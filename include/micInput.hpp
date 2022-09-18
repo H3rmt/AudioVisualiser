@@ -19,8 +19,8 @@ private:
     uint16_t volumes[sampleCount]{};
     uint16_t maxLvl;
 
-    uint8_t noise;
     uint8_t minLevelDifferenece;
+    uint8_t minAvgLevel;
     uint8_t levelDiffereneceOff;
     int micCenter;
 
@@ -30,16 +30,13 @@ private:
     uint16_t offCounter;
 
     /**
-     * reads sound value from microphone and removes noise
+     * reads sound value from microphone
      */
     void getSoundValue()
     {
         int n = analogRead(micPin);
-        // Serial.println(n);
         n = abs(n - 512 - micCenter);
-        // Serial.println(n);
-        n = (n <= noise) ? 0 : (n - noise);
-        // Serial.println(n);
+        Serial.println(n);
         soundValue = n;
     }
 
@@ -51,11 +48,24 @@ private:
      */
     void calcSoundLevel(int soundValue)
     {
-        // fall slower, rise faster
-        if (soundValue > level)
+        if (false)
+        {
+            // fall slower, rise faster
+            if (soundValue > level)
+                level = ((level * 3) + soundValue) >> 2;
+            else
+                level = ((level * 7) + soundValue) >> 3;
+        }
+        else if (true)
+        {
+            // fall and rise fast
+            // level = ((level * 1) + soundValue) >> 1;
             level = ((level * 3) + soundValue) >> 2;
+        }
         else
+        {
             level = ((level * 7) + soundValue) >> 3;
+        }
     }
 
     /**
@@ -81,21 +91,41 @@ private:
                 maxLvl = volumes[i];
         }
 
-        // fall slower, rise faster
-        if (maxLvl > maxLvlAvg)
-            maxLvlAvg = (maxLvlAvg * 31 + maxLvl) >> 5;
+        // dump down a bit
+        maxLvl = maxLvl - (maxLvl >> 3);
+
+        if (false)
+        {
+            // fall slower, rise faster
+            if (maxLvl > maxLvlAvg)
+                maxLvlAvg = (maxLvlAvg * 31 + maxLvl) >> 5;
+            else
+                maxLvlAvg = (maxLvlAvg * 63 + maxLvl) >> 6;
+        }
+        else if (false)
+        {
+            // fall and rise fast
+            maxLvlAvg = (maxLvlAvg * 15 + maxLvl) >> 4;
+            // maxLvlAvg = (maxLvlAvg * 63 + maxLvl) >> 6;
+        }
         else
-            maxLvlAvg = (maxLvlAvg * 63 + maxLvl) >> 6;
+        {
+            // fall faster, rise slower
+            if (maxLvl > maxLvlAvg)
+                maxLvlAvg = (maxLvlAvg * 63 + maxLvl) >> 6;
+            else
+                maxLvlAvg = (maxLvlAvg * 31 + maxLvl) >> 5;
+        }
     }
 
 public:
-    explicit micinput(uint8_t micPin, uint8_t noise = 15, int micCenter = 0, uint8_t minLevelDifferenece = 40, uint16_t offDelay = 30)
+    explicit micinput(uint8_t micPin, int micCenter = 0, uint8_t minLevelDifferenece = 40, uint16_t offDelay = 30, uint16_t minAvgLevel = 120)
     {
         this->micPin = micPin;
-        this->noise = noise;
         this->micCenter = micCenter;
         this->minLevelDifferenece = minLevelDifferenece;
         this->offDelay = offDelay;
+        this->minAvgLevel = minAvgLevel;
     }
 
     void init()
@@ -115,7 +145,7 @@ public:
 
     uint16_t getmaxLvlAvg()
     {
-        return maxLvlAvg;
+        return maxLvlAvg < minAvgLevel ? minAvgLevel : maxLvlAvg;
     }
 
     uint16_t getAvg()
@@ -127,7 +157,6 @@ public:
     {
         return soundValue;
     }
-
 
     void readSound()
     {
