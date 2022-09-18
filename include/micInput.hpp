@@ -12,11 +12,12 @@ class micinput
 {
 private:
     uint16_t maxLvlAvg;
-
+    int soundValue;
     uint16_t level;
 
     uint16_t volumeCount;
     uint16_t volumes[sampleCount]{};
+    uint16_t maxLvl;
 
     uint8_t noise;
     uint8_t minLevelDifferenece;
@@ -31,7 +32,7 @@ private:
     /**
      * reads sound value from microphone and removes noise
      */
-    int getSoundValue() const
+    void getSoundValue()
     {
         int n = analogRead(micPin);
         // Serial.println(n);
@@ -39,7 +40,7 @@ private:
         // Serial.println(n);
         n = (n <= noise) ? 0 : (n - noise);
         // Serial.println(n);
-        return n;
+        soundValue = n;
     }
 
     /**
@@ -73,7 +74,7 @@ private:
      */
     void calcAvgMinMax()
     {
-        int maxLvl = volumes[0];
+        maxLvl = volumes[0];
         for (uint16_t i = 1; i < sampleCount; i++)
         {
             if (volumes[i] > maxLvl)
@@ -88,7 +89,7 @@ private:
     }
 
 public:
-    explicit micinput(uint8_t micPin, uint8_t noise = 15, int micCenter = 0, uint8_t minLevelDifferenece = 40, uint16_t offDelay = 10)
+    explicit micinput(uint8_t micPin, uint8_t noise = 15, int micCenter = 0, uint8_t minLevelDifferenece = 40, uint16_t offDelay = 30)
     {
         this->micPin = micPin;
         this->noise = noise;
@@ -117,14 +118,25 @@ public:
         return maxLvlAvg;
     }
 
+    uint16_t getAvg()
+    {
+        return maxLvl;
+    }
+
+    int getRaw()
+    {
+        return soundValue;
+    }
+
+
     void readSound()
     {
-        int soundValue = getSoundValue();
+        getSoundValue();
         calcSoundLevel(soundValue);
         addCurrentVolumeToSamples(soundValue);
         calcAvgMinMax();
-        // Serial.println(maxLvlAvg);
-        // Serial.println();
+        Serial.println(maxLvlAvg);
+        Serial.println();
 
         // pset to off if difference is to low
         if (maxLvlAvg <= minLevelDifferenece)
@@ -136,7 +148,9 @@ public:
             offCounter++;
             if (offCounter >= offDelay)
             {
+                // Serial.print("off");
                 level = 0;
+                // offCounter = 0;
             }
         }
         else
