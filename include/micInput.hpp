@@ -11,47 +11,48 @@ template <uint16_t sampleCount>
 class micinput
 {
 private:
-    int soundValue;
+    // raw read from mic (after centering to right scale)
+    int micValue;
 
+    // current lvl (calculated by calcLvl)
     uint16_t lvl;
 
+    // current maxLvl in lvls array (only used in calcAvg)
     uint16_t maxLvl;
+    // current maxLvlAvg, gets slowly adjusted to maxLvl
     uint16_t maxLvlAvg;
 
+    // current index in lvls array
     uint16_t lvlCount;
     uint16_t lvls[sampleCount]{};
 
-    uint16_t minAvgLvl;
-    uint16_t avgLevelFloor;
-    uint16_t levelDiffereneceOff;
-    int micOffset;
-
     uint8_t micPin;
-
+    int micOffset;
+    uint16_t minAvgLvl;
     uint16_t offDelay;
+    uint16_t avgLevelFloor;
+
+    // current count of off cycles so far (gets reset if maxLvlAvg > minAvgLvl)
     uint16_t offCounter;
 
     /**
-     * reads sound value from microphone
+     * reads sound value from microphone and centees to right scale
      */
     void readMic()
     {
-        int n = analogRead(micPin);
-        n = abs(n - 512 - micOffset);
-        Serial.println(n);
-        soundValue = n;
+        micValue = abs(analogRead(micPin) - 512 - micOffset);
     }
 
     /**
      * calculates current level based on previous level and new level
      *
-     * multiplies by 3 adds soundValue and divides by 2 to make
+     * multiplies by 3 adds micValue and divides by 2 to make
      * changes smoth and prevent flickering (soundValue makes up 1/4 of new value)
      */
-    void calcLvl(int soundValue)
+    void calcLvl(int micValue)
     {
         // fall and rise fast
-        lvl = ((lvl * 3) + soundValue) >> 2;
+        lvl = ((lvl * 3) + micValue) >> 2;
     }
 
     /**
@@ -60,7 +61,10 @@ private:
     void addLvlToLvls(uint16_t volume)
     {
         lvls[lvlCount] = volume;
-        if (++lvlCount >= sampleCount)
+        lvlCount++;
+
+        // reset counter if array end is reached
+        if (lvlCount >= sampleCount)
             lvlCount = 0;
     }
 
@@ -91,19 +95,15 @@ private:
     void checkOff()
     {
 
-        // pset to off if difference is to low
+        // check if maxLvlAvg is smaller that set Threshold
         if (maxLvlAvg <= minAvgLvl)
         {
-
-            // Serial.print("min !!");
-            // Serial.println(maxLvlAvg);
             maxLvlAvg = minAvgLvl;
             offCounter++;
+            // set lvl to 0 if offCounter reached offDelay Threshold
             if (offCounter >= offDelay)
             {
-                // Serial.print("off");
                 lvl = 0;
-                // offCounter = 0;
             }
         }
         else
@@ -160,7 +160,7 @@ public:
     }
 
     /**
-     * returns last maxLvl from lvls 
+     * returns last maxLvl from lvls
      */
     uint16_t getMax()
     {
@@ -169,26 +169,23 @@ public:
 
     /**
      * returns the last raw mic read (after centering to right scale)
-     * 
+     *
      * value read in readMic()
      */
     int getRaw()
     {
-        return soundValue;
+        return micValue;
     }
-
 
     /**
      * reads value from mic, calculates the Lvl and AvgLvl and sets lvl to 0 if to quiet
-     */ 
+     */
     void read()
     {
         readMic();
-        calcLvl(soundValue);
-        addLvlToLvls(soundValue);
+        calcLvl(micValue);
+        addLvlToLvls(micValue);
         calcAvg();
-        // Serial.println(maxLvlAvg);
-        // Serial.println();
         checkOff();
     }
 };
