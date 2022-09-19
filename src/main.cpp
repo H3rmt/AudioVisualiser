@@ -18,7 +18,7 @@
 #define BUTTONPIN2 9
 #define BUTTONPIN3 10
 
-micinput<SAMPLES> input = micinput<SAMPLES>(A0, -100, 40, 130, 100);
+micinput<SAMPLES> input = micinput<SAMPLES>(A0, -100, 30, 130, 100);
 strip<LEDPIN2, LEDCOUNT2> strip2 = strip<LEDPIN2, LEDCOUNT2>(false, 50, 2);
 strip<LEDPIN3, LEDCOUNT3> strip3 = strip<LEDPIN3, LEDCOUNT3>(false, 50, 2);
 
@@ -34,7 +34,7 @@ void setup()
 
 	// strip2.Test2();
 	// delay(400);
-	
+
 	strip3.init();
 	// strip3.Test2();
 	// delay(400);
@@ -48,10 +48,9 @@ void setup()
 	// delay(400);
 }
 
-
 void loop()
 {
-	input.readSound();
+	input.read();
 
 	// if(digitalRead(BUTTONPIN))
 	// strip1State++;
@@ -86,13 +85,13 @@ void loop()
 		strip3State = 0;
 
 	// strip2.Test();
-	
-	// strip2.Normal(input.getLevel(), input.getmaxLvlAvg(), true, false);
-	// strip2.Normal(input.getAvg(), 611, false, false);
-	// strip3.Normal(input.getmaxLvlAvg(), 611, false, false);
-	// strip3.Normal(input.getRaw(), input.getmaxLvlAvg(), true, false);
-	// strip3.Normal(input.getLevel(), 611, false, false);
-	
+
+	strip2.Normal(input.getLvl(), input.getAvg(), true, true);
+	// strip2.Normal(input.getMax(), 611, false, false);
+	// strip3.Normal(input.getAvg(), 611, false, false);
+	strip3.Normal(input.getRaw(), input.getAvg(), true, true);
+	// strip3.Normal(input.getLvl(), 611, false, false);
+
 	return;
 
 	switch (strip2State)
@@ -101,25 +100,25 @@ void loop()
 		strip2.Clear();
 		break;
 	case 1:
-		strip2.Normal(input.getLevel(), input.getmaxLvlAvg(), false);
+		strip2.Normal(input.getLvl(), input.getAvg(), false);
 		break;
 	case 2:
-		strip2.CentreOut(false, input.getLevel(), 0, input.getmaxLvlAvg());
+		strip2.CentreOut(false, input.getLvl(), 0, input.getAvg());
 		break;
 	case 3:
-		strip2.Normal(input.getLevel(), input.getmaxLvlAvg());
+		strip2.Normal(input.getLvl(), input.getAvg());
 		break;
 	case 4:
-		strip2.CentreOut(true, input.getLevel(), 0, input.getmaxLvlAvg());
+		strip2.CentreOut(true, input.getLvl(), 0, input.getAvg());
 		break;
 	case 5:
-		strip2.FallingStar(input.getLevel(), 0, input.getmaxLvlAvg());
+		strip2.FallingStar(input.getLvl(), 0, input.getAvg());
 		break;
 	case 6:
-		strip2.Pulse(input.getLevel(), 0, input.getmaxLvlAvg());
+		strip2.Pulse(input.getLvl(), 0, input.getAvg());
 		break;
 	case 7:
-		strip2.Stream(input.getLevel(), 0, input.getmaxLvlAvg());
+		strip2.Stream(input.getLvl(), 0, input.getAvg());
 		break;
 	}
 
@@ -129,25 +128,25 @@ void loop()
 		strip3.Clear();
 		break;
 	case 1:
-		strip3.Normal(input.getLevel(), input.getmaxLvlAvg(), false);
+		strip3.Normal(input.getLvl(), input.getAvg(), false);
 		break;
 	case 2:
-		strip3.CentreOut(false, input.getLevel(), 0, input.getmaxLvlAvg());
+		strip3.CentreOut(false, input.getLvl(), 0, input.getAvg());
 		break;
 	case 3:
-		strip3.Normal(input.getLevel(), input.getmaxLvlAvg());
+		strip3.Normal(input.getLvl(), input.getAvg());
 		break;
 	case 4:
-		strip3.CentreOut(true, input.getLevel(), 0, input.getmaxLvlAvg());
+		strip3.CentreOut(true, input.getLvl(), 0, input.getAvg());
 		break;
 	case 5:
-		strip3.FallingStar(input.getLevel(), 0, input.getmaxLvlAvg());
+		strip3.FallingStar(input.getLvl(), 0, input.getAvg());
 		break;
 	case 6:
-		strip3.Pulse(input.getLevel(), 0, input.getmaxLvlAvg());
+		strip3.Pulse(input.getLvl(), 0, input.getAvg());
 		break;
 	case 7:
-		strip3.Stream(input.getLevel(), 0, input.getmaxLvlAvg());
+		strip3.Stream(input.getLvl(), 0, input.getAvg());
 		break;
 	}
 }

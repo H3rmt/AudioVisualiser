@@ -104,8 +104,6 @@ public:
 		leds[3] = CRGB::DarkRed;
 		show();
 	}
-	
-
 
 	void Clear()
 	{
@@ -116,10 +114,9 @@ public:
 		show();
 	}
 
-	void Normal(bool rainbow, uint16_t lvl, uint16_t minLvlAvg, uint16_t maxLvlAvg)
+	void Normal(uint16_t lvl, uint16_t maxLvlAvg, bool rainbow = true, bool peakDot = true)
 	{
-
-		uint16_t height = calcHeight(lvl, minLvlAvg, maxLvlAvg);
+		uint16_t height = calcHeight(lvl, 0, maxLvlAvg);
 
 		if (rainbow)
 			adjustColorOffsets();
@@ -163,11 +160,13 @@ public:
 				}
 			}
 		}
+
 		if (height > peak)
 			peak = height;
 		if (peak >= ledCount)
 			peak = ledCount - 1;
-		if (peak > 0)
+
+		if (peakDot && peak > 0)
 		{
 			if (rainbow)
 			{
@@ -432,55 +431,6 @@ public:
 
 			show();
 		}
-	}
-
-	void Maximum(bool rainbow, uint16_t lvl, uint16_t minLvlAvg, uint16_t maxLvlAvg)
-	{
-		uint16_t height = calcHeight(maxLvlAvg, 0, 1023);
-		if (rainbow)
-			adjustColorOffsets();
-
-		if (reversed)
-		{
-			for (uint16_t i = 0; i < ledCount; i++)
-			{
-				int j = (ledCount - 1) - i;
-				if (i >= height)
-					leds[j] = CRGB::Black;
-				else
-				{
-					if (rainbow)
-					{
-						leds[j] = Wheel(i, ledCount, colorOffset);
-					}
-					else
-					{
-						leds[j] = Wheel(i, ledCount);
-					}
-				}
-			}
-		}
-		else
-		{
-			for (uint16_t i = 0; i < ledCount; i++)
-			{
-				if (i >= height)
-					leds[i] = CRGB::Black;
-				else
-				{
-					if (rainbow)
-					{
-						leds[i] = Wheel(i, ledCount, colorOffset);
-					}
-					else
-					{
-						leds[i] = Wheel(i, ledCount);
-					}
-				}
-			}
-		}
-
-		show();
 	}
 };
 
