@@ -8,7 +8,7 @@
 
 #### More Videos + Sound in Videos folder 
 
-<div style="display:flex;gap:8px;flex-direction:row;">
-<img src="./Videos/08_both_cut.gif" style="width:calc(50% - 4px);">
-<img src="./Videos/05_both_olivia_cut.gif" style="width:calc(50% - 4px);">
+<div style="display:flex;gap:8px;flex-direction:row;width:100%;overflow:auto;">
+  <img src="./Videos/08_both_cut.gif"  style="width:calc(50% - 4px);transform:scale(0.5);">
+  <img src="./Videos/05_both_olivia_cut.gif" style="width:calc(50% - 4px);transform:scale(0.5);">
 </div>
