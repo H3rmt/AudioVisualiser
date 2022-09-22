@@ -18,7 +18,7 @@
 #define BUTTONPIN2 9
 #define BUTTONPIN3 10
 
-micinput<SAMPLES> input = micinput<SAMPLES>(A0, -100, 30, 130, 100);
+micinput<SAMPLES> input = micinput<SAMPLES>(A0, -100, 40, 30, 100);
 strip<LEDPIN2, LEDCOUNT2> strip2 = strip<LEDPIN2, LEDCOUNT2>(false, 50, 2);
 strip<LEDPIN3, LEDCOUNT3> strip3 = strip<LEDPIN3, LEDCOUNT3>(false, 50, 2);
 
@@ -87,9 +87,10 @@ void loop()
 	// strip2.Test();
 
 	strip2.Normal(input.getLvl(), input.getAvg(), true, true);
+	strip3.Normal(input.getLvl(), input.getAvg(), true, true);
 	// strip2.Normal(input.getMax(), 611, false, false);
 	// strip3.Normal(input.getAvg(), 611, false, false);
-	strip3.Normal(input.getRaw(), input.getAvg(), true, true);
+	// strip3.Normal(input.getRaw(), input.getAvg(), true, true);
 	// strip3.Normal(input.getLvl(), 611, false, false);
 
 	return;

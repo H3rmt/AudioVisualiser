@@ -12,7 +12,7 @@ class micinput
 {
 private:
     // raw read from mic (after centering to right scale)
-    int micValue;
+    uint16_t micValue;
 
     // current lvl (calculated by calcLvl)
     uint16_t lvl;
@@ -27,7 +27,7 @@ private:
     uint16_t lvls[sampleCount]{};
 
     uint8_t micPin;
-    int micOffset;
+    int16_t micOffset;
     uint16_t minAvgLvl;
     uint16_t offDelay;
     uint16_t avgLevelFloor;
@@ -40,7 +40,8 @@ private:
      */
     void readMic()
     {
-        micValue = abs(analogRead(micPin) - 512 - micOffset);
+        int r = analogRead(micPin) - 512 - micOffset;
+        micValue = abs(r);
     }
 
     /**
@@ -49,18 +50,18 @@ private:
      * multiplies by 3 adds micValue and divides by 2 to make
      * changes smoth and prevent flickering (soundValue makes up 1/4 of new value)
      */
-    void calcLvl(int micValue)
+    void calcLvl()
     {
         // fall and rise fast
         lvl = ((lvl * 3) + micValue) >> 2;
     }
 
     /**
-     * adds current volume to list of lvls
+     * adds current micValue to list of lvls
      */
-    void addLvlToLvls(uint16_t volume)
+    void addLvlToLvls()
     {
-        lvls[lvlCount] = volume;
+        lvls[lvlCount] = micValue;
         lvlCount++;
 
         // reset counter if array end is reached
@@ -94,11 +95,9 @@ private:
 
     void checkOff()
     {
-
         // check if maxLvlAvg is smaller that set Threshold
         if (maxLvlAvg <= minAvgLvl)
         {
-            maxLvlAvg = minAvgLvl;
             offCounter++;
             // set lvl to 0 if offCounter reached offDelay Threshold
             if (offCounter >= offDelay)
@@ -121,7 +120,7 @@ public:
      * minAvgLvl      min level of AvgLvl bevore off counter gets incremented
      * avgLevelFloor  avgLvl cant get lower than this, to prevent flickering if quiet (only gets floored on the output, internal value stays)
      */
-    explicit micinput(uint8_t micPin, int micOffset = 0, uint8_t minAvgLvl = 40, uint16_t offDelay = 30, uint16_t avgLevelFloor = 120)
+    explicit micinput(uint8_t micPin, int16_t micOffset = 0, uint8_t minAvgLvl = 40, uint16_t offDelay = 30, uint16_t avgLevelFloor = 120)
     {
         this->micPin = micPin;
         this->micOffset = micOffset;
@@ -138,7 +137,7 @@ public:
         pinMode(micPin, INPUT);
 
         lvl = 5;
-        maxLvlAvg = 10;
+        maxLvlAvg = 100;
         lvlCount = 0;
         offCounter = 0;
     }
@@ -183,10 +182,15 @@ public:
     void read()
     {
         readMic();
-        calcLvl(micValue);
-        addLvlToLvls(micValue);
+        calcLvl();
+        addLvlToLvls();
         calcAvg();
         checkOff();
+        // Serial.print(lvl);
+        // Serial.print(" - ");
+        // Serial.print(maxLvlAvg);
+        // Serial.print(" - ");
+        // Serial.println(micValue);
     }
 };
 
