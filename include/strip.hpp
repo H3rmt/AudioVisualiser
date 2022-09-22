@@ -26,10 +26,11 @@ private:
 
 	uint16_t peakDotFallSpeed;
 	float colorChangeSpeed;
+	float moveSpeed;
 
 	// dynamic values
+	// peak is used for peak dot, but also for Circle position
 	float peak = 0;
-	uint8_t peakDotCount = 0;
 
 	uint16_t calcHeight(uint16_t lvl, uint16_t minLvlAvg, uint16_t maxLvlAvg, uint16_t ledHeight = ledCount) const
 	{
@@ -53,14 +54,8 @@ private:
 
 	void fallPeakDot(uint16_t fallSpeed)
 	{
-		if (peakDotCount > 4)
-		{
-			if (peak > 0)
-				peak -= (float)ledCount / fallSpeed;
-			peakDotCount = 0;
-		}
-		else
-			peakDotCount++;
+		if (peak > 0)
+			peak -= (float)ledCount / fallSpeed / 4;
 	}
 
 	CHSV Wheel(uint16_t x, uint16_t _ledCount, float _offset = 240)
@@ -69,11 +64,12 @@ private:
 	}
 
 public:
-	explicit strip(bool reverse = false, uint16_t peakDotFallDivide = 50, uint8_t colorChangeSpeed = 1)
+	explicit strip(bool reverse = false, uint16_t peakDotFallDivide = 50, float colorChangeSpeed = 1, float moveSpeed = 1)
 	{
 		this->reversed = reverse;
 		this->peakDotFallSpeed = peakDotFallDivide;
 		this->colorChangeSpeed = colorChangeSpeed;
+		this->moveSpeed = moveSpeed;
 	}
 
 	void init()
@@ -313,12 +309,11 @@ public:
 		uint16_t height = calcHeight(lvl, 0, maxLvlAvg, ledCount - width);
 		if (rainbow)
 			adjustColorOffsets();
-		
+
 		for (uint16_t i = 0; i < ledCount; i++)
 		{
 			leds[i] = CRGB::Black;
 		}
-
 
 		if (reversed)
 		{
@@ -331,7 +326,7 @@ public:
 				}
 				else
 				{
-					leds[j] = CRGB::Red;
+					leds[j] = CRGB::DarkCyan;
 				}
 			}
 		}
@@ -346,7 +341,60 @@ public:
 				}
 				else
 				{
-					leds[i] = CRGB::Red;
+					leds[i] = CRGB::DarkCyan;
+				}
+			}
+		}
+
+		show();
+	}
+
+	void Circle(uint16_t lvl, uint16_t maxLvlAvg, bool rainbow = true, uint16_t width = 1, float baseMove = 0.05)
+	{
+		uint16_t height = calcHeight(lvl, 0, maxLvlAvg, ledCount);
+		if (rainbow)
+			adjustColorOffsets();
+
+		for (uint16_t i = 0; i < ledCount; i++)
+		{
+			leds[i] = CRGB::Black;
+		}
+
+		peak += ((height * moveSpeed) / 30) + baseMove;
+
+		if (peak > ledCount)
+			peak -= ledCount; // reset
+
+		uint16_t cPeak = (uint16_t)peak;
+
+		if (reversed)
+		{
+			for (uint16_t i = peak; i < peak + width - 1; i++)
+			{
+				int j = (ledCount - 1) - i;
+				// % ledCount start at beginning if at end
+				if (rainbow)
+				{
+					leds[j % ledCount] = CHSV(colorOffset, 255, 255);
+				}
+				else
+				{
+					leds[j % ledCount] = CRGB::DarkCyan;
+				}
+			}
+		}
+		else
+		{
+			for (uint16_t i = peak; i < peak + width - 1; i++)
+			{
+				// % ledCount start at beginning if at end
+				if (rainbow)
+				{
+					leds[i % ledCount] = CHSV(colorOffset, 255, 255);
+				}
+				else
+				{
+					leds[i % ledCount] = CRGB::DarkCyan;
 				}
 			}
 		}

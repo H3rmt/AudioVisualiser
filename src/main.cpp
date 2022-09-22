@@ -11,19 +11,20 @@
 #define LEDCOUNT 34
 #define BUTTONPIN 3
 
-#define LEDPIN2 3
-#define LEDPIN3 2
-#define LEDCOUNT2 59
-#define LEDCOUNT3 27
-#define BUTTONPIN2 9
-#define BUTTONPIN3 10
+#define SUBLEDPIN 3
+#define SUBLEDCOUNT 59
+#define SUBBUTTONPIN 9
 
-micinput<SAMPLES> input = micinput<SAMPLES>(A0, -100, 50, 30, 100);
-strip<LEDPIN2, LEDCOUNT2> sub = strip<LEDPIN2, LEDCOUNT2>(false, 50, 3.5);
-strip<LEDPIN3, LEDCOUNT3> strip3 = strip<LEDPIN3, LEDCOUNT3>(true, 50, 2.5);
+#define MIDLEDPIN 2
+#define MIDLEDCOUNT 27
+#define MIDBUTTONPIN 10
 
-int strip2State = 5;
-int strip3State = 5;
+micinput<SAMPLES> input = micinput<SAMPLES>(A0, -100, 45, 30, 100);
+strip<SUBLEDPIN, SUBLEDCOUNT> sub = strip<SUBLEDPIN, SUBLEDCOUNT>(false, 50, 1.5, 1.5);
+strip<MIDLEDPIN, MIDLEDCOUNT> mid = strip<MIDLEDPIN, MIDLEDCOUNT>(false, 50, 1.5, 1.5);
+
+int subState = 6;
+int midState = 3;
 
 void setup()
 {
@@ -31,64 +32,64 @@ void setup()
 	input.init();
 
 	sub.init();
-	strip3.init();
+	mid.init();
 
 	// sub.Test2();
 	// delay(400);
 
-	// strip3.Test2();
+	// mid.Test2();
 	// delay(400);
 
-	// strip3.Test();
+	// mid.Test();
 	// delay(400);
 
 	// sub.Test();
 	// delay(400);
 
-	pinMode(BUTTONPIN2, INPUT);
-	pinMode(BUTTONPIN3, INPUT);
+	pinMode(SUBBUTTONPIN, INPUT);
+	pinMode(MIDBUTTONPIN, INPUT);
 }
 
 void loop()
 {
 	input.read();
 
-	if (digitalRead(BUTTONPIN2))
+	if (digitalRead(SUBBUTTONPIN))
 	{
-		strip2State++;
-		// Serial.println(strip2State);
-		while (digitalRead(BUTTONPIN2))
+		subState++;
+		// Serial.println(subState);
+		while (digitalRead(SUBBUTTONPIN))
 		{
 		}
 	}
 
-	if (digitalRead(BUTTONPIN3))
+	if (digitalRead(MIDBUTTONPIN))
 	{
-		strip3State++;
-		// Serial.println(strip3State);
-		while (digitalRead(BUTTONPIN3))
+		midState++;
+		// Serial.println(midState);
+		while (digitalRead(MIDBUTTONPIN))
 		{
 		}
 	}
 
-	if (strip2State >= 6)
-		strip2State = 0;
+	if (subState >= 7)
+		subState = 0;
 
-	if (strip3State >= 6)
-		strip3State = 0;
+	if (midState >= 7)
+		midState = 0;
 
 	// sub.Test();
 
 	// sub.Normal(input.getLvl(), input.getAvg(), true, true);
-	// strip3.Normal(input.getLvl(), input.getAvg(), true, true);
+	// mid.Normal(input.getLvl(), input.getAvg(), true, true);
 	// sub.Normal(input.getMax(), 611, false, false);
-	// strip3.Normal(input.getAvg(), 611, false, false);
-	// strip3.Normal(input.getRaw(), input.getAvg(), true, true);
-	// strip3.Normal(input.getLvl(), 611, false, false);
+	// mid.Normal(input.getAvg(), 611, false, false);
+	// mid.Normal(input.getRaw(), input.getAvg(), true, true);
+	// mid.Normal(input.getLvl(), 611, false, false);
 
 	// return;
 
-	switch (strip2State)
+	switch (subState)
 	{
 	case 0:
 		sub.Clear();
@@ -109,38 +110,34 @@ void loop()
 		sub.FallingStar(input.getLvl(), input.getAvg(), true, 3);
 		break;
 	case 6:
-		// sub.Pulse(input.getLvl(), 0, input.getAvg());
-		break;
-	case 7:
-		// sub.Stream(input.getLvl(), 0, input.getAvg());
+		sub.Circle(input.getLvl(), input.getAvg(), true, 8, 0.03);
 		break;
 	}
 
-	switch (strip3State)
+	// return;
+
+	switch (midState)
 	{
 	case 0:
-		strip3.Clear();
+		mid.Clear();
 		break;
 	case 1:
-		strip3.Normal(input.getLvl(), input.getAvg(), false);
+		mid.Normal(input.getLvl(), input.getAvg(), false);
 		break;
 	case 2:
-		strip3.CentreOut(input.getLvl(), input.getAvg(), false);
+		mid.CentreOut(input.getLvl(), input.getAvg(), false);
 		break;
 	case 3:
-		strip3.Normal(input.getLvl(), input.getAvg());
+		mid.Normal(input.getLvl(), input.getAvg());
 		break;
 	case 4:
-		strip3.CentreOut(input.getLvl(), input.getAvg());
+		mid.CentreOut(input.getLvl(), input.getAvg());
 		break;
 	case 5:
-		strip3.FallingStar(input.getLvl(), input.getAvg(), false, 1);
+		mid.FallingStar(input.getLvl(), input.getAvg(), true, 1);
 		break;
 	case 6:
-		// strip3.Pulse(input.getLvl(), 0, input.getAvg());
-		break;
-	case 7:
-		// strip3.Stream(input.getLvl(), 0, input.getAvg());
+		mid.Circle(input.getLvl(), input.getAvg(), true, 4);
 		break;
 	}
 }
