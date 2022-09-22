@@ -18,27 +18,27 @@ private:
 	bool reversed;
 
 	// rainbow effects
-	uint16_t colorOffset = 0;
+	float colorOffset = 0;
 
 	// pulse and stream colorPalette
 	CRGBPalette16 targetPalette = OceanColors_p;
 	CRGBPalette16 currentPalette = OceanColors_p;
 
 	uint16_t peakDotFallSpeed;
-	uint8_t colorChangeSpeed;
+	float colorChangeSpeed;
 
 	// dynamic values
 	float peak = 0;
 	uint8_t peakDotCount = 0;
 
-	uint16_t calcHeight(uint16_t lvl, uint16_t minLvlAvg, uint16_t maxLvlAvg) const
+	uint16_t calcHeight(uint16_t lvl, uint16_t minLvlAvg, uint16_t maxLvlAvg, uint16_t ledHeight = ledCount) const
 	{
-		uint16_t height = ledCount * (lvl - minLvlAvg) / (long)(maxLvlAvg - minLvlAvg);
+		uint16_t height = ledHeight * (lvl - minLvlAvg) / (long)(maxLvlAvg - minLvlAvg);
 
 		if (height < 0)
 			height = 0;
-		else if (height > ledCount)
-			height = ledCount;
+		else if (height > ledHeight)
+			height = ledHeight;
 		return height;
 	}
 
@@ -63,9 +63,9 @@ private:
 			peakDotCount++;
 	}
 
-	CHSV Wheel(uint16_t x, uint16_t _ledCount, uint8_t _offset = 240)
+	CHSV Wheel(uint16_t x, uint16_t _ledCount, float _offset = 240)
 	{
-		return {(map(x, 0, _ledCount - 1, 0, 255 * 2) - _offset) % 255, 255, 255};
+		return {(map(x, 0, _ledCount - 1, 0, 255 * 2) - (int)_offset) % 255, 255, 255};
 	}
 
 public:
@@ -197,9 +197,9 @@ public:
 		fallPeakDot(peakDotFallSpeed);
 	}
 
-	void CentreOut(bool rainbow, uint16_t lvl, uint16_t minLvlAvg, uint16_t maxLvlAvg)
+	void CentreOut(uint16_t lvl, uint16_t maxLvlAvg, bool rainbow = true, bool peakDot = true)
 	{
-		uint16_t height = calcHeight(lvl, minLvlAvg, maxLvlAvg);
+		uint16_t height = calcHeight(lvl, 0, maxLvlAvg);
 
 		if (rainbow)
 			adjustColorOffsets();
@@ -308,31 +308,50 @@ public:
 		fallPeakDot(peakDotFallSpeed);
 	}
 
-	void FallingStar(uint16_t lvl, uint16_t minLvlAvg, uint16_t maxLvlAvg)
+	void FallingStar(uint16_t lvl, uint16_t maxLvlAvg, bool rainbow = true, uint16_t width = 1)
 	{
-		uint16_t height = calcHeight(lvl, minLvlAvg, maxLvlAvg);
-
+		uint16_t height = calcHeight(lvl, 0, maxLvlAvg, ledCount - width);
+		if (rainbow)
+			adjustColorOffsets();
+		
 		for (uint16_t i = 0; i < ledCount; i++)
 		{
 			leds[i] = CRGB::Black;
 		}
 
-		if (height > peak)
-			peak = height;
-		if (peak >= ledCount)
-			peak = ledCount - 1;
 
-		if (peak > 0)
+		if (reversed)
 		{
-			if (reversed)
-				leds[ledCount - (uint16_t)peak] = CRGB::Blue;
-			else
-				leds[(uint16_t)peak] = CRGB::Blue;
+			for (uint16_t i = height; i < height + width; i++)
+			{
+				int j = (ledCount - 1) - i;
+				if (rainbow)
+				{
+					leds[j] = CHSV(colorOffset, 255, 255);
+				}
+				else
+				{
+					leds[j] = CRGB::Red;
+				}
+			}
+		}
+		else
+		{
+			for (uint16_t i = height; i < height + width; i++)
+			{
+
+				if (rainbow)
+				{
+					leds[i] = CHSV(colorOffset, 255, 255);
+				}
+				else
+				{
+					leds[i] = CRGB::Red;
+				}
+			}
 		}
 
 		show();
-
-		fallPeakDot(peakDotFallSpeed / 3);
 	}
 
 	void Pulse(uint16_t lvl, uint16_t minLvlAvg, uint16_t maxLvlAvg)
