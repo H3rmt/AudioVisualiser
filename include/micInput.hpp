@@ -21,12 +21,16 @@ private:
     uint16_t maxLvl;
     // current maxLvlAvg, gets slowly adjusted to maxLvl
     uint16_t maxLvlAvg;
+    
+    // current potAvg + maxLvlAvg / 2 (average of pot and current avg) 
+    uint16_t maxLvlAvgAdj;
 
     // current index in lvls array
     uint16_t lvlCount;
     uint16_t lvls[sampleCount]{};
 
     uint8_t micPin;
+    uint8_t avgPin;
     int16_t micOffset;
     uint16_t minAvgLvl;
     uint16_t offDelay;
@@ -53,7 +57,7 @@ private:
     void calcLvl()
     {
         // fall and rise fast
-        lvl = ((lvl * 3) + micValue) >> 2;
+        lvl = ((lvl * 1) + micValue) >> 1;
     }
 
     /**
@@ -61,7 +65,7 @@ private:
      */
     void addLvlToLvls()
     {
-        lvls[lvlCount] = micValue;
+        lvls[lvlCount] = lvl;
         lvlCount++;
 
         // reset counter if array end is reached
@@ -84,13 +88,15 @@ private:
         }
 
         // dump down a bit, allows level to rise above and hit end of LED strip
-        maxLvl -= (maxLvl >> 3);
+        maxLvl -= (maxLvl >> 4);
 
         // fall faster, rise slower
         if (maxLvl > maxLvlAvg)
             maxLvlAvg = (maxLvlAvg * 63 + maxLvl) >> 6;
         else
             maxLvlAvg = (maxLvlAvg * 31 + maxLvl) >> 5;
+
+        maxLvlAvgAdj = ((maxLvlAvg * 2) + analogRead(avgPin)) / 3;
     }
 
     void checkOff()
@@ -120,9 +126,10 @@ public:
      * minAvgLvl      min level of AvgLvl bevore off counter gets incremented
      * avgLevelFloor  avgLvl cant get lower than this, to prevent flickering if quiet (only gets floored on the output, internal value stays)
      */
-    explicit micinput(uint8_t micPin, int16_t micOffset = 0, uint8_t minAvgLvl = 40, uint16_t offDelay = 30, uint16_t avgLevelFloor = 120)
+    explicit micinput(uint8_t micPin, uint8_t avgPin, int16_t micOffset = 0, uint8_t minAvgLvl = 40, uint16_t offDelay = 30, uint16_t avgLevelFloor = 120)
     {
         this->micPin = micPin;
+        this->avgPin = avgPin;
         this->micOffset = micOffset;
         this->minAvgLvl = minAvgLvl;
         this->offDelay = offDelay;
@@ -136,10 +143,10 @@ public:
     {
         pinMode(micPin, INPUT);
 
-        lvl = 5;
-        maxLvlAvg = 100;
+        lvl = 1;
+        maxLvlAvg = 1000;
         lvlCount = 0;
-        offCounter = 0;
+        offCounter = offDelay;
     }
 
     /**
@@ -155,7 +162,7 @@ public:
      */
     uint16_t getAvg()
     {
-        return maxLvlAvg < avgLevelFloor ? avgLevelFloor : maxLvlAvg;
+        return maxLvlAvgAdj < avgLevelFloor ? avgLevelFloor : maxLvlAvgAdj;
     }
 
     /**
@@ -186,9 +193,16 @@ public:
         addLvlToLvls();
         calcAvg();
         checkOff();
+
         // Serial.print(lvl);
         // Serial.print(" - ");
+        // Serial.print(maxLvl);
+        // Serial.print(" - ");
         // Serial.print(maxLvlAvg);
+        // Serial.print(" - ");
+        // Serial.print(analogRead(avgPin));
+        // Serial.print(" - ");
+        // Serial.print(maxLvlAvgAdj);
         // Serial.print(" - ");
         // Serial.println(micValue);
     }

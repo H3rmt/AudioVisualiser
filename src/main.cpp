@@ -7,6 +7,9 @@
 
 #define SAMPLES 10
 
+#define MICPIN A0
+#define AVGPIN A1
+
 #define LEDPIN 4
 #define LEDCOUNT 34
 #define BUTTONPIN 3
@@ -20,17 +23,17 @@
 #define MIDLEDCOUNT 27
 #define MIDBUTTONPIN 10
 
-micinput<SAMPLES> input = micinput<SAMPLES>(A0, -100, 45, 30, 100);
-strip<SUBLEDPIN, SUBLEDCOUNT> sub = strip<SUBLEDPIN, SUBLEDCOUNT>(false, 50, 1.5, 2.5);
-strip<MIDLEDPIN1, MIDLEDCOUNT> mid1 = strip<MIDLEDPIN1, MIDLEDCOUNT>(true, 50, 1.5, 1.5);
-strip<MIDLEDPIN2, MIDLEDCOUNT> mid2 = strip<MIDLEDPIN2, MIDLEDCOUNT>(false, 50, 1.5, 1.5);
+micinput<SAMPLES> input = micinput<SAMPLES>(MICPIN, AVGPIN, -100, 45, 30, 100);
+strip<SUBLEDPIN, SUBLEDCOUNT> sub = strip<SUBLEDPIN, SUBLEDCOUNT>(false, 10, 1.5, 2.5);
+strip<MIDLEDPIN1, MIDLEDCOUNT> mid1 = strip<MIDLEDPIN1, MIDLEDCOUNT>(true, 10, 1.5, 1.5);
+strip<MIDLEDPIN2, MIDLEDCOUNT> mid2 = strip<MIDLEDPIN2, MIDLEDCOUNT>(false, 10, 1.5, 1.5);
 
 int subState = 6;
 int midState = 3;
 
 void setup()
 {
-	Serial.begin(9600);
+	// Serial.begin(9600);
 	input.init();
 
 	sub.init();
