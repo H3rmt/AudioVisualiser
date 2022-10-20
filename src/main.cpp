@@ -5,7 +5,6 @@
 #include "strip.hpp"
 #include "micInput.hpp"
 
-
 #define MICPIN A0
 #define AVGPIN A1
 
@@ -34,13 +33,13 @@ long lastMillis = 0;
 long loops = 0;
 
 #define chechTime1 long f = millis();
-#define chechTime2               \
+#define chechTime2                \
 	Serial.print("time millis:"); \
 	Serial.println(millis() - f);
 
 void checkCycles()
 {
-  	loops++;
+	loops++;
 	long currentMillis = millis();
 	if (currentMillis - lastMillis > 1000)
 	{
@@ -136,11 +135,13 @@ void loop()
 		sub.FallingStar(input.getLvl(), input.getAvg(), true, 3);
 		break;
 	case 6:
-		sub.Circle(input.getLvl(), input.getAvg(), true, 7, 0.07);
+		sub.Circle(input.getLvl(), input.getAvg(), true, 7, 0.07, 3);
 		break;
 	}
 
 	// return;
+
+	midState = 6;
 
 	switch (midState)
 	{
@@ -169,11 +170,11 @@ void loop()
 		mid2.FallingStar(input.getLvl(), input.getAvg(), true, 1);
 		break;
 	case 6:
-		mid1.Circle(input.getLvl(), input.getAvg(), true, 4);
-		mid2.Circle(input.getLvl(), input.getAvg(), true, 4);
+		mid1.Circle(input.getLvl(), input.getAvg(), true, 2, 0.04, 4);
+		mid2.Circle(input.getLvl(), input.getAvg(), true, 1, 0.04, 6);
 		break;
 	}
-	
+
 	show();
-	checkCycles();
+	// checkCycles();
 }

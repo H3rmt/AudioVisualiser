@@ -337,7 +337,7 @@ public:
 		}
 	}
 
-	void Circle(uint16_t lvl, uint16_t maxLvlAvg, bool rainbow = true, uint16_t width = 1, float baseMove = 0.05)
+	void Circle(uint16_t lvl, uint16_t maxLvlAvg, bool rainbow = true, uint16_t width = 1, float baseMove = 0.05, uint8_t bars = 1)
 	{
 		uint16_t height = calcHeight(lvl, 0, maxLvlAvg, ledCount);
 		if (rainbow)
@@ -348,42 +348,56 @@ public:
 			leds[i] = CRGB::Black;
 		}
 
-		uint16_t speed = ((uint32_t) height * height) / (ledCount * 0.8); // convert linear height to exponential function
+		uint16_t speed = ((uint32_t)height * height) / (ledCount * 0.8); // convert linear height to exponential function
 		peak += ((speed * moveSpeed) / 30) + baseMove;
 
 		if (peak > ledCount)
 			peak -= ledCount; // reset
 
 		uint16_t cPeak = (uint16_t)peak;
+		float split = (float) ledCount / bars;
 
 		if (reversed)
 		{
-			for (uint16_t i = cPeak; i < cPeak + width - 1; i++)
+			for (uint16_t i = cPeak; i < cPeak + width; i++)
 			{
-				int j = (ledCount - 1) - i;
+				int j = ledCount - (i % ledCount);
 				// % ledCount start at beginning if at end
 				if (rainbow)
 				{
-					leds[j % ledCount] = CHSV(colorOffset, 255, 255);
+					for (uint8_t c = 0; c < bars; c++)
+					{
+						leds[(j + (uint16_t)(split * c)) % ledCount] = CHSV(colorOffset, 255, 255);
+					}
 				}
 				else
 				{
-					leds[j % ledCount] = CRGB::DarkCyan;
+					for (uint8_t c = 0; c < bars; c++)
+					{
+						leds[(j + (uint16_t)(split * c)) % ledCount] = CRGB::DarkCyan;
+					}
 				}
 			}
+			Serial.println();
 		}
 		else
 		{
-			for (uint16_t i = cPeak; i < cPeak + width - 1; i++)
+			for (uint16_t i = cPeak; i < cPeak + width; i++)
 			{
 				// % ledCount start at beginning if at end
 				if (rainbow)
 				{
-					leds[i % ledCount] = CHSV(colorOffset, 255, 255);
+					for (uint8_t c = 0; c < bars; c++)
+					{
+						leds[(i + (uint16_t)(split * c)) % ledCount] = CHSV(colorOffset, 255, 255);
+					}
 				}
 				else
 				{
-					leds[i % ledCount] = CRGB::DarkCyan;
+					for (uint8_t c = 0; c < bars; c++)
+					{
+						leds[(i + (uint16_t)(split * c)) % ledCount] = CRGB::DarkCyan;
+					}
 				}
 			}
 		}
@@ -485,7 +499,7 @@ public:
 };
 
 void show()
-{	
+{
 	// FastLED.setBrightness(255);
 	FastLED.show();
 };
