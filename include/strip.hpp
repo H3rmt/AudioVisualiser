@@ -78,11 +78,6 @@ public:
 		FastLED.setBrightness(255);
 	}
 
-	void show()
-	{
-		FastLED.show();
-	}
-
 	void Test()
 	{
 		leds[0] = CRGB::Aqua;
@@ -107,7 +102,6 @@ public:
 		{
 			leds[i] = CRGB::Black;
 		}
-		show();
 	}
 
 	void Normal(uint16_t lvl, uint16_t maxLvlAvg, bool rainbow = true, bool peakDot = true)
@@ -187,8 +181,6 @@ public:
 				}
 			}
 		}
-
-		show();
 
 		fallPeakDot(peakDotFallSpeed);
 	}
@@ -299,8 +291,6 @@ public:
 			}
 		}
 
-		show();
-
 		fallPeakDot(peakDotFallSpeed);
 	}
 
@@ -345,8 +335,6 @@ public:
 				}
 			}
 		}
-
-		show();
 	}
 
 	void Circle(uint16_t lvl, uint16_t maxLvlAvg, bool rainbow = true, uint16_t width = 1, float baseMove = 0.05)
@@ -360,7 +348,8 @@ public:
 			leds[i] = CRGB::Black;
 		}
 
-		peak += ((height * moveSpeed) / 30) + baseMove;
+		uint16_t speed = ((uint32_t) height * height) / (ledCount * 0.8); // convert linear height to exponential function
+		peak += ((speed * moveSpeed) / 30) + baseMove;
 
 		if (peak > ledCount)
 			peak -= ledCount; // reset
@@ -369,7 +358,7 @@ public:
 
 		if (reversed)
 		{
-			for (uint16_t i = peak; i < peak + width - 1; i++)
+			for (uint16_t i = cPeak; i < cPeak + width - 1; i++)
 			{
 				int j = (ledCount - 1) - i;
 				// % ledCount start at beginning if at end
@@ -385,7 +374,7 @@ public:
 		}
 		else
 		{
-			for (uint16_t i = peak; i < peak + width - 1; i++)
+			for (uint16_t i = cPeak; i < cPeak + width - 1; i++)
 			{
 				// % ledCount start at beginning if at end
 				if (rainbow)
@@ -398,8 +387,6 @@ public:
 				}
 			}
 		}
-
-		show();
 	}
 
 	void Pulse(uint16_t lvl, uint16_t minLvlAvg, uint16_t maxLvlAvg)
@@ -449,8 +436,6 @@ public:
 				leds[random16(ledCount)] += CRGB::White;
 			}
 
-			show();
-
 			adjustColorOffsets();
 		}
 	}
@@ -495,10 +480,14 @@ public:
 			{
 				leds[random16(ledCount)] += CRGB::White;
 			}
-
-			show();
 		}
 	}
+};
+
+void show()
+{	
+	// FastLED.setBrightness(255);
+	FastLED.show();
 };
 
 #endif //_STRIP_HPP
