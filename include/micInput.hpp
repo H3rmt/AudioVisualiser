@@ -7,7 +7,6 @@
 
 #include <Arduino.h>
 
-template <uint16_t sampleCount>
 class micinput
 {
 private:
@@ -24,10 +23,6 @@ private:
     
     // current potAvg + maxLvlAvg / 2 (average of pot and current avg) 
     uint16_t maxLvlAvgAdj;
-
-    // current index in lvls array
-    uint16_t lvlCount;
-    uint16_t lvls[sampleCount]{};
 
     uint8_t micPin;
     uint8_t avgPin;
@@ -61,34 +56,13 @@ private:
     }
 
     /**
-     * adds current micValue to list of lvls
-     */
-    void addLvlToLvls()
-    {
-        lvls[lvlCount] = lvl;
-        lvlCount++;
-
-        // reset counter if array end is reached
-        if (lvlCount >= sampleCount)
-            lvlCount = 0;
-    }
-
-    /**
      * calculates new max level and adjustes maxLvlAvg
      * adjustst old levels by multiplying by 63 and dividing by >> 6
      */
     void calcAvg()
     {
-        // calc max of last {sampleCount} levels
-        maxLvl = lvls[0];
-        for (uint16_t i = 1; i < sampleCount; i++)
-        {
-            if (lvls[i] > maxLvl)
-                maxLvl = lvls[i];
-        }
-
         // dump down a bit, allows level to rise above and hit end of LED strip
-        maxLvl -= (maxLvl >> 4);
+        maxLvl -= (lvl >> 4);
 
         // fall faster, rise slower
         if (maxLvl > maxLvlAvg)
@@ -145,7 +119,6 @@ public:
 
         lvl = 1;
         maxLvlAvg = 1000;
-        lvlCount = 0;
         offCounter = offDelay;
     }
 
@@ -190,7 +163,6 @@ public:
     {
         readMic();
         calcLvl();
-        addLvlToLvls();
         calcAvg();
         checkOff();
 
