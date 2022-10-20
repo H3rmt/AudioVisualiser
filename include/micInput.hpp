@@ -18,11 +18,11 @@ private:
 
     // current maxLvl in lvls array (only used in calcAvg)
     uint16_t maxLvl;
-    // current maxLvlAvg, gets slowly adjusted to maxLvl
-    uint16_t maxLvlAvg;
+    // current lvlAvg, gets slowly adjusted to maxLvl
+    uint16_t lvlAvg;
     
-    // current potAvg + maxLvlAvg / 2 (average of pot and current avg) 
-    uint16_t maxLvlAvgAdj;
+    // current potAvg + lvlAvg / 2 (average of pot and current avg) 
+    uint16_t lvlAvgAdj;
 
     uint8_t micPin;
     uint8_t avgPin;
@@ -31,7 +31,7 @@ private:
     uint16_t offDelay;
     uint16_t avgLevelFloor;
 
-    // current count of off cycles so far (gets reset if maxLvlAvg > minAvgLvl)
+    // current count of off cycles so far (gets reset if lvlAvg > minAvgLvl)
     uint16_t offCounter;
 
     /**
@@ -52,31 +52,40 @@ private:
     void calcLvl()
     {
         // fall and rise fast
-        lvl = ((lvl * 1) + micValue) >> 1;
+        lvl = (lvl + micValue) >> 1;
     }
 
     /**
-     * calculates new max level and adjustes maxLvlAvg
+     * calculates new max level and adjustes lvlAvg
      * adjustst old levels by multiplying by 63 and dividing by >> 6
      */
     void calcAvg()
     {
         // dump down a bit, allows level to rise above and hit end of LED strip
-        maxLvl -= (lvl >> 4);
+        maxLvl = ((maxLvl * 3) + lvl) >> 2;
+        uint16_t cMaxLvl = maxLvl - (maxLvl >> 5);
 
         // fall faster, rise slower
-        if (maxLvl > maxLvlAvg)
-            maxLvlAvg = (maxLvlAvg * 63 + maxLvl) >> 6;
+        if (cMaxLvl > lvlAvg)
+            lvlAvg = (lvlAvg * 31 + cMaxLvl) >> 5;
         else
-            maxLvlAvg = (maxLvlAvg * 31 + maxLvl) >> 5;
+            lvlAvg = (lvlAvg * 15 + cMaxLvl) >> 4;
 
-        maxLvlAvgAdj = ((maxLvlAvg * 2) + analogRead(avgPin)) / 3;
+        lvlAvgAdj = ((lvlAvg * 2) + analogRead(avgPin)) / 3;
     }
 
     void checkOff()
     {
-        // check if maxLvlAvg is smaller that set Threshold
-        if (maxLvlAvg <= minAvgLvl)
+        // Serial.print(lvl);
+        // Serial.print(" - ");
+        // Serial.print(maxLvl);
+        // Serial.print(" - ");
+        // Serial.print(lvlAvg);
+        // Serial.print(" - ");
+        // Serial.println(lvlAvgAdj);
+        
+        // check if lvlAvg is smaller that set Threshold
+        if (lvlAvg <= minAvgLvl)
         {
             offCounter++;
             // set lvl to 0 if offCounter reached offDelay Threshold
@@ -117,8 +126,9 @@ public:
     {
         pinMode(micPin, INPUT);
 
-        lvl = 1;
-        maxLvlAvg = 1000;
+        lvl = 10;
+        maxLvl = 10;
+        lvlAvg = 100;
         offCounter = offDelay;
     }
 
@@ -135,7 +145,7 @@ public:
      */
     uint16_t getAvg()
     {
-        return maxLvlAvgAdj < avgLevelFloor ? avgLevelFloor : maxLvlAvgAdj;
+        return lvlAvgAdj < avgLevelFloor ? avgLevelFloor : lvlAvgAdj;
     }
 
     /**
@@ -170,11 +180,11 @@ public:
         // Serial.print(" - ");
         // Serial.print(maxLvl);
         // Serial.print(" - ");
-        // Serial.print(maxLvlAvg);
+        // Serial.print(lvlAvg);
         // Serial.print(" - ");
         // Serial.print(analogRead(avgPin));
         // Serial.print(" - ");
-        // Serial.print(maxLvlAvgAdj);
+        // Serial.print(lvlAvgAdj);
         // Serial.print(" - ");
         // Serial.println(micValue);
     }

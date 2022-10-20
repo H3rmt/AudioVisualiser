@@ -22,7 +22,7 @@
 #define MIDLEDCOUNT 27
 #define MIDBUTTONPIN 10
 
-micinput input = micinput(MICPIN, AVGPIN, -100, 45, 30, 100);
+micinput input = micinput(MICPIN, AVGPIN, -140, 25, 30, 100);
 strip<SUBLEDPIN, SUBLEDCOUNT> sub = strip<SUBLEDPIN, SUBLEDCOUNT>(false, 10, 1.5, 2.5);
 strip<MIDLEDPIN1, MIDLEDCOUNT> mid1 = strip<MIDLEDPIN1, MIDLEDCOUNT>(true, 10, 1.5, 1.5);
 strip<MIDLEDPIN2, MIDLEDCOUNT> mid2 = strip<MIDLEDPIN2, MIDLEDCOUNT>(false, 10, 1.5, 1.5);
@@ -79,9 +79,7 @@ void setup()
 
 void loop()
 {
-	chechTime1
 	input.read();
-	chechTime2
 
 	if (digitalRead(SUBBUTTONPIN))
 	{
