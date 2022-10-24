@@ -21,13 +21,20 @@
 #define MIDLEDCOUNT 27
 #define MIDBUTTONPIN 10
 
+#define SIDELEDPIN1 5
+#define SIDELEDPIN2 6
+#define SIDELEDCOUNT 31
+#define SIDEBUTTONPIN 8
+
 micinput input = micinput(MICPIN, AVGPIN, -140, 25, 30, 100);
 strip<SUBLEDPIN, SUBLEDCOUNT> sub = strip<SUBLEDPIN, SUBLEDCOUNT>(false, 10, 1.5, 2.5);
-strip<MIDLEDPIN1, MIDLEDCOUNT> mid1 = strip<MIDLEDPIN1, MIDLEDCOUNT>(true, 10, 1.5, 1.5);
-strip<MIDLEDPIN2, MIDLEDCOUNT> mid2 = strip<MIDLEDPIN2, MIDLEDCOUNT>(false, 10, 1.5, 1.5);
+strip<MIDLEDPIN1, MIDLEDCOUNT> mid1 = strip<MIDLEDPIN1, MIDLEDCOUNT>(true, 10, 1.5, 1.2);
+strip<MIDLEDPIN2, MIDLEDCOUNT> mid2 = strip<MIDLEDPIN2, MIDLEDCOUNT>(false, 10, 1.5, 1.2);
+strip<SIDELEDPIN1, SIDELEDCOUNT> side1 = strip<SIDELEDPIN1, SIDELEDCOUNT>(false, 10, 1.5, 2.5);
 
 int subState = 6;
 int midState = 3;
+int sideState = 1;
 
 long lastMillis = 0;
 long loops = 0;
@@ -59,6 +66,7 @@ void setup()
 	sub.init();
 	mid1.init();
 	mid2.init();
+	side1.init();
 
 	// sub.Test2();
 	// delay(400);
@@ -74,6 +82,7 @@ void setup()
 
 	pinMode(SUBBUTTONPIN, INPUT);
 	pinMode(MIDBUTTONPIN, INPUT);
+	pinMode(SIDEBUTTONPIN, INPUT);
 }
 
 void loop()
@@ -98,11 +107,23 @@ void loop()
 		}
 	}
 
+	if (digitalRead(SIDEBUTTONPIN))
+	{
+		sideState++;
+		// Serial.println(sideState);
+		while (digitalRead(SIDEBUTTONPIN))
+		{
+		}
+	}
+
 	if (subState >= 7)
 		subState = 0;
 
 	if (midState >= 7)
 		midState = 0;
+
+	if (sideState >= 7)
+		sideState = 0;
 	// sub.Test();
 
 	// sub.Normal(input.getLvl(), input.getAvg(), true, true);
@@ -113,6 +134,8 @@ void loop()
 	// mid1.Normal(input.getLvl(), 611, false, false);
 
 	// return;
+
+	subState = 4;
 
 	switch (subState)
 	{
@@ -135,7 +158,7 @@ void loop()
 		sub.FallingStar(input.getLvl(), input.getAvg(), true, 3);
 		break;
 	case 6:
-		sub.Circle(input.getLvl(), input.getAvg(), true, 7, 0.07, 3);
+		sub.Circle(input.getLvl(), input.getAvg(), true, 7, 0.05, 2);
 		break;
 	}
 
@@ -171,10 +194,37 @@ void loop()
 		break;
 	case 6:
 		mid1.Circle(input.getLvl(), input.getAvg(), true, 2, 0.04, 4);
-		mid2.Circle(input.getLvl(), input.getAvg(), true, 1, 0.04, 6);
+		mid2.Circle(input.getLvl(), input.getAvg(), true, 2, 0.04, 4);
+		break;
+	}
+
+	sideState = 6;
+
+	switch (sideState)
+	{
+	case 0:
+		side1.Clear();
+		break;
+	case 1:
+		side1.Normal(input.getLvl(), input.getAvg(), false);
+		break;
+	case 2:
+		side1.CentreOut(input.getLvl(), input.getAvg(), false);
+		break;
+	case 3:
+		side1.Normal(input.getLvl(), input.getAvg());
+		break;
+	case 4:
+		side1.CentreOut(input.getLvl(), input.getAvg());
+		break;
+	case 5:
+		side1.FallingStar(input.getLvl(), input.getAvg(), true, 3);
+		break;
+	case 6:
+		side1.Circle(input.getLvl(), input.getAvg(), true, 7, 0.05, 2);
 		break;
 	}
 
 	show();
-	// checkCycles();
+	checkCycles();
 }

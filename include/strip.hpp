@@ -378,7 +378,6 @@ public:
 					}
 				}
 			}
-			Serial.println();
 		}
 		else
 		{
