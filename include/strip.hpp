@@ -26,7 +26,6 @@ private:
 
 	uint16_t peakDotFallSpeed;
 	float colorChangeSpeed;
-	float moveSpeed;
 
 	// dynamic values
 	// peak is used for peak dot, but also for Circle position
@@ -52,10 +51,10 @@ private:
 		}
 	}
 
-	void fallPeakDot(uint16_t fallSpeed)
+	void fallPeakDot()
 	{
 		if (peak > 0)
-			peak -= (float)ledCount / fallSpeed / 4;
+			peak -= (float)ledCount / peakDotFallSpeed;
 	}
 
 	CHSV Wheel(uint16_t x, uint16_t _ledCount, float _offset = 240)
@@ -64,12 +63,11 @@ private:
 	}
 
 public:
-	explicit strip(bool reverse = false, uint16_t peakDotFallDivide = 50, float colorChangeSpeed = 1, float moveSpeed = 1)
+	explicit strip(bool reverse = false, uint8_t peakDotFallSpeed = 180, float colorChangeSpeed = 1)
 	{
 		this->reversed = reverse;
-		this->peakDotFallSpeed = peakDotFallDivide;
+		this->peakDotFallSpeed = peakDotFallSpeed;
 		this->colorChangeSpeed = colorChangeSpeed;
-		this->moveSpeed = moveSpeed;
 	}
 
 	void init()
@@ -84,7 +82,6 @@ public:
 		leds[1] = CRGB::Red;
 		leds[2] = CRGB::Aqua;
 		leds[3] = CRGB::Red;
-		show();
 	}
 
 	void Test2()
@@ -93,7 +90,6 @@ public:
 		leds[1] = CRGB::Green;
 		leds[2] = CRGB::Orange;
 		leds[3] = CRGB::DarkRed;
-		show();
 	}
 
 	void Clear()
@@ -182,7 +178,7 @@ public:
 			}
 		}
 
-		fallPeakDot(peakDotFallSpeed);
+		fallPeakDot();
 	}
 
 	void CentreOut(uint16_t lvl, uint16_t maxLvlAvg, bool rainbow = true, bool peakDot = true)
@@ -257,6 +253,8 @@ public:
 		if (peak >= ledCount)
 			peak = ledCount - 1;
 
+		// Serial.println(peak);
+
 		if (peak > 0)
 		{
 			if (rainbow)
@@ -269,6 +267,7 @@ public:
 				}
 				else
 				{
+					// Serial.println(count - (uint16_t)peak);
 					CRGB color = Wheel((uint16_t)peak, ledCount, colorOffset);
 					leds[count - (uint16_t)peak] = color;
 					leds[count + (uint16_t)peak - 2] = color;
@@ -291,7 +290,7 @@ public:
 			}
 		}
 
-		fallPeakDot(peakDotFallSpeed);
+		fallPeakDot();
 	}
 
 	void FallingStar(uint16_t lvl, uint16_t maxLvlAvg, bool rainbow = true, uint16_t width = 1)
@@ -337,9 +336,9 @@ public:
 		}
 	}
 
-	void Circle(uint16_t lvl, uint16_t maxLvlAvg, bool rainbow = true, uint16_t width = 1, float baseMove = 0.05, uint8_t bars = 1)
+	void Circle(uint16_t lvl, uint16_t maxLvlAvg, bool rainbow = true, uint8_t width = 1, float baseMove = 0.05, uint8_t bars = 1, float moveSpeed = 1.8)
 	{
-		uint16_t height = calcHeight(lvl, 0, maxLvlAvg, ledCount);
+		uint16_t height = calcHeight(lvl, 0, maxLvlAvg);
 		if (rainbow)
 			adjustColorOffsets();
 
@@ -355,7 +354,7 @@ public:
 			peak -= ledCount; // reset
 
 		uint16_t cPeak = (uint16_t)peak;
-		float split = (float) ledCount / bars;
+		float split = (float)ledCount / bars;
 
 		if (reversed)
 		{
@@ -402,96 +401,25 @@ public:
 		}
 	}
 
-	void Pulse(uint16_t lvl, uint16_t minLvlAvg, uint16_t maxLvlAvg)
+	void Pulse(uint16_t lvl, uint16_t maxLvlAvg, float intensity)
 	{
-		EVERY_N_SECONDS(5)
+		uint16_t height = calcHeight(lvl, 0, maxLvlAvg);
+
+		adjustColorOffsets();
+
+		if (height >= ledCount * intensity)
 		{
-			for (int i = 0; i < 16; i++)
+			for (uint16_t i = 0; i < ledCount; i++)
 			{
-				targetPalette[i] = CHSV(colorOffset, 255, 255);
+				// leds[i] = Wheel(i, ledCount, colorOffset);
+				leds[i] = CHSV(colorOffset, 255, 255);
 			}
 		}
-
-		EVERY_N_MILLISECONDS(100)
+		else
 		{
-			nblendPaletteTowardPalette(currentPalette, targetPalette, 20);
-		}
-
-		EVERY_N_MILLISECONDS(20)
-		{
-			// fadeToBlackBy(leds, ledCount, 4);
-
-			uint16_t height = 250 * (lvl - minLvlAvg) / (long)(maxLvlAvg - minLvlAvg);
-
-			auto newcolour = ColorFromPalette(currentPalette, constrain(height, 0, 255), constrain(height + 5 + random8(40), 0, 255), LINEARBLEND);
-
-			if (ledCount % 2 == 0)
+			for (uint16_t i = 0; i < ledCount; i++)
 			{
-				nblend(leds[ledCount / 2], newcolour, 128);
-				nblend(leds[ledCount / 2 - 1], newcolour, 128);
-			}
-			else
-			{
-				nblend(leds[ledCount / 2], newcolour, 128);
-			}
-
-			for (uint16_t i = ledCount - 1; i > ledCount / 2; i--)
-			{
-				leds[i] = leds[i - 1];
-			}
-			for (uint16_t i = 0; i < ledCount / 2; i++)
-			{
-				leds[i] = leds[i + 1];
-			}
-
-			if (lvl > (minLvlAvg + ((maxLvlAvg - minLvlAvg) * 0.5)) && random8(10) > 5)
-			{
-				leds[random16(ledCount)] += CRGB::White;
-			}
-
-			adjustColorOffsets();
-		}
-	}
-
-	void Stream(uint16_t lvl, uint16_t minLvlAvg, uint16_t maxLvlAvg)
-	{
-		EVERY_N_SECONDS(5)
-		{
-			for (int i = 0; i < 16; i++)
-			{
-				targetPalette[i] = CHSV(random8(), 255, 255);
-			}
-		}
-
-		EVERY_N_MILLISECONDS(100)
-		{
-			nblendPaletteTowardPalette(currentPalette, targetPalette, 20);
-		}
-
-		EVERY_N_MILLISECONDS(20)
-		{
-			fadeToBlackBy(leds, ledCount, ledCount / 5);
-
-			auto newColor = ColorFromPalette(currentPalette, constrain(lvl, 0, 255), constrain(lvl * 2, 0, 255),
-											 LINEARBLEND);
-			if (reversed)
-				nblend(leds[ledCount - 1], newColor, 128);
-			else
-				nblend(leds[0], newColor, 128);
-
-			if (reversed)
-				for (uint16_t i = ledCount - 1; i > 0; i--)
-				{
-					leds[i] = leds[i - 1];
-				}
-			else
-				for (uint16_t i = 0; i < ledCount; i++)
-				{
-					leds[i] = leds[i + 1];
-				}
-			if (lvl > (minLvlAvg + ((maxLvlAvg - minLvlAvg) * 0.5)) && random8(10) > 5)
-			{
-				leds[random16(ledCount)] += CRGB::White;
+				leds[i] = CRGB::Black;
 			}
 		}
 	}

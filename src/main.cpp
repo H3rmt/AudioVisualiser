@@ -26,15 +26,17 @@
 #define SIDELEDCOUNT 31
 #define SIDEBUTTONPIN 8
 
-micinput input = micinput(MICPIN, AVGPIN, -140, 25, 30, 100);
-strip<SUBLEDPIN, SUBLEDCOUNT> sub = strip<SUBLEDPIN, SUBLEDCOUNT>(false, 10, 1.5, 2.5);
-strip<MIDLEDPIN1, MIDLEDCOUNT> mid1 = strip<MIDLEDPIN1, MIDLEDCOUNT>(true, 10, 1.5, 1.2);
-strip<MIDLEDPIN2, MIDLEDCOUNT> mid2 = strip<MIDLEDPIN2, MIDLEDCOUNT>(false, 10, 1.5, 1.2);
-strip<SIDELEDPIN1, SIDELEDCOUNT> side1 = strip<SIDELEDPIN1, SIDELEDCOUNT>(false, 10, 1.5, 2.5);
+micinput input = micinput(MICPIN, AVGPIN, -140, 20, 30);
+strip<SUBLEDPIN, SUBLEDCOUNT> sub = strip<SUBLEDPIN, SUBLEDCOUNT>(false, 300, 1.5);
+strip<MIDLEDPIN1, MIDLEDCOUNT> mid1 = strip<MIDLEDPIN1, MIDLEDCOUNT>(true, 10, 1.5);
+strip<MIDLEDPIN2, MIDLEDCOUNT> mid2 = strip<MIDLEDPIN2, MIDLEDCOUNT>(false, 10, 1.5);
+strip<SIDELEDPIN1, SIDELEDCOUNT> side1 = strip<SIDELEDPIN1, SIDELEDCOUNT>(false, 10, 1.5);
 
 int subState = 6;
 int midState = 3;
 int sideState = 1;
+
+long lastExec = 0;
 
 long lastMillis = 0;
 long loops = 0;
@@ -61,6 +63,8 @@ void checkCycles()
 void setup()
 {
 	Serial.begin(9600);
+	Serial.println("\n\n\n");
+
 	input.init();
 
 	sub.init();
@@ -87,6 +91,11 @@ void setup()
 
 void loop()
 {
+	long currentMillis = millis();
+	if (currentMillis - lastExec < 12)
+		return;
+	lastExec = currentMillis;
+
 	input.read();
 
 	if (digitalRead(SUBBUTTONPIN))
@@ -135,7 +144,7 @@ void loop()
 
 	// return;
 
-	subState = 4;
+	subState = 7;
 
 	switch (subState)
 	{
@@ -158,7 +167,10 @@ void loop()
 		sub.FallingStar(input.getLvl(), input.getAvg(), true, 3);
 		break;
 	case 6:
-		sub.Circle(input.getLvl(), input.getAvg(), true, 7, 0.05, 2);
+		sub.Circle(input.getLvl(), input.getAvg(), true, 7, 0.05, 2, 2.5);
+		break;
+	case 7:
+		sub.Pulse(input.getLvl(), input.getAvg(), 0.9);
 		break;
 	}
 
@@ -193,10 +205,19 @@ void loop()
 		mid2.FallingStar(input.getLvl(), input.getAvg(), true, 1);
 		break;
 	case 6:
-		mid1.Circle(input.getLvl(), input.getAvg(), true, 2, 0.04, 4);
-		mid2.Circle(input.getLvl(), input.getAvg(), true, 2, 0.04, 4);
+		mid1.Circle(input.getLvl(), input.getAvg(), true, 2, 0.08, 2, 2.0);
+		// mid2.Circle(input.getLvl(), input.getAvg(), true, 2, 0.08, 2, 2.0);
+		mid2.CentreOut(input.getLvl(), input.getAvg());
+		break;
+	case 7:
+		mid1.Pulse(input.getLvl(), input.getAvg(), 0.85);
+		mid2.Pulse(input.getLvl(), input.getAvg(), 0.85);
 		break;
 	}
+
+	show();
+	checkCycles();
+	return;
 
 	sideState = 6;
 
@@ -221,7 +242,7 @@ void loop()
 		side1.FallingStar(input.getLvl(), input.getAvg(), true, 3);
 		break;
 	case 6:
-		side1.Circle(input.getLvl(), input.getAvg(), true, 7, 0.05, 2);
+		side1.Circle(input.getLvl(), input.getAvg(), true, 7, 0.05, 2, 2.5);
 		break;
 	}
 
