@@ -96,7 +96,7 @@ private:
         // Serial.println(lvlAvgAdj);
 
         // check if lvlAvg is smaller that set Threshold
-        if (lvlAvgAdj <= minAvgLvl)
+        if (lvlAvg <= minAvgLvl)
         {
             offCounter++;
             // set lvl to 0 if offCounter reached offDelay Threshold
