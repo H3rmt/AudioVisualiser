@@ -13,7 +13,7 @@ template <uint8_t ledPin, uint16_t ledCount>
 class strip
 {
 private:
-	CRGB leds[ledCount]{};
+	CRGB leds[ledCount];
 
 	bool reversed;
 
@@ -21,8 +21,8 @@ private:
 	float colorOffset = 0;
 
 	// pulse and stream colorPalette
-	CRGBPalette16 targetPalette = OceanColors_p;
-	CRGBPalette16 currentPalette = OceanColors_p;
+	// CRGBPalette16 targetPalette = OceanColors_p;
+	// CRGBPalette16 currentPalette = OceanColors_p;
 
 	uint16_t peakDotFallSpeed;
 	float colorChangeSpeed;
