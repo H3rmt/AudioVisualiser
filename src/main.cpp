@@ -4,27 +4,25 @@
 
 #include "strip.hpp"
 #include "micInput.hpp"
+// #include <IRremote.hpp>
 
 #define MICPIN A0
 #define AVGPIN A1
 
-// #define LEDPIN 4
-// #define LEDCOUNT 34
-// #define BUTTONPIN 3
+#define REMOTEPIN 4
 
 #define SUBLEDPIN 2
 #define SUBLEDCOUNT 59
-// #define SUBBUTTONPIN 9
 
 #define MIDLEDPIN1 3
 #define MIDLEDPIN2 6
 #define MIDLEDCOUNT 27
-// #define MIDBUTTONPIN 10
 
-#define SIDELEDPIN1 5
-#define SIDELEDPIN2 6
-#define SIDELEDCOUNT 31
-// #define SIDEBUTTONPIN 8
+// #define SIDELEDPIN1 5
+// #define SIDELEDPIN2 6
+// #define SIDELEDCOUNT 31
+
+// IRrecv irrecv(REMOTEPIN);
 
 micinput input = micinput(MICPIN, AVGPIN, -140, 20, 30);
 strip<SUBLEDPIN, SUBLEDCOUNT> sub = strip<SUBLEDPIN, SUBLEDCOUNT>(false, 300, 1.5);
@@ -32,8 +30,8 @@ strip<MIDLEDPIN1, MIDLEDCOUNT> mid1 = strip<MIDLEDPIN1, MIDLEDCOUNT>(true, 10, 1
 strip<MIDLEDPIN2, MIDLEDCOUNT> mid2 = strip<MIDLEDPIN2, MIDLEDCOUNT>(false, 10, 1.5);
 // strip<SIDELEDPIN1, SIDELEDCOUNT> side1 = strip<SIDELEDPIN1, SIDELEDCOUNT>(false, 10, 1.5);
 
-int subState = 7;
-int midState = 6;
+int subState = 6;
+int midState = 7;
 // int sideState = 1;
 
 long lastExec = 0;
@@ -63,6 +61,7 @@ void checkCycles()
 void setup()
 {
 	Serial.begin(9600);
+	// irrecv.start();
 	Serial.println("\n\n\n");
 
 	input.init();
@@ -72,14 +71,17 @@ void setup()
 	mid2.init();
 	// side1.init();
 
-	// sub.Test2();
-	// delay(400);
+	sub.Test2();
+	show();
+	delay(400);
 
-	// mid1.Test2();
-	// delay(400);
+	mid1.Test();
+	show();
+	delay(400);
 
-	// mid1.Test();
-	// delay(400);
+	mid2.Test2();
+	show();
+	delay(400);
 
 	// sub.Test();
 	// delay(400);
@@ -91,13 +93,20 @@ void setup()
 
 void loop()
 {
+	// if (irrecv.decode())
+	// {
+	// 	irrecv.resume();
+	// 	Serial.println(irrecv.decodedIRData.command);
+	// }
+
 	long currentMillis = millis();
-	if (currentMillis - lastExec < 12)
+	if (currentMillis - lastExec < 10)
 		return;
+
 	lastExec = currentMillis;
 
 	input.read();
-	Serial.println(input.getLvl());
+	
 
 	// if (digitalRead(SUBBUTTONPIN))
 	// {
@@ -146,7 +155,6 @@ void loop()
 	// return;
 
 	// subState = 7;
-
 	switch (subState)
 	{
 	case 0:
@@ -171,7 +179,7 @@ void loop()
 		sub.Circle(input.getLvl(), input.getAvg(), true, 7, 0.05, 2, 2.5);
 		break;
 	case 7:
-		sub.Pulse(input.getLvl(), input.getAvg(), 0.9);
+		sub.Pulse(input.getLvl(), input.getAvg(), 0.90);
 		break;
 	}
 
@@ -210,8 +218,8 @@ void loop()
 		mid2.CentreOut(input.getLvl(), input.getAvg());
 		break;
 	case 7:
-		mid1.Pulse(input.getLvl(), input.getAvg(), 0.85);
-		mid2.Pulse(input.getLvl(), input.getAvg(), 0.85);
+		mid1.Pulse(input.getLvl(), input.getAvg(), 0.9);
+		mid2.Pulse(input.getLvl(), input.getAvg(), 0.9);
 		break;
 	}
 
