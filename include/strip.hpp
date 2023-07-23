@@ -5,8 +5,7 @@
 #ifndef _STRIP_HPP
 #define _STRIP_HPP
 
-#include <Arduino.h>
-#include "FastLED.h"
+#include "glob.hpp"
 #include "micInput.hpp"
 
 template <uint8_t ledPin, uint16_t ledCount>
@@ -90,6 +89,17 @@ public:
 		leds[1] = CRGB::Green;
 		leds[2] = CRGB::Orange;
 		leds[3] = CRGB::DarkRed;
+	}
+
+	void OffAnimiation()
+	{
+		for (uint16_t i = 0; i < ledCount; i++)
+		{
+			leds[i] = CRGB::Black;
+		}
+
+		leds[0] = CRGB::Red;
+		leds[ledCount - 1] = CRGB::Red;
 	}
 
 	void Clear()
@@ -253,7 +263,7 @@ public:
 		if (peak >= ledCount)
 			peak = ledCount - 1;
 
-		// Serial.println(peak);
+		// println(peak);
 
 		if (peak > 0)
 		{
@@ -267,7 +277,7 @@ public:
 				}
 				else
 				{
-					// Serial.println(count - (uint16_t)peak);
+					// println(count - (uint16_t)peak);
 					CRGB color = Wheel((uint16_t)peak, ledCount, colorOffset);
 					leds[count - (uint16_t)peak] = color;
 					leds[count + (uint16_t)peak - 2] = color;
@@ -366,7 +376,7 @@ public:
 				{
 					for (uint8_t c = 0; c < bars; c++)
 					{
-						leds[(j + (uint16_t)(split * c)) % ledCount] = Wheel(i, ledCount, colorOffset); //CHSV(colorOffset, 255, 255);
+						leds[(j + (uint16_t)(split * c)) % ledCount] = Wheel(i, ledCount, colorOffset); // CHSV(colorOffset, 255, 255);
 					}
 				}
 				else
@@ -387,7 +397,7 @@ public:
 				{
 					for (uint8_t c = 0; c < bars; c++)
 					{
-						leds[(i + (uint16_t)(split * c)) % ledCount] = Wheel(i, ledCount, colorOffset); //CHSV(colorOffset, 255, 255);
+						leds[(i + (uint16_t)(split * c)) % ledCount] = Wheel(i, ledCount, colorOffset); // CHSV(colorOffset, 255, 255);
 					}
 				}
 				else

@@ -28,7 +28,7 @@
 // SecondsUntilOff
 #define SUO 1
 #else
-#define SUO 4
+#define SUO 5
 #endif
 
 

@@ -1,30 +1,8 @@
-//
-// Created by enrico on 22.06.22.
-//
-
-#include "strip.hpp"
-#include "micInput.hpp"
-// #include <IRremote.hpp>
-
-#define MICPIN A0
-#define AVGPIN A1
-
-#define REMOTEPIN 4
-
-#define SUBLEDPIN 2
-#define SUBLEDCOUNT 59
-
-#define MIDLEDPIN1 3
-#define MIDLEDPIN2 6
-#define MIDLEDCOUNT 27
-
-// #define SIDELEDPIN1 5
-// #define SIDELEDPIN2 6
-// #define SIDELEDCOUNT 31
+#include "glob.hpp"
 
 // IRrecv irrecv(REMOTEPIN);
 
-micinput input = micinput(MICPIN, AVGPIN, -140, 20, 30);
+micinput input = micinput(MICPIN, AVGPIN, -140, 42, UPS * SUO);
 strip<SUBLEDPIN, SUBLEDCOUNT> sub = strip<SUBLEDPIN, SUBLEDCOUNT>(false, 300, 1.5);
 strip<MIDLEDPIN1, MIDLEDCOUNT> mid1 = strip<MIDLEDPIN1, MIDLEDCOUNT>(true, 10, 1.5);
 strip<MIDLEDPIN2, MIDLEDCOUNT> mid2 = strip<MIDLEDPIN2, MIDLEDCOUNT>(false, 10, 1.5);
@@ -39,19 +17,14 @@ long lastExec = 0;
 long lastMillis = 0;
 long loops = 0;
 
-#define chechTime1 long f = millis();
-#define chechTime2                \
-	Serial.print("time millis:"); \
-	Serial.println(millis() - f);
-
 void checkCycles()
 {
 	loops++;
 	long currentMillis = millis();
 	if (currentMillis - lastMillis > 1000)
 	{
-		Serial.print("Loops last second:");
-		Serial.println(loops);
+		print("Loops last second:");
+		println(loops);
 
 		lastMillis = currentMillis;
 		loops = 0;
@@ -62,7 +35,7 @@ void setup()
 {
 	Serial.begin(9600);
 	// irrecv.start();
-	Serial.println("\n\n\n");
+	println("\n\n\n");
 
 	input.init();
 
@@ -96,22 +69,21 @@ void loop()
 	// if (irrecv.decode())
 	// {
 	// 	irrecv.resume();
-	// 	Serial.println(irrecv.decodedIRData.command);
+	// 	println(irrecv.decodedIRData.command);
 	// }
 
 	long currentMillis = millis();
-	if (currentMillis - lastExec < 10)
+	if (currentMillis - lastExec < (1000 / UPS))
 		return;
 
 	lastExec = currentMillis;
 
 	input.read();
-	
 
 	// if (digitalRead(SUBBUTTONPIN))
 	// {
 	// 	subState++;
-	// 	// Serial.println(subState);
+	// 	// println(subState);
 	// 	while (digitalRead(SUBBUTTONPIN))
 	// 	{
 	// 	}
@@ -120,7 +92,7 @@ void loop()
 	// if (digitalRead(MIDBUTTONPIN))
 	// {
 	// 	midState++;
-	// 	// Serial.println(midState);
+	// 	// println(midState);
 	// 	while (digitalRead(MIDBUTTONPIN))
 	// 	{
 	// 	}
@@ -129,7 +101,7 @@ void loop()
 	// if (digitalRead(SIDEBUTTONPIN))
 	// {
 	// 	sideState++;
-	// 	// Serial.println(sideState);
+	// 	// println(sideState);
 	// 	while (digitalRead(SIDEBUTTONPIN))
 	// 	{
 	// 	}
@@ -143,18 +115,17 @@ void loop()
 
 	// if (sideState >= 7)
 	// 	sideState = 0;
-	// sub.Test();
 
-	// sub.Normal(input.getLvl(), input.getAvg(), true, true);
-	// mid1.Normal(input.getLvl(), input.getAvg(), true, true);
-	// sub.Normal(input.getMax(), 611, false, false);
-	// mid1.Normal(input.getAvg(), 611, false, false);
-	// mid1.Normal(input.getRaw(), input.getAvg(), true, true);
-	// mid1.Normal(input.getLvl(), 611, false, false);
+	if (input.getOff())
+	{
+		mid1.OffAnimiation();
+		mid2.OffAnimiation();
+		sub.OffAnimiation();
+		show();
+		checkCycles();
+		return;
+	}
 
-	// return;
-
-	// subState = 7;
 	switch (subState)
 	{
 	case 0:
@@ -188,10 +159,6 @@ void loop()
 		sub.Pulse(input.getLvl(), input.getAvg(), 0.90);
 		break;
 	}
-
-	// return;
-
-	// midState = 6;
 
 	switch (midState)
 	{
