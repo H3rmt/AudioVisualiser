@@ -1,11 +1,7 @@
-//
-// Created by enrico on 17.07.22.
-//
-
 #ifndef _MICINPUT_HPP
 #define _MICINPUT_HPP
 
-#include <Arduino.h>
+#include "glob.hpp"
 
 #define v5 false
 
@@ -18,10 +14,8 @@ private:
     // current lvl (calculated by calcLvl)
     uint16_t lvl;
 
-    // current maxLvl in lvls array (only used in calcAvg)
-    uint16_t maxLvl;
-    // current lvlAvg, gets slowly adjusted to maxLvl
-    uint16_t lvlAvg;
+    // current lvlAvg, gets slowly adjusted to lvl
+    float lvlAvg;
 
     // current potAvg + lvlAvg / 2 (average of pot and current avg)
     uint16_t lvlAvgAdj;
@@ -31,10 +25,11 @@ private:
     int16_t micOffset;
     uint16_t minAvgLvl;
     uint16_t offDelay;
-    uint16_t avgLevelFloor;
 
     // current count of off cycles so far (gets reset if lvlAvg > minAvgLvl)
     uint16_t offCounter;
+
+    bool off;
 
     /**
      * reads sound value from microphone and centers to right scale
@@ -65,19 +60,19 @@ private:
     void calcAvg()
     {
         // dump down a bit, allows level to rise above and hit end of LED strip
-        maxLvl = ((maxLvl * 3) + lvl) >> 2;
+        // maxLvl = ((maxLvl * 3) + lvl) >> 2;
         // uint16_t cMaxLvl = maxLvl - (maxLvl >> 5);
 
         // fall faster, rise slower
         // if (cMaxLvl > lvlAvg)
-            // lvlAvg = (lvlAvg * 31 + cMaxLvl) >> 5;
+        // lvlAvg = (lvlAvg * 31 + cMaxLvl) >> 5;
         // else
-            // lvlAvg = (lvlAvg * 127 + cMaxLvl) >> 7;
-            // lvlAvg = (lvlAvg * 15 + cMaxLvl) >> 4;
+        // lvlAvg = (lvlAvg * 127 + cMaxLvl) >> 7;
+        // lvlAvg = (lvlAvg * 15 + cMaxLvl) >> 4;
 
-        // lvlAvg = ((lvlAvg * 15) + maxLvl) >> 4;
-        lvlAvg = ((lvlAvg * 7) + maxLvl) >> 3;
-        
+        // lvlAvg = ((lvlAvg * 7) + maxLvl) >> 3;
+
+        lvlAvg = ((lvlAvg * 15) + lvl) / 16;
 
         int avg = analogRead(avgPin);
         lvlAvgAdj = lvlAvg + (map(avg, 0, (v5 ? 1013 : 668), 0, 200) - 25);
@@ -87,26 +82,32 @@ private:
 
     void checkOff()
     {
-        // Serial.print(lvl);
-        // Serial.print(" - ");
-        // Serial.print(maxLvl);
-        // Serial.print(" - ");
-        // Serial.print(lvlAvg);
-        // Serial.print(" - ");
-        // Serial.println(lvlAvgAdj);
+        if (off)
+        {
+
+        }
 
         // check if lvlAvg is smaller that set Threshold
         if (lvlAvg <= minAvgLvl)
         {
-            offCounter++;
-            // set lvl to 0 if offCounter reached offDelay Threshold
+            print("check Off: ");
+            print(offCounter);
+
             if (offCounter >= offDelay)
             {
-                lvl = 0;
+                print(" off");
+                off = true;
             }
+            else
+            {
+                offCounter++;
+                off = false;
+            }
+            println();
         }
         else
         {
+            off = false;
             offCounter = 0;
         }
     }
@@ -118,7 +119,6 @@ public:
      *                arround -100 for 3,3V, as 3,3V mic level cant get centered to 0 with 512, instead ~412
      * offDelay       count of iteratios with AvgLvl < minAvgLvl bevore level gets set to 0
      * minAvgLvl      min level of AvgLvl bevore off counter gets incremented
-     * avgLevelFloor  avgLvl cant get lower than this, to prevent flickering if quiet (only gets floored on the output, internal value stays)
      */
     explicit micinput(uint8_t micPin, uint8_t avgPin, int16_t micOffset = 0, uint8_t minAvgLvl = 20, uint16_t offDelay = 30)
     {
@@ -136,10 +136,10 @@ public:
     {
         pinMode(micPin, INPUT);
 
-        lvl = 200;
-        maxLvl = 200;
-        lvlAvg = 500;
+        lvl = 50;
+        lvlAvg = minAvgLvl;
         offCounter = offDelay;
+        off = false;
     }
 
     /**
@@ -147,7 +147,7 @@ public:
      */
     uint16_t getLvl()
     {
-        return lvl;
+        return off ? 0 : lvl;
     }
 
     /**
@@ -156,6 +156,11 @@ public:
     uint16_t getAvg()
     {
         return lvlAvgAdj;
+    }
+
+    bool getOff()
+    {
+        return off;
     }
 
     /**
@@ -168,17 +173,16 @@ public:
         calcAvg();
         checkOff();
 
-        // Serial.print(getLvl());
-        // Serial.print("; ");
-        // Serial.print(getAvg());
-        // Serial.print("; ");
-        // Serial.print(maxLvl);
-        // Serial.print("; ");
-        // Serial.print(lvlAvg);
-        // Serial.print("; ");
-        // Serial.print(micValue);
-        // Serial.print("; ");
-        // Serial.println();
+        print("lvl: ");
+        print(lvl);
+        print(";  lvlAvgAdj: ");
+        print(lvlAvgAdj);
+        print(";  lvlAvg: ");
+        print(lvlAvg);
+        print(";  micValue: ");
+        print(micValue);
+        print(";  ");
+        println();
     }
 };
 
