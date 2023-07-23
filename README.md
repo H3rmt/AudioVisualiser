@@ -1,10 +1,12 @@
 # AudioVisualiser
-### program to control multiple LED-Strips with an arduino-nano using sound from an microphone attached to speakers
 
+Program to control multiple LED-Strips with an Arduino nano (every) using a microphone as input
+
+**micInput:** Reads microphone and outputs the smoothed current and average Volume level
+
+**strip:** Resembles one LED strip and has different Modes that change the LEDs according to micInputs outputs
 
 ![](Videos/02_sub_only.jpg)
-
-### currently controlls 3 LED strips (2 parallel), 6 more (3 parallel) on the side to be added
 
 #### More Videos + Sound in Videos folder 
 
