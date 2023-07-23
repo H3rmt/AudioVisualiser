@@ -336,7 +336,7 @@ public:
 		}
 	}
 
-	void Circle(uint16_t lvl, uint16_t maxLvlAvg, bool rainbow = true, uint8_t width = 1, float baseMove = 0.05, uint8_t bars = 1, float moveSpeed = 1.8)
+	void Circle(uint16_t lvl, uint16_t maxLvlAvg, uint8_t width = 1, float baseMove = 0.05, uint8_t bars = 1, float moveSpeed = 1.8, bool rainbow = true)
 	{
 		uint16_t height = calcHeight(lvl, 0, maxLvlAvg);
 		if (rainbow)
@@ -366,14 +366,14 @@ public:
 				{
 					for (uint8_t c = 0; c < bars; c++)
 					{
-						leds[(j + (uint16_t)(split * c)) % ledCount] = CHSV(colorOffset, 255, 255);
+						leds[(j + (uint16_t)(split * c)) % ledCount] = Wheel(i, ledCount, colorOffset); //CHSV(colorOffset, 255, 255);
 					}
 				}
 				else
 				{
 					for (uint8_t c = 0; c < bars; c++)
 					{
-						leds[(j + (uint16_t)(split * c)) % ledCount] = CRGB::DarkCyan;
+						leds[(j + (uint16_t)(split * c)) % ledCount] = CHSV(colorOffset, 255, 255);
 					}
 				}
 			}
@@ -387,21 +387,21 @@ public:
 				{
 					for (uint8_t c = 0; c < bars; c++)
 					{
-						leds[(i + (uint16_t)(split * c)) % ledCount] = CHSV(colorOffset, 255, 255);
+						leds[(i + (uint16_t)(split * c)) % ledCount] = Wheel(i, ledCount, colorOffset); //CHSV(colorOffset, 255, 255);
 					}
 				}
 				else
 				{
 					for (uint8_t c = 0; c < bars; c++)
 					{
-						leds[(i + (uint16_t)(split * c)) % ledCount] = CRGB::DarkCyan;
+						leds[(i + (uint16_t)(split * c)) % ledCount] = CHSV(colorOffset, 255, 255);
 					}
 				}
 			}
 		}
 	}
 
-	void Pulse(uint16_t lvl, uint16_t maxLvlAvg, float intensity)
+	void Pulse(uint16_t lvl, uint16_t maxLvlAvg, float intensity, bool rainbow = true)
 	{
 		uint16_t height = calcHeight(lvl, 0, maxLvlAvg);
 
@@ -411,8 +411,10 @@ public:
 		{
 			for (uint16_t i = 0; i < ledCount; i++)
 			{
-				// leds[i] = Wheel(i, ledCount, colorOffset);
-				leds[i] = CHSV(colorOffset, 255, 255);
+				if (rainbow)
+					leds[i] = Wheel(i, ledCount, colorOffset);
+				else
+					leds[i] = CHSV(colorOffset, 255, 255);
 			}
 		}
 		else

@@ -30,8 +30,8 @@ strip<MIDLEDPIN1, MIDLEDCOUNT> mid1 = strip<MIDLEDPIN1, MIDLEDCOUNT>(true, 10, 1
 strip<MIDLEDPIN2, MIDLEDCOUNT> mid2 = strip<MIDLEDPIN2, MIDLEDCOUNT>(false, 10, 1.5);
 // strip<SIDELEDPIN1, SIDELEDCOUNT> side1 = strip<SIDELEDPIN1, SIDELEDCOUNT>(false, 10, 1.5);
 
-int subState = 6;
-int midState = 7;
+int subState = 7;
+int midState = 4;
 // int sideState = 1;
 
 long lastExec = 0;
@@ -176,9 +176,15 @@ void loop()
 		sub.FallingStar(input.getLvl(), input.getAvg(), true, 3);
 		break;
 	case 6:
-		sub.Circle(input.getLvl(), input.getAvg(), true, 7, 0.05, 2, 2.5);
+		sub.Circle(input.getLvl(), input.getAvg(), 5, 0.05, 3, 2.5, false);
 		break;
 	case 7:
+		sub.Circle(input.getLvl(), input.getAvg(), 5, 0.05, 3, 2.5);
+		break;
+	case 8:
+		sub.Pulse(input.getLvl(), input.getAvg(), 0.90, false);
+		break;
+	case 9:
 		sub.Pulse(input.getLvl(), input.getAvg(), 0.90);
 		break;
 	}
@@ -214,10 +220,18 @@ void loop()
 		mid2.FallingStar(input.getLvl(), input.getAvg(), true, 1);
 		break;
 	case 6:
-		mid1.Circle(input.getLvl(), input.getAvg(), true, 2, 0.08, 2, 2.0);
-		mid2.CentreOut(input.getLvl(), input.getAvg());
+		mid1.Circle(input.getLvl(), input.getAvg(), 2, 0.08, 2, 2.0, false);
+		mid2.Circle(input.getLvl(), input.getAvg(), 2, 0.08, 2, 2.0, false);
 		break;
 	case 7:
+		mid1.Circle(input.getLvl(), input.getAvg(), 2, 0.08, 2, 2.0);
+		mid2.Circle(input.getLvl(), input.getAvg(), 2, 0.08, 2, 2.0);
+		break;
+	case 8:
+		mid1.Pulse(input.getLvl(), input.getAvg(), 0.9, false);
+		mid2.Pulse(input.getLvl(), input.getAvg(), 0.9, false);
+		break;
+	case 9:
 		mid1.Pulse(input.getLvl(), input.getAvg(), 0.9);
 		mid2.Pulse(input.getLvl(), input.getAvg(), 0.9);
 		break;
