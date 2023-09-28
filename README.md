@@ -14,11 +14,11 @@ TODO: add control via Remote
 
 ---
 
-![](Videos/02_sub_only.jpg)
+|  ![](Videos/02_sub_only.jpg) | ![](Videos/10_all_small.jpg)  |
+| ------------- | ------------- |
+
 
 #### More Videos + Sound in Videos folder 
 
-<div style="display:flex;gap:8px;flex-direction:row;width:100%;overflow:auto;">
-  <img src="./Videos/08_both_cut.gif" style="width:calc(50% - 4px);">
-  <img src="./Videos/05_both_olivia_cut.gif" style="width:calc(50% - 4px);">
-</div>
+|  ![](Videos/08_both_cut.gif) | ![](Videos/05_both_olivia_cut.gif)  |
+| ------------- | ------------- |
