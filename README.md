@@ -12,13 +12,13 @@ Limits updates/s to ~80 for consistency
 
 TODO: add control via Remote
 
----
 
+| Jun. 2022 | Sep. 2023 |
+|:-------------:|:-------------:|
 |  ![](Videos/02_sub_only.jpg) | ![](Videos/10_all_small.jpg)  |
-| ------------- | ------------- |
 
 
-#### More Videos + Sound in Videos folder 
+#### More Videos + Sound in [Videos folder](./Videos)
 
 |  ![](Videos/08_both_cut.gif) | ![](Videos/05_both_olivia_cut.gif)  |
 | ------------- | ------------- |
