@@ -73,9 +73,7 @@ private:
         // lvlAvg = ((lvlAvg * 7) + maxLvl) >> 3;
 
         lvlAvg = ((lvlAvg * 15) + lvl) / 16;
-
-        int avg = analogRead(avgPin);
-        lvlAvgAdj = lvlAvg + (map(avg, 0, (v5 ? 1013 : 668), 0, 200) - 25);
+        lvlAvgAdj = lvlAvg + (map(550, 0, (v5 ? 1013 : 668), 0, 200) - 25);
 
         // lvlAvgAdj = ((lvlAvg * 2) + analogRead(avgPin)) / 3;
     }
@@ -136,7 +134,7 @@ public:
     {
         pinMode(micPin, INPUT);
 
-        lvl = 50;
+        lvl = 20;
         lvlAvg = minAvgLvl;
         offCounter = offDelay;
         off = false;

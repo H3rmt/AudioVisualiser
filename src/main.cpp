@@ -2,7 +2,7 @@
 
 // IRrecv irrecv(REMOTEPIN);
 
-micinput input = micinput(MICPIN, AVGPIN, -140, 42, UPS * SUO);
+micinput input = micinput(MICPIN, AVGPIN, -170, 52, UPS * SUO);
 strip<SUBLEDPIN, SUBLEDCOUNT> sub = strip<SUBLEDPIN, SUBLEDCOUNT>(false, 300, 1.5);
 strip<MIDLEDPIN1, MIDLEDCOUNT> mid1 = strip<MIDLEDPIN1, MIDLEDCOUNT>(true, 10, 1.5);
 strip<MIDLEDPIN2, MIDLEDCOUNT> mid2 = strip<MIDLEDPIN2, MIDLEDCOUNT>(false, 10, 1.5);
@@ -147,10 +147,10 @@ void loop()
 		sub.FallingStar(input.getLvl(), input.getAvg(), true, 3);
 		break;
 	case 6:
-		sub.Circle(input.getLvl(), input.getAvg(), 5, 0.05, 3, 2.5, false);
+		sub.Circle(input.getLvl(), input.getAvg(), 5, 0.02, 3, 2.5, false);
 		break;
 	case 7:
-		sub.Circle(input.getLvl(), input.getAvg(), 5, 0.05, 3, 2.5);
+		sub.Circle(input.getLvl(), input.getAvg(), 5, 0.02, 3, 2.5);
 		break;
 	case 8:
 		sub.Pulse(input.getLvl(), input.getAvg(), 0.90, false);

@@ -439,7 +439,9 @@ public:
 
 void show()
 {
-	// FastLED.setBrightness(255);
+	int avg = analogRead(AVGPIN);
+
+	FastLED.setBrightness(map(avg, 0, 730, 0, 250));
 	FastLED.show();
 };
 
