@@ -6,13 +6,20 @@
 #define SAMPLING_FREQUENCY 16000 // Frequency range plotted is 2.5kHz (sampling frequency/4)
 #define CHANNELS 1
 
-#define MAXAVGFREQ 30 // Last n frequencies to average for peak frequency
+#define MAXAVGFREQ 45 // Last n frequencies to average for peak frequency
 #define FIX_SPIKES
-#define FLOATING_AVG_MIN 65000
+#define FLOATING_AVG_MIN 80000
 
-#define INCREASE_DIVIDER_PEAK 12000
-#define DECREASE_DIVIDER_PEAK 2000
+#define ESTIMATE_SAMPLES_PER_SECOND 40
+
+#define DIVIDER_MIN 0.4
+#define DIVIDER_START 0.8
+#define INCREASE_DIVIDER_PEAK 9500
+#define DECREASE_DIVIDER_PEAK 4500
 #define DECREASE_DIVIDER_SECONDS 15
+
+#define OFF_THRESHOLD 2500
+#define OFF_SECONDS 30
 
 // Scale factors for the display
 #define TRACE_SCALE 170          // Scale factor for 'scope trace amplitude

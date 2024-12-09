@@ -6,15 +6,28 @@ Strip sub = Strip(SUBPIN, SUBCOUNT, false, 30, 600, true);
 Strip midl = Strip(LEFTPIN, LEFTRIGHTCOUNT, true, 10, 600, false);
 Strip midr = Strip(RIGHTPIN, LEFTRIGHTCOUNT, false, 10, 600, false);
 
-Strip l1 = Strip(LEFT3PIN, LEFTRIGHT3COUNT, false, 10, 60, true);
-Strip l2 = Strip(LEFT2PIN, LEFTRIGHT3COUNT, true, 10, 600, true);
+Strip l1 = Strip(LEFT3PIN, LEFTRIGHT3COUNT, false, 10, 60, false);
+Strip l2 = Strip(LEFT2PIN, LEFTRIGHT3COUNT, true, 10, 600, false);
 
-Strip r1 = Strip(RIGHT1PIN, LEFTRIGHT3COUNT, false, 10, 600, true);
-Strip r2 = Strip(RIGHT2PIN, LEFTRIGHT3COUNT, true, 10, 600, true);
+Strip r1 = Strip(RIGHT1PIN, LEFTRIGHT3COUNT, false, 10, 600, false);
+Strip r2 = Strip(RIGHT2PIN, LEFTRIGHT3COUNT, true, 10, 600, false);
+
+void drawLEDsOff()
+{
+    sub.OffAnimiation();
+    midl.OffAnimiation();
+    midr.OffAnimiation();
+
+    l1.OffAnimiation();
+    l2.OffAnimiation();
+
+    r1.OffAnimiation();
+    r2.OffAnimiation();
+}
 
 void drawLEDs(uint32_t input, uint32_t avg)
 {
-    sub.Pulse(input, avg);
+    sub.Pulse(input, avg, false);
     midl.Circle(input, avg);
     midr.Circle(input, avg);
 

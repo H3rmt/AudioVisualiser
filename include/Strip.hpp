@@ -33,6 +33,7 @@ private:
 	// peak is used for peak dot, but also for Circle position
 	float peak = 0;
 	float circle_position = 0;
+	uint16_t pulse_last = 10000000;
 
 	uint16_t calcHeight(uint16_t lvl, uint16_t minLvlAvg, uint16_t maxLvlAvg) const
 	{
@@ -365,8 +366,28 @@ public:
 	// 	}
 	// }
 
-	void Pulse(int16_t lvl, uint16_t maxLvlAvg)
+	void Pulse(int16_t lvl, uint16_t maxLvlAvg, bool onlyPeak = false)
 	{
+			pulse_last = lvl;
+		if (onlyPeak && (lvl < maxLvlAvg * 0.80 && lvl < pulse_last * 1.3))
+		{
+			if (peak >= 5)
+			{
+				for (uint16_t i = 0; i < ledCount; i++)
+				{
+					pixels.setPixelColor(i, Adafruit_NeoPixel::Color(0, 0, 0));
+				}
+				setBrightness(0, 1000);
+				pixels.show();
+				return;
+			}
+			peak++;
+		}
+		else
+		{
+			peak = 0;
+		}
+
 		uint32_t speed = map(lvl, 0, maxLvlAvg, 0, colorChangeSpeed * 9);
 		float speed_c = (speed * speed) / (colorChangeSpeed * 7);
 		colorOffset += speed_c;
@@ -400,7 +421,7 @@ public:
 		float speed_1 = (height * height) / ((float)ledCount * 1.1);
 		float speed_2 = (float)height * .8;
 		float speed = max(speed_1, speed_2);
-		float add = (speed * moveSpeed) + moveSpeed;
+		float add = (speed * moveSpeed) + (moveSpeed / 2);
 		if (add > peak)
 			peak = add;
 

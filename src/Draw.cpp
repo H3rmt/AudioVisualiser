@@ -131,7 +131,7 @@ void drawFPS(TFT_eSPI &tft, double fps, double time, float divider)
     tft.print(" IPS");
 }
 
-void drawSprite(TFT_eSprite &canvas, int approxBuffer[SAMPLES_USABLE], short streamBuffer[SAMPLES], int peakBuffer[SAMPLES_USABLE], uint8_t max_index_float, u_int32_t stream_buffer_max, u_int32_t avg, u_int32_t floating_avg)
+void drawSprite(TFT_eSprite &canvas, int approxBuffer[SAMPLES_USABLE], short streamBuffer[SAMPLES], int peakBuffer[SAMPLES_USABLE], uint8_t max_index_float, uint8_t max_index_actual, uint8_t max_index, u_int32_t stream_buffer_max, u_int32_t avg, u_int32_t floating_avg, bool off)
 {
     canvas.fillSprite(ILI9341_BLACK);
     for (uint16_t i = 0; i < SAMPLES_USABLE; i++)
@@ -152,9 +152,17 @@ void drawSprite(TFT_eSprite &canvas, int approxBuffer[SAMPLES_USABLE], short str
         uint16_t col = rainbowColor(127 + min(hp, 96));
 
 #ifdef DRAW_MAX
-        if (i + 1 >= max_index_float && i - 1 <= max_index_float)
+        if (i + 1 >= max_index_actual && i - 1 <= max_index_actual)
         {
-            canvas.fillRect(WIDTH_BAR * i, 2, WIDTH_BAR - 1, 4, ILI9341_ORANGE);
+            canvas.fillRect(WIDTH_BAR * i, 2, WIDTH_BAR - 1, 4, ILI9341_WHITE);
+        }
+        if (i == max_index_float)
+        {
+            canvas.fillRect(WIDTH_BAR * i, 8, WIDTH_BAR - 1, 4, ILI9341_ORANGE);
+        }
+        if (i == max_index)
+        {
+            canvas.fillRect(WIDTH_BAR * i, 12, WIDTH_BAR - 1, 4, ILI9341_RED);
         }
 #endif
 
@@ -171,6 +179,7 @@ void drawSprite(TFT_eSprite &canvas, int approxBuffer[SAMPLES_USABLE], short str
 
 #ifdef DRAW_TRACE
     uint16_t startSample = 0;
+    uint32_t color = off ? ILI9341_RED : ILI9341_GREEN;
 
     // Render the 'scope trace, only a half the buffer is plotted after the trigger point
     for (uint16_t x = 0; x < WIDTH; x += WIDTH_TRACE)
@@ -180,7 +189,7 @@ void drawSprite(TFT_eSprite &canvas, int approxBuffer[SAMPLES_USABLE], short str
             HEIGHT / 2 - (streamBuffer[startSample] / TRACE_SCALE),
             x + WIDTH_TRACE,
             HEIGHT / 2 - (streamBuffer[startSample + 1] / TRACE_SCALE),
-            ILI9341_GREEN);
+            color);
         startSample++;
         if (startSample >= SAMPLES - 1)
             break;
@@ -190,11 +199,11 @@ void drawSprite(TFT_eSprite &canvas, int approxBuffer[SAMPLES_USABLE], short str
         canvas.drawLine(1 + x * 64, HEIGHT / 2 - 2, 1 + x * 64 + 3, HEIGHT / 2 + 2, ILI9341_RED);
         canvas.drawLine(1 + x * 64, HEIGHT / 2 + 2, 1 + x * 64 + 3, HEIGHT / 2 - 2, ILI9341_RED);
     }
-    // causes incraease in devider
-    canvas.drawLine(WIDTH - 15, HEIGHT / 2 + (INCREASE_DIVIDER_PEAK / TRACE_SCALE), WIDTH - 10, HEIGHT / 2 + (INCREASE_DIVIDER_PEAK / TRACE_SCALE), ILI9341_RED);
-    canvas.drawLine(WIDTH - 15, HEIGHT / 2 + (DECREASE_DIVIDER_PEAK / TRACE_SCALE), WIDTH - 10, HEIGHT / 2 + (DECREASE_DIVIDER_PEAK / TRACE_SCALE), ILI9341_GREEN);
+    canvas.drawLine(WIDTH - 6, HEIGHT / 2 + (INCREASE_DIVIDER_PEAK / TRACE_SCALE), WIDTH, HEIGHT / 2 + (INCREASE_DIVIDER_PEAK / TRACE_SCALE), ILI9341_ORANGE);
+    canvas.drawLine(WIDTH - 6, HEIGHT / 2 + (DECREASE_DIVIDER_PEAK / TRACE_SCALE), WIDTH, HEIGHT / 2 + (DECREASE_DIVIDER_PEAK / TRACE_SCALE), ILI9341_GREEN);
+    canvas.drawLine(WIDTH - 6, HEIGHT / 2 + (OFF_THRESHOLD / TRACE_SCALE), WIDTH, HEIGHT / 2 + (OFF_THRESHOLD / TRACE_SCALE), ILI9341_RED);
 
-    canvas.drawLine(WIDTH - 15, HEIGHT / 2 + (stream_buffer_max / TRACE_SCALE), WIDTH - 1, HEIGHT / 2 + (stream_buffer_max / TRACE_SCALE), ILI9341_CYAN);
+    canvas.drawLine(WIDTH - 15, HEIGHT / 2 + (stream_buffer_max / TRACE_SCALE), WIDTH - 6, HEIGHT / 2 + (stream_buffer_max / TRACE_SCALE), ILI9341_CYAN);
 #endif
 
 #ifdef DRAW_INFO
@@ -203,15 +212,15 @@ void drawSprite(TFT_eSprite &canvas, int approxBuffer[SAMPLES_USABLE], short str
         sbm = HEIGHT;
     canvas.fillRect(WIDTH - 15, 0, 4, sbm, ILI9341_GREEN);
 
-    uint16_t hav = approxBuffer[max_index_float] / FFT_SCALE;
-    if (hav > HEIGHT)
-        hav = HEIGHT;
-    canvas.fillRect(WIDTH - 11, 0, 4, hav, ILI9341_RED);
-
     uint16_t ha = avg / FFT_SCALE;
     if (ha > HEIGHT)
         ha = HEIGHT;
-    canvas.fillRect(WIDTH - 7, 0, 4, ha, ILI9341_WHITE);
+    canvas.fillRect(WIDTH - 11, 0, 4, ha, ILI9341_RED);
+
+    uint16_t hav = approxBuffer[max_index_float] / FFT_SCALE;
+    if (hav > HEIGHT)
+        hav = HEIGHT;
+    canvas.fillRect(WIDTH - 7, 0, 4, hav, ILI9341_WHITE);
 
     uint16_t hfa = floating_avg / FFT_SCALE;
     if (hfa > HEIGHT)
