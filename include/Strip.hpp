@@ -32,8 +32,9 @@ private:
 	// dynamic values
 	// peak is used for peak dot, but also for Circle position
 	float peak = 0;
+	uint16_t last_dir_change = 0;
 	float circle_position = 0;
-	uint16_t pulse_last = 10000000;
+	uint16_t pulse_last = 100000;
 
 	uint16_t calcHeight(uint16_t lvl, uint16_t minLvlAvg, uint16_t maxLvlAvg) const
 	{
@@ -58,13 +59,11 @@ private:
 	void setBrightness(uint16_t lvl, uint16_t maxLvlAvg)
 	{
 		if (!adaptiveBrightness)
-			pixels.setBrightness(100);
+			pixels.setBrightness(70);
 		else
 		{
-			uint32_t brightness = map(lvl, 0, maxLvlAvg, 20, 400);
-			uint32_t brightness_c = max(25, ((uint32_t)(brightness / 5)) * 5);
-			if (brightness_c > 255)
-				brightness_c = 255;
+			uint32_t brightness = map(lvl, 0, maxLvlAvg, 20, 300);
+			uint32_t brightness_c = min(255, max(25, ((uint32_t)(brightness / 5)) * 5));
 			pixels.setBrightness(brightness_c);
 		}
 	}
@@ -366,9 +365,9 @@ public:
 	// 	}
 	// }
 
-	void Pulse(int16_t lvl, uint16_t maxLvlAvg, bool onlyPeak = false)
+	void Pulse(uint16_t lvl, uint16_t maxLvlAvg, bool onlyPeak = false)
 	{
-			pulse_last = lvl;
+		pulse_last = lvl;
 		if (onlyPeak && (lvl < maxLvlAvg * 0.80 && lvl < pulse_last * 1.3))
 		{
 			if (peak >= 5)
@@ -417,62 +416,49 @@ public:
 			pixels.setPixelColor(i, Adafruit_NeoPixel::Color(0, 0, 0));
 		}
 		peak *= 0.90;
+		last_dir_change++;
 
-		float speed_1 = (height * height) / ((float)ledCount * 1.1);
-		float speed_2 = (float)height * .8;
+		// TF is this calculation
+		float speed_1 = (height * height) / ((float)ledCount); // blue
+		float speed_2 = (float)height * .9; // green 
 		float speed = max(speed_1, speed_2);
 		float add = (speed * moveSpeed) + (moveSpeed / 2);
+		uint32_t static_color = speed_1 > speed_2 ? Adafruit_NeoPixel::Color(0, 0, 255) : Adafruit_NeoPixel::Color(0, 255, 0);
+
 		if (add > peak)
 			peak = add;
 
+		if (lvl > maxLvlAvg && height >= ledCount - 2 && last_dir_change > 10)
+		{
+			last_dir_change = 0;
+			static_color = Adafruit_NeoPixel::Color(255, 0, 0); // red
+			reversed = !reversed;
+		}
 		circle_position += peak;
 
 		if (circle_position > ledCount)
 			circle_position -= ledCount; // reset
 
-		float split = (float)ledCount / bars;
+		uint8_t bar_offset = (float)ledCount / bars;
 
-		uint32_t static_color = speed_1 > speed_2 ? Adafruit_NeoPixel::Color(0, 0, 255) : Adafruit_NeoPixel::Color(0, 255, 0);
 
-		if (reversed)
+		Serial.println();
+		for (uint16_t i = 0; i < width; i++)
 		{
-			for (uint16_t i = circle_position; i < circle_position + width; i++)
+			for (uint8_t c = 0; c < bars; c++)
 			{
-				// % ledCount start at beginning if at end
+				uint16_t pos = (i + (uint16_t)circle_position + (bar_offset * c)) % ledCount;
+				if (reversed)
+				{
+					pos = (ledCount - 1 - pos);
+				}
 				if (rainbow)
 				{
-					for (uint8_t c = 0; c < bars; c++)
-					{
-						pixels.setPixelColor((ledCount - 1 - (i + (uint16_t)(split * c))) % ledCount, Wheel(i, ledCount));
-					}
+					pixels.setPixelColor(pos, Wheel(i, ledCount));
 				}
 				else
 				{
-					for (uint8_t c = 0; c < bars; c++)
-					{
-						pixels.setPixelColor((ledCount - 1 - (i + (uint16_t)(split * c))) % ledCount, static_color);
-					}
-				}
-			}
-		}
-		else
-		{
-			for (uint16_t i = circle_position; i < circle_position + width; i++)
-			{
-				// % ledCount start at beginning if at end
-				if (rainbow)
-				{
-					for (uint8_t c = 0; c < bars; c++)
-					{
-						pixels.setPixelColor((i + (uint16_t)(split * c)) % ledCount, Wheel(i, ledCount));
-					}
-				}
-				else
-				{
-					for (uint8_t c = 0; c < bars; c++)
-					{
-						pixels.setPixelColor((i + (uint16_t)(split * c)) % ledCount, static_color);
-					}
+					pixels.setPixelColor(pos, static_color);
 				}
 			}
 		}

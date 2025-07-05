@@ -24,14 +24,14 @@ int display_peakBuffer[SAMPLES_USABLE]; // Amplitude peak buffer
 int currentBuffer = 1; // Current buffer that has the correct samples
 
 // Divider for the sample value
-float divider = DIVIDER_START;
+float loudness_divider = DIVIDER_START;
 int16_t less_than_divider_decrease_counter = 0;
 bool off = false;
 uint16_t less_than_off_counter = 0;
 
 uint16_t max_index_float = 5;              // Index of the peak frequency Average
 uint16_t max_index_actual = 5;             // Index of the peak frequency Average
-uint32_t avg_max_float = FLOATING_AVG_MIN; // Average of the peak frequencys
+uint32_t avg_max_float = FLOATING_AVG_MIN_BASE; // Average of the peak frequencys
 short stream_buffer_max = 0;               // Maximum value in the streamBuffer
 
 // values for the display
@@ -100,6 +100,14 @@ void setup()
   Serial.println("LEDS complete");
 }
 
+u_int32_t getMin(u_int16_t frequency)
+{
+  // Map frequency (0..SAMPLES_USABLE) to a divider between 1.9 (at 0) and 0.5 (at SAMPLES_USABLE)
+  float frequency_divider = 1.9f - ((1.4f * frequency) / SAMPLES_USABLE);
+  float loud_div = max(0.9f, min(1.8f, map(loudness_divider, 0.7f, 2.0f, 0.9f, 1.7f)));
+  return FLOATING_AVG_MIN_BASE * loud_div * frequency_divider;
+}
+
 void loop()
 {
   // Only 64 PDM audio samples are available at a time so accumulate 256 for the FFT
@@ -118,8 +126,8 @@ void loop()
     // Fill the buffers with the samples
     for (int i = 0; i < samplesRead; i++)
     {
-      streamBuffer[i + sampleCount] = sampleBuffer[i] / divider;
-      approxBuffer[i + sampleCount] = (sampleBuffer[i] / divider) / 2;
+      streamBuffer[i + sampleCount] = sampleBuffer[i] / loudness_divider;
+      approxBuffer[i + sampleCount] = (sampleBuffer[i] / loudness_divider) / 2;
     }
 
     sampleCount += samplesRead;
@@ -162,7 +170,7 @@ void loop()
 
       if (stream_buffer_max > INCREASE_DIVIDER_PEAK)
       {
-        divider += 0.05;
+        loudness_divider += 0.05;
         less_than_divider_decrease_counter = 0;
       }
       else if (stream_buffer_max < DECREASE_DIVIDER_PEAK)
@@ -170,9 +178,9 @@ void loop()
         less_than_divider_decrease_counter++;
         if (less_than_divider_decrease_counter > DECREASE_DIVIDER_SECONDS * ESTIMATE_SAMPLES_PER_SECOND)
         {
-          if (divider > DIVIDER_MIN)
+          if (loudness_divider > DIVIDER_MIN)
           {
-            divider -= 0.1;
+            loudness_divider -= 0.1;
           }
           less_than_divider_decrease_counter = 0;
         }
@@ -191,13 +199,13 @@ void loop()
       for (int i = 0; i < SAMPLES_USABLE; i++)
       {
         // adjust the amplitude of the approxBuffer (increase higher frequencies)
-        approxBuffer[i] = (0.38 + (i / 11.0)) * approxBuffer[i];
+        approxBuffer[i] = (0.4 + (i / 14.0)) * approxBuffer[i];
 
         // update the peakBuffer
         if (approxBuffer[i] > peakBuffer[i])
           peakBuffer[i] = approxBuffer[i];
         else
-          peakBuffer[i] = peakBuffer[i] * 0.96 + approxBuffer[i] * 0.04;
+          peakBuffer[i] = peakBuffer[i] * 0.987 + approxBuffer[i] * 0.016;
 
         // Find the peak frequency
         if (i < MAXAVGFREQ && peakBuffer[i] > peakBuffer[max_index])
@@ -210,7 +218,7 @@ void loop()
       // move the floating peak frequency to the correct index
       if (max_index > max_index_float)
       {
-        max_index_float += max(1, (max_index - max_index_float) / 8); // move /8 of the way
+        max_index_float += max(1, (max_index - max_index_float) / 5); // move /5 of the way
         if (max_index_float > MAXAVGFREQ)
         {
           max_index_float = MAXAVGFREQ;
@@ -218,9 +226,9 @@ void loop()
       }
       else if (max_index < max_index_float)
       {
-        if (max_index_float > max(1, (max_index_float - max_index) / 4))
+        if (max_index_float > max(1, (max_index_float - max_index) / 3))
         {
-          max_index_float -= max(1, (max_index_float - max_index) / 4); // move /4 of the way
+          max_index_float -= max(1, (max_index_float - max_index) / 3); // move /3 of the way
         }
         else
         {
@@ -251,12 +259,12 @@ void loop()
 
       // adjust the floating average to the peak frequency
       // floating_avg = floating_avg * 0.98 + avg * 0.025;
-      avg_max_float = avg_max_float * 0.99 + peak_avg * 0.025;
+      avg_max_float = avg_max_float * 0.99 + peak_avg * 0.022;
       // min and max the floating average
       if (avg_max_float < peak_avg)
         avg_max_float = peak_avg;
-      if (avg_max_float < FLOATING_AVG_MIN * divider)
-        avg_max_float = FLOATING_AVG_MIN * divider;
+      if (avg_max_float < getMin(max_index_actual))
+        avg_max_float = getMin(max_index_actual);
 
 #ifdef DEBUGG
       Serial.print("peak_avg: ");
@@ -341,6 +349,11 @@ void setup1()
   display_ready = true;
 }
 
+float map(float x, float in_min, float in_max, float out_min, float out_max)
+{
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
 uint16_t counter = 0;   // Frame counter
 uint16_t interval = 40; // FPS calculated over 40 frames
 void loop1()
@@ -359,11 +372,18 @@ void loop1()
   drawSprite(spr,
              (currentBuffer == 1 ? approxBuffer1 : approxBuffer2),
              (currentBuffer == 1 ? streamBuffer1 : streamBuffer2),
-             display_peakBuffer, display_max_index_float, display_max_index_actual,
-             display_max_index, display_stream_buffer_max, display_peak_avg, display_avg_max_float, off);
+             display_peakBuffer, display_max_index_float, display_max_index_actual, display_max_index,
+             display_stream_buffer_max, getMin(display_max_index_actual),
+             display_peak_avg, display_avg_max_float, off);
+
+  // Serial.println(getMin());
+  // Serial.println(max(0.9f, min(1.8f, map(divider, 0.7f, 2.0f, 0.9f, 1.7f))));
+  // Serial.println(divider);
+  // Serial.println(display_avg_max_float);
+  // Serial.println();
 
   tft.startWrite();
-  tft.pushImageDMA(0, TOPBARHEIGHT, WIDTH, HEIGHT, sptr);
+  tft.pushImageDMA(4, TOPBARHEIGHT, WIDTH, HEIGHT, sptr);
   tft.endWrite();
   // tft.pushImage(0, TOPBARHEIGHT, WIDTH, HEIGHT, sptr);
 
@@ -374,7 +394,7 @@ void loop1()
     double fps = interval * 1000.0 / (millis() - startMillis); // 60 frames over 12_000 - 10_000 = 2_000 => 60 * 1000 / 2_000 = 30
     startMillis = millis();
 
-    drawFPS(tft, fps, 1000.0 / millis_for_one_iteration, divider);
+    drawFPS(tft, fps, 1000.0 / millis_for_one_iteration, loudness_divider);
     counter = 0;
   }
 

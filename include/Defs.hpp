@@ -8,15 +8,15 @@
 
 #define MAXAVGFREQ 45 // Last n frequencies to average for peak frequency
 #define FIX_SPIKES
-#define FLOATING_AVG_MIN 80000
+#define FLOATING_AVG_MIN_BASE 90000
 
 #define ESTIMATE_SAMPLES_PER_SECOND 40
 
-#define DIVIDER_MIN 0.4
+#define DIVIDER_MIN 0.7
 #define DIVIDER_START 0.8
-#define INCREASE_DIVIDER_PEAK 9500
+#define INCREASE_DIVIDER_PEAK 8200
 #define DECREASE_DIVIDER_PEAK 4500
-#define DECREASE_DIVIDER_SECONDS 15
+#define DECREASE_DIVIDER_SECONDS 10
 
 #define OFF_THRESHOLD 2500
 #define OFF_SECONDS 30
@@ -32,6 +32,7 @@
 #define DRAW_TRACE // Draw a scope type trace
 #define DRAW_MAX   // Draw peak frequency bar indicator
 #define DRAW_INFO   // Draw info bars bar
+// #define DRAW_RED_CROSS // Draw red cross on frequency when values were ignored 
 
 #define DRAW_PEAK  // Draw spectrum peak bar
 // #define DOT_PEAK    // Draw spectrum peak dot
@@ -39,7 +40,7 @@
 // Sprite width and height
 #define FULLWIDTH 320
 #define SIDEBARWIDTH 50
-#define WIDTH (FULLWIDTH - SIDEBARWIDTH)
+#define WIDTH (FULLWIDTH - SIDEBARWIDTH - 3) // 4 offset from left
 #define FULLHEIGHT 240
 #define TOPBARHEIGHT 50
 #define HEIGHT (FULLHEIGHT - TOPBARHEIGHT)
