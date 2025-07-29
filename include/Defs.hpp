@@ -23,7 +23,7 @@
 
 // Scale factors for the display
 #define TRACE_SCALE 170          // Scale factor for 'scope trace amplitude
-#define FFT_SCALE (SAMPLES * 3.5) // Scale factor for FFT bar amplitude 3.5
+#define FFT_SCALE 1100 // Scale factor for FFT bar amplitude 3.5
 
 #define WIDTH_BAR 4
 #define WIDTH_TRACE 1

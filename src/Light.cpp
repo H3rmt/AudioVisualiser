@@ -2,15 +2,15 @@
 #include "Defs.hpp"
 #include "Strip.hpp"
 
-Strip sub = Strip(SUBPIN, SUBCOUNT, false, 30, 600, true);
-Strip midl = Strip(LEFTPIN, LEFTRIGHTCOUNT, true, 10, 600, false);
-Strip midr = Strip(RIGHTPIN, LEFTRIGHTCOUNT, false, 10, 600, false);
+Strip sub = Strip(SUBPIN, 140, false, 400, true);
+Strip midl = Strip(LEFTPIN, 63, true, 500, false);
+Strip midr = Strip(RIGHTPIN, 62, false, 500, false);
 
-Strip l1 = Strip(LEFT3PIN, LEFTRIGHT3COUNT, false, 10, 60, true);
-Strip l2 = Strip(LEFT2PIN, LEFTRIGHT3COUNT, true, 10, 600, true);
+Strip l1 = Strip(LEFT3PIN, 70, false, 300, true);
+Strip l2 = Strip(LEFT2PIN, 70, true, 300, true);
 
-Strip r1 = Strip(RIGHT1PIN, LEFTRIGHT3COUNT, false, 10, 600, true);
-Strip r2 = Strip(RIGHT2PIN, LEFTRIGHT3COUNT, true, 10, 600, true);
+Strip r1 = Strip(RIGHT1PIN, 70, false, 300, true);
+Strip r2 = Strip(RIGHT2PIN, 70, true, 300, true);
 
 void drawLEDsOff()
 {
@@ -29,8 +29,8 @@ void drawLEDs(uint32_t input, uint32_t avg)
 {
     sub.Pulse(input, avg, false);
     // sub.CentreOut(input, avg, true);
-    midl.Circle(input, avg, 5, 2, 0.09, true);
-    midr.Circle(input, avg, 5, 2, 0.09, true);
+    midl.Circle(input, avg, 4, 2, 0.12, true);
+    midr.Circle(input, avg, 4, 2, 0.12, true);
 
     l1.CentreOut(input, avg, true);
     l2.CentreIn(input, avg, true);

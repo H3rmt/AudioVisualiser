@@ -26,7 +26,6 @@ private:
 	// CRGBPalette16 targetPalette = OceanColors_p;
 	// CRGBPalette16 currentPalette = OceanColors_p;
 
-	// uint16_t peakDotFallSpeed;
 	uint16_t colorChangeSpeed;
 
 	// dynamic values
@@ -34,7 +33,7 @@ private:
 	float peak = 0;
 	uint16_t last_dir_change = 0;
 	float circle_position = 0;
-	uint16_t pulse_last = 100000;
+	uint16_t pulse_last = 10000;
 
 	uint16_t calcHeight(uint16_t lvl, uint16_t minLvlAvg, uint16_t maxLvlAvg) const
 	{
@@ -68,23 +67,16 @@ private:
 		}
 	}
 
-	// void fallPeakDot()
-	// {
-	// 	if (peak > 0)
-	// 		peak -= (float)ledCount / peakDotFallSpeed;
-	// }
-
 	uint32_t Wheel(uint16_t x, uint8_t _ledCount)
 	{
 		return Adafruit_NeoPixel::ColorHSV((map(x, 0, _ledCount, 0, 65535 * 2) + colorOffset) % 65535, 255, 255);
 	}
 
 public:
-	explicit Strip(uint8_t ledPin, uint16_t ledCount, bool reverse = false, uint8_t peakDotFallSpeed = 180, uint16_t colorChangeSpeed = 500, bool adaptiveBrightness = false)
-		: pixels(ledCount, ledPin, NEO_GRB + NEO_KHZ800), ledCount(ledCount)
+	explicit Strip(uint8_t ledPin, uint16_t ledCount, bool reverse = false, uint16_t colorChangeSpeed = 500, bool adaptiveBrightness = false)
+		: pixels(ledCount, ledPin, NEO_RGB + NEO_KHZ800), ledCount(ledCount)
 	{
 		this->reversed = reverse;
-		// this->peakDotFallSpeed = peakDotFallSpeed;
 		this->colorChangeSpeed = colorChangeSpeed;
 		this->adaptiveBrightness = adaptiveBrightness;
 	}
@@ -120,9 +112,11 @@ public:
 			pixels.setPixelColor(i, Adafruit_NeoPixel::Color(0, 0, 0));
 		}
 
-		pixels.setPixelColor(0, Adafruit_NeoPixel::Color(200, 0, 0));
-		pixels.setPixelColor(ledCount - 1, Adafruit_NeoPixel::Color(200, 0, 0));
+		uint16_t start = ((uint16_t)(circle_position)) % ledCount;
+		pixels.setPixelColor(start, Adafruit_NeoPixel::Color(200, 0, 0));
+		pixels.setPixelColor((start + ledCount - 1) % ledCount, Adafruit_NeoPixel::Color(200, 0, 0));
 		pixels.show();
+		circle_position += 0.05;
 	}
 
 	void Clear()
@@ -420,7 +414,7 @@ public:
 
 		// TF is this calculation
 		float speed_1 = (height * height) / ((float)ledCount); // blue
-		float speed_2 = (float)height * .9; // green 
+		float speed_2 = (float)height * .8; // green 
 		float speed = max(speed_1, speed_2);
 		float add = (speed * moveSpeed) + (moveSpeed / 2);
 		uint32_t static_color = speed_1 > speed_2 ? Adafruit_NeoPixel::Color(0, 0, 255) : Adafruit_NeoPixel::Color(0, 255, 0);
