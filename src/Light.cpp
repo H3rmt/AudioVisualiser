@@ -2,24 +2,26 @@
 
 #include "Strip.hpp"
 
-Strip sub = Strip(16, 140);
-Strip midl = Strip(16, 63);
-Strip midr = Strip(16, 62);
+Strip sub = Strip(140, D4);
+Strip midl = Strip(63, D4);
+Strip midr = Strip(62, D4);
 
-Strip sideo = Strip(17, 70);
-Strip sidem = Strip(17, 70);
+Strip sideo = Strip(70, D5);
+Strip sidem = Strip(70, D5);
 
-void selectChannel(int channel) {
-  digitalWrite(15, (channel) & 0x01);
-  digitalWrite(25, (channel >> 1) & 0x01);
+void selectChannel(int channel)
+{
+    digitalWrite(15, (channel) & 0x01);
+    digitalWrite(25, (channel >> 1) & 0x01);
 }
 
-void updateMaxBright(uint8_t maxBrightness) {
-    sub.setMaxBrightness(255);
-    midl.setMaxBrightness(255);
-    midr.setMaxBrightness(255);
-    sideo.setMaxBrightness(255);
-    sidem.setMaxBrightness(255);
+void updateMaxBright(uint8_t maxBrightness)
+{
+    sub.setMaxBrightness(maxBrightness);
+    midl.setMaxBrightness(maxBrightness);
+    midr.setMaxBrightness(maxBrightness);
+    sideo.setMaxBrightness(maxBrightness);
+    sidem.setMaxBrightness(maxBrightness);
 }
 
 void drawLEDsOff()
@@ -62,6 +64,19 @@ void initLeds()
     sideo.begin();
     sidem.begin();
     sidem.setReversed(true);
+}
+
+void testLedsSingle()
+{
+    sub.begin();
+    sideo.begin();
+    while (true)
+    {
+        sub.test();
+        sideo.test2();
+        delay(100);
+        Serial.println("LEDS complete");
+    }
 }
 
 void testLeds()

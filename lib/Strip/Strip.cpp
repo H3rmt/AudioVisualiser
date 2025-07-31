@@ -62,10 +62,7 @@ void Strip::setColorChangeSpeed(uint16_t speed)
 /// @brief Clears the NeoPixel strip by setting all pixels to black (off).
 void Strip::clear()
 {
-    for (uint16_t i = 0; i < ledCount; i++)
-    {
-        pixels.setPixelColor(i, Adafruit_NeoPixel::Color(0, 0, 0));
-    }
+    pixels.clear();
 }
 
 /// @brief Advances the color offset varaible (colorOffset) for rainbow effects.

@@ -55,11 +55,10 @@ void p0Setup(
     Serial.println("Setup complete");
 
     delay(50);
-    initLeds();
+    // initLeds();
+    Serial.println("LEDs initialized");
     delay(50);
-    testLeds();
-    delay(50);
-    Serial.println("LEDS complete");
+    testLedsSingle();
 }
 
 // Timer for FFT
@@ -95,6 +94,11 @@ void p0Loop(Shared *shared, AnalyzeData *liveAnalyzeData,
             readMillis = millis();
             liveMicData->sampleCount = 0;
             analyzeData(liveMicData, liveAnalyzeData);
+
+            Serial.print("FFT Iteration took: ");
+            Serial.print(shared->millisForOneFFT);
+            Serial.println(" ms");
+
             if (liveAnalyzeData->off)
                 drawLEDsOff();
             else
