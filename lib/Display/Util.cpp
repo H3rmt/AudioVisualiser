@@ -1,7 +1,5 @@
 #include "Util.hpp"
 
-#include "Defs.hpp"
-
 // If 'spectrum' is in the range 0-159 it is converted to a spectrum colour
 // from 0 = red through to 127 = blue to 159 = violet
 // Extending the range to 0-191 adds a further violet to red band

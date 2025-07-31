@@ -1,73 +1,114 @@
 #include "Light.hpp"
-#include "Defs.hpp"
+
 #include "Strip.hpp"
 
-Strip sub = Strip(SUBPIN, 140, false, 400, true);
-Strip midl = Strip(LEFTPIN, 63, true, 500, false);
-Strip midr = Strip(RIGHTPIN, 62, false, 500, false);
+Strip sub = Strip(16, 140);
+Strip midl = Strip(16, 63);
+Strip midr = Strip(16, 62);
 
-Strip l1 = Strip(LEFT3PIN, 70, false, 300, true);
-Strip l2 = Strip(LEFT2PIN, 70, true, 300, true);
+Strip sideo = Strip(17, 70);
+Strip sidem = Strip(17, 70);
 
-Strip r1 = Strip(RIGHT1PIN, 70, false, 300, true);
-Strip r2 = Strip(RIGHT2PIN, 70, true, 300, true);
+void selectChannel(int channel) {
+  digitalWrite(15, (channel) & 0x01);
+  digitalWrite(25, (channel >> 1) & 0x01);
+}
+
+void updateMaxBright(uint8_t maxBrightness) {
+    sub.setMaxBrightness(255);
+    midl.setMaxBrightness(255);
+    midr.setMaxBrightness(255);
+    sideo.setMaxBrightness(255);
+    sidem.setMaxBrightness(255);
+}
 
 void drawLEDsOff()
 {
-    sub.OffAnimiation();
-    midl.OffAnimiation();
-    midr.OffAnimiation();
-
-    l1.OffAnimiation();
-    l2.OffAnimiation();
-
-    r1.OffAnimiation();
-    r2.OffAnimiation();
+    selectChannel(0);
+    sub.offAnimiation();
+    sideo.offAnimiation();
+    selectChannel(1);
+    midl.offAnimiation();
+    sidem.offAnimiation();
+    selectChannel(2);
+    midr.offAnimiation();
+    sideo.offAnimiation();
+    selectChannel(3);
+    sidem.offAnimiation();
 }
 
 void drawLEDs(uint32_t input, uint32_t avg)
 {
-    sub.Pulse(input, avg, false);
-    // sub.CentreOut(input, avg, true);
-    midl.Circle(input, avg, 4, 2, 0.12, true);
-    midr.Circle(input, avg, 4, 2, 0.12, true);
-
-    l1.CentreOut(input, avg, true);
-    l2.CentreIn(input, avg, true);
-
-    r1.CentreOut(input, avg, true);
-    r2.CentreIn(input, avg, true);
+    selectChannel(0);
+    sub.pulse(input, avg, false);
+    sideo.centre(input, avg);
+    selectChannel(1);
+    midl.circle(input, avg, 4, 2, 0.12, true);
+    sidem.centre(input, avg);
+    selectChannel(2);
+    midr.circle(input, avg, 4, 2, 0.12, true);
+    sideo.centre(input, avg);
+    selectChannel(3);
+    sidem.centre(input, avg);
 }
 
 void initLeds()
 {
-    sub.init();
-    midl.init();
-    midr.init();
-
-    l1.init();
-    l2.init();
-
-    r1.init();
-    r2.init();
+    sub.begin();
+    sub.setAdaptiveBrightness(true);
+    midl.begin();
+    midl.setReversed(true);
+    midr.begin();
+    sideo.begin();
+    sidem.begin();
+    sidem.setReversed(true);
 }
 
 void testLeds()
 {
-    sub.Test();
-    delay(50);
-    midl.Test();
-    delay(50);
-    midr.Test();
-    delay(50);
+    selectChannel(0);
+    sub.test();
+    sideo.test();
+    delay(100);
+    selectChannel(1);
+    midl.test();
+    sidem.test();
+    delay(100);
+    selectChannel(2);
+    midr.test();
+    sideo.test();
+    delay(100);
+    selectChannel(3);
+    sidem.test();
 
-    l1.Test();
-    delay(50);
-    l2.Test();
-    delay(50);
+    delay(200);
 
-    r1.Test();
-    delay(50);
-    r2.Test();
-    delay(50);
+    selectChannel(0);
+    sub.test2();
+    selectChannel(1);
+    midl.test2();
+    selectChannel(2);
+    midr.test2();
+    selectChannel(0);
+    sideo.test2();
+    selectChannel(1);
+    sidem.test2();
+    selectChannel(2);
+    sideo.test2();
+    selectChannel(3);
+    sidem.test2();
+
+    delay(200);
+
+    selectChannel(0);
+    sub.test3();
+    sideo.test3();
+    selectChannel(1);
+    midl.test3();
+    sidem.test3();
+    selectChannel(2);
+    midr.test3();
+    sideo.test3();
+    selectChannel(3);
+    sidem.test3();
 }
