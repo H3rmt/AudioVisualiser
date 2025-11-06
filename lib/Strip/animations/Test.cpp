@@ -3,11 +3,20 @@
 #include <Arduino.h>
 #include <Adafruit_NeoPixel.h>
 
-void Strip::test()
+void Strip::test(bool one)
 {
     clear();
-    pixels.setPixelColor(0, Adafruit_NeoPixel::Color(100, 0, 200));
-    pixels.setPixelColor(1, Adafruit_NeoPixel::Color(200, 40, 0));
+    if (one)
+    {
+        pixels.setPixelColor(0, Adafruit_NeoPixel::Color(255, 0, 0));
+        pixels.setPixelColor(1, Adafruit_NeoPixel::Color(0, 255, 0));
+    }
+    else
+    {
+        pixels.setPixelColor(0, Adafruit_NeoPixel::Color(0, 0, 255));
+        pixels.setPixelColor(1, Adafruit_NeoPixel::Color(255, 255, 255));
+    }
+
     // pixels.setPixelColor(2, Adafruit_NeoPixel::Color(100, 0, 200));
     // pixels.setPixelColor(3, Adafruit_NeoPixel::Color(200, 40, 0));
 

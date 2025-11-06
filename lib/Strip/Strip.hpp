@@ -6,8 +6,12 @@
 class Strip
 {
 public:
+	Adafruit_NeoPixel pixels;
+	
 	Strip(uint16_t ledCount, int16_t ledPin);
 	void begin();
+
+	void setLength(uint16_t n);
 
 	void setReversed(bool reverse);
 	void setRainbow(bool rainbow);
@@ -15,9 +19,11 @@ public:
 	void setColorChangeSpeed(uint16_t speed);
 	void setMaxBrightness(uint8_t maxBrightness);
 
-	void test();
+	void test(bool one = true);
 	void test2();
 	void test3();
+	void test4();
+	void off();
 	void offAnimiation();
 
 	void normal(uint32_t lvl, uint32_t maxLvlAvg);
@@ -26,7 +32,6 @@ public:
 	void circle(uint32_t lvl, uint32_t maxLvlAvg, uint16_t width, uint16_t bars, float moveSpeed, bool reverseOnPeak);
 
 private:
-	Adafruit_NeoPixel pixels;
 	uint16_t ledCount;
 
 	bool reversed;

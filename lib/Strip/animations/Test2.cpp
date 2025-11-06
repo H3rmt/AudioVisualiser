@@ -6,14 +6,14 @@
 void Strip::test2()
 {
     clear();
-    for (int i = 0; i < ledCount; i++)
+    for (int b = 0; b < 65535; b += 514)
     {
-        for (int b = 0; b < 65535; b += 65535 / 255) // 257
+        for (int i = 0; i < ledCount; i++)
         {
-            pixels.setPixelColor(i, Adafruit_NeoPixel::ColorHSV(b));
-            pixels.show();
-            delay(1);
+            pixels.setPixelColor(i, Adafruit_NeoPixel::ColorHSV(b % 65535, 255, 255));
         }
+        pixels.show();
+        delay(10);
     }
     clear();
 }

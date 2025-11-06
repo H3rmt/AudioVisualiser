@@ -4,37 +4,28 @@
 
 #include "Defs.hpp"
 
-struct MicData
-{
-    // Sample stream buffer with raw loudness values (N samples)
-    short streamBuffer[SAMPLES];
-
-    // ApproxFFT sample buffer
-    int approxBuffer[SAMPLES];
-
-    // Amount of samples alreay read inside of streamBuffer and approxBuffer
-    int sampleCount = 0;
-};
-
 struct AnalyzeData
 {
+    // Approximate FFT buffer
+    int results[SAMPLES_USABLE];
+
     // Amplitude peak buffer
-    int peakBuffer[SAMPLES_USABLE];
+    int peaks[SAMPLES_USABLE];
 
     // Maximum value in the streamBuffer
-    short streamBufferMaxValue = 0;
+    int resultMax = 0;
 
-    // Amount of samples with maximum of all frequencies lower than OFF_THRESHOLD
+    // Amount of samples with maximum of all frequencies lower than OFF_THRESHOLD (if this exceeds OFF_SECONDS * ESTIMATE_SAMPLES_PER_SECOND, the system is considered "off")
     uint16_t lessThanOffCounter = 0;
 
     // No sound is detected over some time
     bool off = false;
 
     // Divider used for incomming sample values from microphone
-    float loudnessDivider = 0.8;
+    // float loudnessDivider = 0.8;
 
     // Iterations where loudness is less than DECREASE_DIVIDER_PEAK
-    uint16_t lessThanLoudnessDividerDecreaseCounter = 0;
+    // uint16_t lessThanLoudnessDividerDecreaseCounter = 0;
 
     // Index of the peak frequency Average that is adjusted to move towards the detected peak
     uint8_t peakFreaquencyIndexFloat = 0;

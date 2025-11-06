@@ -1,17 +1,21 @@
-#include "Strip.hpp"
+#include "MultiplexedStrip.hpp"
 
 #include <Arduino.h>
 #include <Adafruit_NeoPixel.h>
 
 #include "Util.hpp"
 
-void Strip::centre(uint32_t lvl, uint32_t maxLvlAvg)
+void MultiplexedStrip::centre(uint8_t index, uint32_t lvl, uint32_t maxLvlAvg)
 {
+    StripData *current = getCurrentStrip(index);
+    if (current == nullptr)
+        return;
+
     uint16_t height;
-    updateColorOffset();
+    updateColorOffset(current);
 
     // used instead of ledCount, but can vary depending on %2 on ledCount
-    uint16_t count = ledCount % 2 == 0 ? ledCount / 2 : (ledCount + 1) / 2;
+    uint16_t count = current->ledCount % 2 == 0 ? current->ledCount / 2 : (current->ledCount + 1) / 2;
     height = map(lvl, 0, maxLvlAvg, 0, count);
 
     for (uint16_t i = 0; i < count; i++)
@@ -19,24 +23,24 @@ void Strip::centre(uint32_t lvl, uint32_t maxLvlAvg)
         uint32_t color;
         if (i >= height)
             color = Adafruit_NeoPixel::Color(0, 0, 0); // Off
-        else if (rainbow)
-            color = Adafruit_NeoPixel::ColorHSV(colorWheel(i, count, globalState.colorOffset));
+        else if (current->rainbow)
+            color = Adafruit_NeoPixel::ColorHSV(colorWheel(i, count, current->colorOffset, 1));
         else
             color = Adafruit_NeoPixel::Color(0, 0, 255); // Blue
 
-        if (reversed)
+        if (current->reversed)
         {
             pixels.setPixelColor(count - i - 1, color);
-            pixels.setPixelColor(count + i - (ledCount % 2 == 0 ? 1 : 0), color);
+            pixels.setPixelColor(count + i - (current->ledCount % 2 == 0 ? 1 : 0), color);
         }
         else
         {
             pixels.setPixelColor(i, color);
-            pixels.setPixelColor(ledCount - 1 - i, color);
+            pixels.setPixelColor(current->ledCount - 1 - i, color);
         }
     }
 
-    setBrightness(lvl, maxLvlAvg);
+    // setBrightness(lvl, maxLvlAvg);
     pixels.show();
 }
 

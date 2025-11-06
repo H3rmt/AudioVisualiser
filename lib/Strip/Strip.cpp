@@ -18,6 +18,12 @@ Strip::Strip(uint16_t ledCount, int16_t ledPin)
     maxBrightness = 255;
 }
 
+void Strip::setLength(uint16_t n)
+{
+    ledCount = n;
+    pixels.updateLength(n);
+}
+
 /// @brief Starts the NeoPixel strip and sets the initial brightness.
 void Strip::begin()
 {
@@ -83,7 +89,7 @@ void Strip::updateColorOffset()
 void Strip::setBrightness(uint16_t lvl, uint16_t maxLvlAvg)
 {
     if (!adaptiveBrightness)
-        pixels.setBrightness(min(maxBrightness, 25 + ((lvl * lvl * lvl) / (maxLvlAvg * maxLvlAvg * maxLvlAvg)) * 230));
+        pixels.setBrightness(min((int)maxBrightness, 25 + ((lvl * lvl * lvl) / (maxLvlAvg * maxLvlAvg * maxLvlAvg)) * 230));
     else
-        pixels.setBrightness(min(maxBrightness, 70));
+        pixels.setBrightness(min((int)maxBrightness, 70));
 }
