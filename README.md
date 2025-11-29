@@ -1,6 +1,6 @@
 # AudioVisualiser
 
-This is curently being rewirtten in the main branch to work on the nano RP2040
+This is curently being rewirtten in the main branch to work on the nano ~~RP2040 nano~~ Esp32 nano
 
 ### Program to control multiple LED-Strips with an Arduino nano (every) using a microphone as input
 
@@ -24,3 +24,4 @@ TODO: add control via Remote
 
 |  ![](Videos/08_both_cut.gif) | ![](Videos/05_both_olivia_cut.gif)  |
 | ------------- | ------------- |
+
