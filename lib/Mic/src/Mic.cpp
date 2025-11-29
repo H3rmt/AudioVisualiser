@@ -1,16 +1,20 @@
 #include <AudioTools.h>
 #include <AudioTools/AudioLibs/AudioRealFFT.h>
+#include <Core.hpp>
 
-#include "Defs.hpp"
-#include "Debug.hpp"
+#include "Mic.hpp"
+
+const int Samples = 512;
+const int SamplesUsable = 256;
+const int SamplingFrequency = 44100;
 
 // 44100 Hz, Mono, 32 bits per sample
-AudioInfo info(SAMPLING_FREQUENCY, 1, 32);
+AudioInfo info(SamplingFrequency, 1, 32);
 I2SStream i2sStream; // Access I2S as stream
 AudioRealFFT fft;    // FFT processor
 StreamCopy copier(fft, i2sStream);
 
-void setupMic(void (*callback)(AudioFFTBase &fft))
+void Mic::setupMic(void (*callback)(AudioFFTBase &fft))
 {
     I2SConfig cfg = i2sStream.defaultConfig(RX_MODE);
     cfg.copyFrom(info);
@@ -23,20 +27,18 @@ void setupMic(void (*callback)(AudioFFTBase &fft))
     auto fcfg = fft.defaultConfig(TX_MODE);
     fcfg.copyFrom(info);
     fcfg.window_function_fft = new Hamming();
-    fcfg.length = SAMPLES;
+    fcfg.length = Samples;
     fcfg.callback = callback;
     fft.begin(fcfg);
 
-#ifdef CDEBUG
-    Serial.println("Mic setup complete");
-    Serial.print("FFT size: ");
-    Serial.print(fft.size()); // SAMPLES / 2
-    Serial.print(", length: ");
-    Serial.println(fft.length()); // SAMPLES
-#endif
+    Console::println("Mic setup complete");
+    Console::print("FFT size: ");
+    Console::print(fft.size()); // SAMPLES / 2
+    Console::print(", length: ");
+    Console::println(fft.length()); // SAMPLES
 }
 
-void copyMicData()
+void Mic::runMicStep()
 {
     copier.copy();
 }

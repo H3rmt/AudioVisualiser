@@ -1,0 +1,8 @@
+{
+  "name": "Analyze",
+  "dependencies": [
+    {
+      "name": "Core"
+    }
+  ]
+}

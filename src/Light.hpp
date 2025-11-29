@@ -6,6 +6,6 @@ void updateMaxBright(uint8_t maxBrightness);
 void drawLEDs(uint32_t input, uint32_t avg);
 void drawLEDsOff();
 void setupLeds();
-void testLeds();
+void testLeds(int index);
 void testLedsSingle();
 void start();

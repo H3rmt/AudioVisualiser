@@ -2,11 +2,10 @@
 
 #include "MultiplexedStrip.hpp"
 
-MultiplexedStrip one = MultiplexedStrip(D5, 72, 72, 72, 72);
-MultiplexedStrip two = MultiplexedStrip(D4, 2, 62, 2, 62);
+auto one = MultiplexedStrip(D5, 72, 72, 72, 72);
+auto two = MultiplexedStrip(D4, 2, 62, 2, 62);
 
-void setupLeds()
-{
+void setupLeds() {
     pinMode(D2, OUTPUT);
     pinMode(D3, OUTPUT);
     digitalWrite(D2, LOW);
@@ -22,29 +21,16 @@ void setupLeds()
     two.setReversed(1, true);
 }
 
-void drawLEDsOff()
-{
+void testLeds(const int index) {
+    one.test(index);
+    two.test(index);
+}
+
+void drawLEDsOff() {
     // TODO
 }
 
-void testLeds()
-{
-    one.test(0);
-    two.test(0);
-    delay(500);
-    one.test(1);
-    two.test(1);
-    delay(500);
-    one.test(2);
-    two.test(2);
-    delay(500);
-    one.test(3);
-    two.test(3);
-    delay(500);
-}
-
-void drawLEDs(uint32_t input, uint32_t avg)
-{
+void drawLEDs(const uint32_t input, const uint32_t avg) {
     // left front back
     one.centre(0, input, avg);
     // right middle
@@ -75,10 +61,8 @@ void drawLEDs(uint32_t input, uint32_t avg)
 
 #ifdef BBB
 
-void start()
-{
-    while (true)
-    {
+void start() {
+    while (true) {
         Serial.println("Starting test");
         selectChannel(0);
         one.off();
@@ -92,8 +76,7 @@ void start()
         selectChannel(3);
         one.off();
         two.off();
-        for (uint32_t i = 0; i < 65535; i += 514)
-        {
+        for (uint32_t i = 0; i < 65535; i += 514) {
             auto color = Adafruit_NeoPixel::ColorHSV(i, 255, 255);
             uint32_t index = map(i, 0, 65535, 0, 70);
             Serial.println("index" + String(index));
@@ -126,12 +109,10 @@ void start()
     }
 }
 
-void testLedsSingle()
-{
+void testLedsSingle() {
     delay(500);
     Serial.println("LEDS start");
-    while (true)
-    {
+    while (true) {
         selectChannel(0);
         Serial.println("Ch 1");
         one.setMaxBrightness(255); // left front back
@@ -187,8 +168,7 @@ void testLedsSingle()
 
 #ifdef AAA
 
-void updateMaxBright(uint8_t maxBrightness)
-{
+void updateMaxBright(uint8_t maxBrightness) {
     sub.setMaxBrightness(maxBrightness);
     midl.setMaxBrightness(maxBrightness);
     midr.setMaxBrightness(maxBrightness);
@@ -196,8 +176,7 @@ void updateMaxBright(uint8_t maxBrightness)
     sidem.setMaxBrightness(maxBrightness);
 }
 
-void drawLEDsOff()
-{
+void drawLEDsOff() {
     selectChannel(0);
     sub.offAnimiation();
     sideo.offAnimiation();
@@ -211,8 +190,7 @@ void drawLEDsOff()
     sidem.offAnimiation();
 }
 
-void drawLEDs(uint32_t input, uint32_t avg)
-{
+void drawLEDs(uint32_t input, uint32_t avg) {
     selectChannel(0);
     sub.pulse(input, avg, false);
     sideo.centre(input, avg);
@@ -226,8 +204,7 @@ void drawLEDs(uint32_t input, uint32_t avg)
     sidem.centre(input, avg);
 }
 
-void initLeds()
-{
+void initLeds() {
     pinMode(D2, OUTPUT);
     pinMode(D3, OUTPUT);
     sub.begin();

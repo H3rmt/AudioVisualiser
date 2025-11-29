@@ -1,0 +1,8 @@
+{
+  "name": "Debug",
+  "dependencies": [
+    {
+      "name": "Core"
+    }
+  ]
+}

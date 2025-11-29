@@ -1,0 +1,8 @@
+{
+  "name": "Mic",
+  "dependencies": [
+    {
+      "name": "Core"
+    }
+  ]
+}

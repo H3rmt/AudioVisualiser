@@ -1,0 +1,76 @@
+#include <Arduino.h>
+#include <Core.hpp>
+#include <TFT_eSPI.h>
+
+#include "Util.hpp"
+
+#include "Display.hpp"
+
+
+void drawSpriteIndizes(uint8_t peakFreaquencyIndexFloat, uint8_t peakFreaquencyIndex, uint8_t peakFreaquencyIndexLazy) {
+    // Draw for peakFreaquencyIndexFloat (orange)
+    Display::spr.fillRect(WIDTH_BAR * peakFreaquencyIndexFloat, 8, WIDTH_BAR - 1, 4, ILI9341_ORANGE);
+
+    // Draw for peakFreaquencyIndex (white)
+    Display::spr.fillRect(WIDTH_BAR * peakFreaquencyIndex, 2, WIDTH_BAR - 1, 4, ILI9341_WHITE);
+    // sprite.fillRect(WIDTH_BAR * (peakFreaquencyIndex + 1), 2, WIDTH_BAR - 1, 4, ILI9341_WHITE);
+    // sprite.fillRect(WIDTH_BAR * (peakFreaquencyIndex - 1), 2, WIDTH_BAR - 1, 4, ILI9341_WHITE);
+
+    // Draw for peakFreaquencyIndexLazy (red)
+    Display::spr.fillRect(WIDTH_BAR * peakFreaquencyIndexLazy, 12, WIDTH_BAR - 1, 4, ILI9341_RED);
+}
+
+void drawSpriteBars(const int approxBuffer[SAMPLES_USABLE], const int peakBuffer[SAMPLES_USABLE]) {
+    for (uint16_t i = 0; i < SAMPLES_USABLE; i++) {
+        if (i * WIDTH_BAR >= SPRITEWIDTH)
+            break;
+        uint16_t hr = approxBuffer[i] / FFT_SCALE;
+        if (hr > SPRITEHEIGHT)
+            hr = SPRITEHEIGHT;
+        if (hr < 2)
+            hr = 0;
+        Display::spr.fillRect(WIDTH_BAR * i, SPRITEHEIGHT - hr, WIDTH_BAR - 1, hr, ILI9341_WHITE);
+
+        uint16_t hp = peakBuffer[i] / FFT_SCALE;
+        if (hp > SPRITEHEIGHT)
+            hp = SPRITEHEIGHT;
+        if (hp < 2)
+            hp = 0;
+        Display::spr.fillRect(WIDTH_BAR * i, SPRITEHEIGHT - hp, WIDTH_BAR - 1, hp - hr,
+                              rainbowColor(127 + min(hp, (uint16_t) 96)));
+    }
+}
+
+// void drawSpriteAudio(TFT_eSprite &canvas, const short streamBuffer[SAMPLES], bool off)
+// {
+//     uint16_t startSample = 0;
+//     uint32_t color = off ? ILI9341_RED : ILI9341_GREEN;
+//
+//     for (uint16_t x = 0; x < SPRITEWIDTH; x += WIDTH_TRACE)
+//     {
+//         canvas.drawLine(
+//             x,
+//             SPRITEHEIGHT / 2 - (streamBuffer[startSample] / TRACE_SCALE),
+//             x + WIDTH_TRACE,
+//             SPRITEHEIGHT / 2 - (streamBuffer[startSample + 1] / TRACE_SCALE),
+//             color);
+//         startSample++;
+//         if (startSample >= SAMPLES - 1)
+//             break;
+//     }
+// }
+
+void drawDebugBars(const AnalyzeData *data, const int results[SAMPLES]) {
+    // canvas.drawLine(SPRITEWIDTH - 6, SPRITEHEIGHT / 2 + (INCREASE_DIVIDER_PEAK / TRACE_SCALE), SPRITEWIDTH, SPRITEHEIGHT / 2 + (INCREASE_DIVIDER_PEAK / TRACE_SCALE), ILI9341_ORANGE);
+    // canvas.drawLine(SPRITEWIDTH - 6, SPRITEHEIGHT / 2 + (DECREASE_DIVIDER_PEAK / TRACE_SCALE), SPRITEWIDTH, SPRITEHEIGHT / 2 + (DECREASE_DIVIDER_PEAK / TRACE_SCALE), ILI9341_GREEN);
+    // canvas.drawLine(SPRITEWIDTH - 6, SPRITEHEIGHT / 2 + (OFF_THRESHOLD / TRACE_SCALE), SPRITEWIDTH, SPRITEHEIGHT / 2 + (OFF_THRESHOLD / TRACE_SCALE), ILI9341_RED);
+    Display::spr.drawLine(SPRITEWIDTH - 12, SPRITEHEIGHT / 2 + (data->resultMax / TRACE_SCALE), SPRITEWIDTH - 6,
+                          SPRITEHEIGHT / 2 + (data->resultMax / TRACE_SCALE), ILI9341_CYAN);
+
+    Display::spr.fillRect(SPRITEWIDTH - 8, 0, 2, min(SPRITEHEIGHT, data->floatingAverage / FFT_SCALE), ILI9341_RED);
+    Display::spr.fillRect(SPRITEWIDTH - 6, 0, 2, min(SPRITEHEIGHT, results[data->peakFrequencyIndex] / FFT_SCALE),
+                          ILI9341_WHITE);
+    Display::spr.fillRect(SPRITEWIDTH - 4, 0, 2, min(SPRITEHEIGHT, data->peakFrequencyValue / FFT_SCALE), ILI9341_PINK);
+    Display::spr.fillRect(SPRITEWIDTH - 2, 0, 2, min(SPRITEHEIGHT, data->floatingAverageMin / FFT_SCALE),
+                          ILI9341_ORANGE);
+}

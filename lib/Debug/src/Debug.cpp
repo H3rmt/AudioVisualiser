@@ -1,35 +1,27 @@
 #include <Arduino.h>
+#include <Core.hpp>
 
-void setupOnboardLeds()
-{
+#include "Debug.hpp"
+
+void Debug::setupOnboardLeds() {
     pinMode(LED_RED, OUTPUT);
     pinMode(LED_GREEN, OUTPUT);
     pinMode(LED_BLUE, OUTPUT);
-    pinMode(LED_BUILTIN, OUTPUT);
-    digitalWrite(LED_BUILTIN, HIGH);
+    // pinMode(LED_BUILTIN, OUTPUT);
+    // digitalWrite(LED_BUILTIN, HIGH);
 }
 
-/// @brief color led to show progress in code
-/// 1 = red
-/// 2 = green
-/// 3 = yellow
-/// 4 = blue
-/// 5 = purple
-/// 6 = cyan
-/// 7 = white
-/// @param code
-void progress(int code)
-{
-    if (code == 0)
-    {
-        digitalWrite(LED_BUILTIN, LOW);
+void Debug::progress(const int code) {
+    if (code == 0) {
+        // digitalWrite(LED_BUILTIN, LOW);
         digitalWrite(LED_RED, HIGH);
         digitalWrite(LED_GREEN, HIGH);
         digitalWrite(LED_BLUE, HIGH);
         return;
     }
+    Console::printf("Progress code %d\r\n", code);
 
-    digitalWrite(LED_BUILTIN, HIGH);
+    // digitalWrite(LED_BUILTIN, HIGH);
     if (code & 0x1)
         digitalWrite(LED_RED, LOW);
     else
@@ -42,15 +34,12 @@ void progress(int code)
         digitalWrite(LED_BLUE, LOW);
     else
         digitalWrite(LED_BLUE, HIGH);
-    delay(200);
 }
 
-void errorExit(int code)
-{
-    while (1)
-    {
-        for (int i = 0; i < code; i++)
-        {
+[[noreturn]] void Debug::errorExit(const int code) {
+    while (true) {
+        Console::printf("Error code %d\r\n", code);
+        for (int i = 0; i < code; i++) {
             digitalWrite(LED_RED, LOW);
             delay(200);
             digitalWrite(LED_RED, HIGH);
@@ -60,21 +49,25 @@ void errorExit(int code)
     }
 }
 
-void onboardLeds()
-{
-    Serial.println("LOOP 0");
+void Debug::testOnboardLeds() {
+    Console::println("testOnboardLeds: red");
     digitalWrite(LED_RED, LOW);
     digitalWrite(LED_GREEN, HIGH);
     digitalWrite(LED_BLUE, HIGH);
-    delay(500);
-    Serial.println("LOOP 1");
+    delay(200);
+    Console::println("testOnboardLeds: green");
     digitalWrite(LED_RED, HIGH);
     digitalWrite(LED_GREEN, LOW);
     digitalWrite(LED_BLUE, HIGH);
-    delay(500);
-    Serial.println("LOOP 2");
+    delay(200);
+    Console::println("testOnboardLeds: blue");
     digitalWrite(LED_RED, HIGH);
     digitalWrite(LED_GREEN, HIGH);
     digitalWrite(LED_BLUE, LOW);
-    delay(500);
+    delay(200);
+    // Console::println("testOnboardLeds: white");
+    // digitalWrite(LED_RED, LOW);
+    // digitalWrite(LED_GREEN, LOW);
+    // digitalWrite(LED_BLUE, LOW);
+    // delay(200);
 }

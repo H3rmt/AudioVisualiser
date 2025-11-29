@@ -1,0 +1,8 @@
+{
+  "name": "Display",
+  "dependencies": [
+    {
+      "name": "Core"
+    }
+  ]
+}

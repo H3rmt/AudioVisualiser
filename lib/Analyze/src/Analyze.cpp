@@ -1,7 +1,8 @@
 #include <Arduino.h>
+#include <Core.hpp>
 
+#include "Analyze.hpp"
 #include "AnalyzeDefs.hpp"
-#include "Structs.hpp"
 
 #ifdef UIIA
 // TODO
@@ -51,20 +52,30 @@ void checkLoudnessDivider(AnalyzeData *liveAnalyzeData)
 
 #endif
 
+constexpr float divider_min = 0.7f;
+constexpr float divider_max = 4.0f;
+
 int getAverageMinValue(uint8_t frequency, float loudnessDivider)
 {
     // Map frequency (0..SAMPLES_USABLE) to a divider between 1.9 (at 0) and 0.5 (at SAMPLES_USABLE)
-    float frequency_divider = 1.9f - ((1.4f * frequency) / SAMPLES_USABLE);
-    float aa = map(loudnessDivider, DIVIDER_MIN, DIVIDER_MAX, 0.9f, 3.0f);
+    float frequency_divider = 1.9f - ((1.4f * frequency) / Consts::SamplesUsable);
+    float aa = map(loudnessDivider, divider_min, divider_max, 0.9f, 3.0f);
     float loud_div = max(0.9f, min(1.8f, aa));
     return FLOATING_AVG_MIN_BASE * loud_div * frequency_divider;
 }
 
-void analyzeFrequencies(AnalyzeData *data)
+constexpr int maxAvgFreq = 45;
+
+void Analyze::analyzeFrequencies(AnalyzeData *data)
 {
     int peakFreaquencyIndex = 0;
-    for (int i = 0; i < SAMPLES_USABLE; i++)
+    for (int i = 0; i < Consts::SamplesUsable; i++)
     {
+        if (data->results[i] > data->resultMax) {
+            data->resultMax = data->results[i];
+        }
+
+        // TODO check if needed
         // adjust the amplitude of the approxBuffer (increase higher frequencies)
         // data->results[i] = (0.4 + (i / 14.0)) * data->results[i];
 
@@ -75,7 +86,7 @@ void analyzeFrequencies(AnalyzeData *data)
             data->peaks[i] = data->peaks[i] * 0.987 + data->results[i] * 0.016;
 
         // Find the peak frequency
-        if (i < MAXAVGFREQ)
+        if (i < maxAvgFreq)
         {
             if (data->peaks[i] > data->peaks[peakFreaquencyIndex])
             {
@@ -83,37 +94,37 @@ void analyzeFrequencies(AnalyzeData *data)
             }
         }
     }
-    data->peakFreaquencyIndex = peakFreaquencyIndex;
+    data->peakFrequencyIndex = peakFreaquencyIndex;
 
     // Move the floating peak frequency index towards the detected peak
-    int diff = data->peakFreaquencyIndex - data->peakFreaquencyIndexFloat;
+    int diff = data->peakFrequencyIndex - data->peakFrequencyIndexFloat;
     if (diff > 0)
     {
-        data->peakFreaquencyIndexFloat += max(1, diff / 5);
-        if (data->peakFreaquencyIndexFloat > MAXAVGFREQ)
-            data->peakFreaquencyIndexFloat = MAXAVGFREQ;
+        data->peakFrequencyIndexFloat += max(1, diff / 5);
+        if (data->peakFrequencyIndexFloat > maxAvgFreq)
+            data->peakFrequencyIndexFloat = maxAvgFreq;
     }
     else if (diff < 0)
     {
         int move = max(1, -diff / 3);
-        if (data->peakFreaquencyIndexFloat > move)
-            data->peakFreaquencyIndexFloat -= move;
+        if (data->peakFrequencyIndexFloat > move)
+            data->peakFrequencyIndexFloat -= move;
         else
-            data->peakFreaquencyIndexFloat = 0;
+            data->peakFrequencyIndexFloat = 0;
     }
 
     // Update the actual peak frequency index only if the floating index is close to the detected peak
-    int diff2 = data->peakFreaquencyIndex - data->peakFreaquencyIndexFloat;
+    int diff2 = data->peakFrequencyIndex - data->peakFrequencyIndexFloat;
     if (abs(diff2) < 3)
-        data->peakFreaquencyIndexLazy = data->peakFreaquencyIndex;
+        data->peakFrequencyIndexLazy = data->peakFrequencyIndex;
 
-    data->peakFreaquencyValue = data->results[data->peakFreaquencyIndex];
+    data->peakFrequencyValue = data->results[data->peakFrequencyIndex];
 
     // Update floating average to follow the peak value, with min clamp
-    data->floatingAverageMin = getAverageMinValue(data->peakFreaquencyIndex, 1.0); // TODO data->loudnessDivider);
+    data->floatingAverageMin = getAverageMinValue(data->peakFrequencyIndex, 1.0); // TODO data->loudnessDivider);
     data->floatingAverage = max(
-        data->peakFreaquencyValue,
+        data->peakFrequencyValue,
         max(
             data->floatingAverageMin,
-            (int)(data->floatingAverage * 0.99f + data->peakFreaquencyValue * 0.022f)));
+            (int)(data->floatingAverage * 0.99f + data->peakFrequencyValue * 0.022f)));
 }
