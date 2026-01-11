@@ -34,9 +34,10 @@ uint32_t last_ota_time = 0;
 
 void connectWifi() {
     Console::println("Connecting to WiFi: ");
+    WiFiClass::setHostname(ESP_HOSTNAME);
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
     while (WiFi.waitForConnectResult() != WL_CONNECTED) {
-        delay(1000);
+        delay(250);
         Console::print(".");
     }
     Console::println("");
@@ -52,7 +53,7 @@ void connectWifi() {
         }
     });
     ArduinoOTA.onError([](const ota_error_t error) {
-        Serial.printf("Error[%u]: ", error);
+        Console::printf("Error[%u]: ", error);
         if (error == OTA_AUTH_ERROR) {
             Console::println("Auth Failed");
         } else if (error == OTA_BEGIN_ERROR) {
@@ -67,7 +68,7 @@ void connectWifi() {
     });
     ArduinoOTA.setPassword(OTA_PASSWORD);
     ArduinoOTA.setHostname(ESP_HOSTNAME);
-    // ArduinoOTA.setMdnsEnabled(false);
+    ArduinoOTA.setMdnsEnabled(true);
     ArduinoOTA.begin();
     Console::printf("OTA started with Password %s started\r\n", OTA_PASSWORD);
 }
