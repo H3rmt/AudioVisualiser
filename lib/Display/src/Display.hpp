@@ -11,12 +11,10 @@
 #define TOPBARHEIGHT 50
 // #define SPRITEHEIGHT 190
 
-#define FFT_SCALE 1100
-// Scale factor for the trace in the sprite
-#define TRACE_SCALE 170
+#define FFT_SCALE 100
 
 // Pixelwidth of one bar in the sprite
-#define WIDTH_BAR 4
+#define WIDTH_BAR 2
 // Width of the line in the trace in sprite
 #define WIDTH_TRACE 1
 
@@ -33,7 +31,11 @@ namespace Display {
     constexpr int spriteWidth = 320;
     constexpr int spriteHeight = 190;
 
+    constexpr int rawDivider = 500000;
+    constexpr int fftDivider = 80;
+
     constexpr bool dma = true;
+    // constexpr bool dma = false;
 
     class Display {
     public:
@@ -52,28 +54,37 @@ namespace Display {
         /// @param data analyzed data to draw
         void draw(const AnalyzeData *data);
 
+        // TODO
+        void drawDebugBars(const AnalyzeData *data);
+
+        // TODO
+        void drawDebugLines(const AnalyzeData *data);
+
+        // TODO
+        void drawRawAudio(const int32_t streamBuffer[Consts::Samples], bool off = false);
+
         /// update FPS counter in top bar
         /// @param loudnessDivider value of samples divider
         /// @param framesPerSecond calculated frames per second
         /// @param ledsUpdatesPerSecond calculated leds updates per second
-        void updateFPS(float loudnessDivider, double framesPerSecond, double ledsUpdatesPerSecond);
+        void updateFPS(uint16_t loudnessDivider, uint16_t framesPerSecond, uint16_t ledsUpdatesPerSecond);
 
         /// Adds info string to display
         /// @param infoString string to add
         /// @param replace replace last string
         void addInfoString(const char *infoString, bool replace = false);
 
-    private:
-        TFT_eSPI tft = TFT_eSPI();
-        TFT_eSprite spr = TFT_eSprite(&tft);
-        uint16_t *sptr = nullptr;
-        int messageCount = 0;
-
         /// wait for last DMA to finish
         void dmaWait();
 
         /// start DMA write
         void dmaWrite();
+
+    private:
+        TFT_eSPI tft = TFT_eSPI();
+        TFT_eSprite spr = TFT_eSprite(&tft);
+        uint16_t *sptr = nullptr;
+        uint16_t messageCount = 0;
 
         /// draw Top bar on display
         void drawTopBar();

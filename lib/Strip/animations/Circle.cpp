@@ -7,7 +7,7 @@
 
 void MultiplexedStrip::circle(uint8_t index, uint32_t lvl, uint32_t maxLvlAvg, uint16_t width = 5, uint16_t bars = 2, float moveSpeed = 0.1f, bool reverseOnPeak = false)
 {
-    StripData *current = getCurrentStrip(index);
+    StripData *current = selectStrip(index);
     if (current == nullptr)
         return;
 

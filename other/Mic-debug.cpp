@@ -10,7 +10,7 @@ I2SStream i2sStream; // Access I2S as stream
 
 CsvOutput<int32_t> csvOutput(Serial); // ASCII stream
 
-uint8_t *buf = (uint8_t *)malloc(1024 * 1024);
+uint8_t buf[1024 * 1024] = {};
 MemoryOutput out(buf, 1024 * 1024); // Memory output
 
 MemoryStream stream(buf, 1024 * 1024);
@@ -21,9 +21,9 @@ void setupMicDebug()
 {
     I2SConfig cfg = i2sStream.defaultConfig(RX_MODE);
     cfg.copyFrom(info);
-    cfg.pin_ws = D10;                    // Word Select (LRCLK)
-    cfg.pin_bck = D8;                    // Bit Clock (BCLK)
-    cfg.pin_data = D9;                   // Data In (DOUT)
+    cfg.pin_ws = D8;                    // Word Select (LRCLK)
+    cfg.pin_bck = D7;                    // Bit Clock (BCLK)
+    cfg.pin_data = D6;                   // Data In (DOUT)
     cfg.i2s_format = I2S_PHILIPS_FORMAT; // or try with I2S_LSB_FORMAT
     i2sStream.begin(cfg);
 

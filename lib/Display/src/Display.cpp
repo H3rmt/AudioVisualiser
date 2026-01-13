@@ -2,6 +2,8 @@
 
 #include <Util.hpp>
 
+#include "../../Strip/Util.hpp"
+
 void Display::Display::init(const bool startAnimation) {
     Console::print("starting TFT on TFT_SCLK: ");
     Console::println(TFT_SCLK);
@@ -18,23 +20,31 @@ void Display::Display::init(const bool startAnimation) {
 
     Console::println("TFT started");
     tft.fillScreen(TFT_CASET);
+    delay(250);
+    tft.fillScreen(rgbTo565(20, 20, 25));
 
     Console::println("creating sprite");
     spr.setColorDepth(16);
     sptr = static_cast<uint16_t *>(spr.createSprite(spriteWidth, spriteHeight));
-
+    spr.fillSprite(rgbTo565(40, 40, 55));
     if (startAnimation) {
-        delay(200);
-        spr.fillSprite(TFT_OLIVE);
-        spr.fillSmoothRoundRect(0, 0, 30, spriteHeight, 5,TFT_DARKGREEN);
-        spr.fillSmoothRoundRect(spriteWidth - 32, 0, 30, 60, 5,TFT_BLACK);
-        spr.fillSmoothRoundRect(spriteWidth - 31, 70, 30, 60, 5,TFT_RED);
-        spr.fillSmoothRoundRect(spriteWidth - 30, 140, 30, 50, 5,TFT_BLUE);
-        addInfoString("display started");
-        delay(1000);
-    } else {
-        delay(200);
+        int color = 0;
+        for (int i = 0; i < spriteWidth - 30; i += 20) {
+            spr.fillRect(15 + i, spriteHeight / 2 - 30, 15, 60, rainbowColor(color, false));
+            dmaWrite();
+            delay(30);
+            color += 6;
+        }
+        for (int i = 0; i < spriteWidth - 30; i += 20) {
+            spr.fillRect(15 + i, spriteHeight / 2 - 30, 15, 60, rainbowColor(color, false));
+            dmaWrite();
+            delay(30);
+            color += 6;
+        }
+        delay(300);
+        spr.fillSprite(rgbTo565(40, 40, 54));
     }
+    addInfoString("display started");
 }
 
 
@@ -42,51 +52,6 @@ void Display::Display::drawBars() {
     Console::println("drawing topbar");
     drawTopBar();
 }
-
-void Display::Display::draw(const AnalyzeData *data) {
-    // simple horizontal bouncing circle at the bottom of the sprite
-    static int cx = 0;
-    static int cx2 = 50;
-    static int dx = 16;
-    static int dx2 = 10;
-    // static int dx = 4;
-    const int radius = 10;
-    const int cy = spriteHeight - radius - 2;
-
-    if (cx == 0) cx = radius + 2;
-
-    // clear only the bottom area where the circle moves to avoid erasing top info
-    const int clearHeight = radius * 2 + 4;
-
-    // tft.fillRect(30, spriteY + spriteHeight - clearHeight, spriteWidth - 60, clearHeight, TFT_BLACK);
-
-    // draw the moving circle
-    // tft.fillCircle(30 + cx, spriteY + cy, radius, TFT_CYAN);
-    // tft.fillCircle(spriteWidth - cx2 - 30, spriteY + cy, radius, TFT_ORANGE);
-
-    spr.fillRect(30, spriteHeight - clearHeight, spriteWidth - 60, clearHeight, TFT_BLACK);
-
-    // draw the moving circle
-    spr.fillCircle(30 + cx, cy, radius, TFT_CYAN);
-    spr.fillCircle(spriteWidth - cx2 - 30, cy, radius, TFT_ORANGE);
-
-    // step and bounce
-    cx += dx;
-    cx2 += dx2;
-    if (cx2 - radius <= 0 || cx2 + radius >= spriteWidth - 60) {
-        dx2 = -dx2;
-        cx2 += dx2;
-    }
-    if (cx - radius <= 0 || cx + radius >= spriteWidth - 60) {
-        dx = -dx;
-        cx += dx;
-    }
-
-
-    spr.fillSmoothRoundRect(spriteWidth - 31, 70, 30, 60, 5, rainbowColor(random(0, 192)));
-    dmaWrite();
-}
-
 
 void Display::Display::dmaWait() {
     if (dma)
@@ -104,40 +69,41 @@ void Display::Display::dmaWrite() {
 
 
 void Display::Display::drawTopBar() {
+    tft.setTextColor(TFT_WHITE, rgbTo565(20, 20, 25));
     tft.setFreeFont(&FreeSans18pt7b);
     tft.setCursor(0, 35);
     tft.print("Wuzhi Audio");
     tft.setFreeFont(nullptr);
 
     const String str2 = String(Consts::SamplingFrequency / 1000) + " kHz";
-    tft.setCursor(200, 5);
+    tft.setCursor(205, 5);
     tft.print(str2);
 
-    const String str3 = String(Consts::Samples) + " samples";
-    tft.setCursor(200, 15);
+    const String str3 = String(Consts::Samples) + " smpls";
+    tft.setCursor(205, 15);
     tft.print(str3);
 
-    tft.drawLine(270, 0, 270, TOPBARHEIGHT - 1, TFT_WHITE);
+    tft.drawLine(270, 0, 270, TOPBARHEIGHT - 1, rgbTo565(130, 130, 130));
     // drawSettingsIcon(Display::tft, Display::tft.width() - 23, 23, TFT_WHITE);
 
-    tft.drawLine(0, TOPBARHEIGHT - 1, FULLWIDTH, TOPBARHEIGHT - 1, TFT_WHITE);
+    tft.drawLine(0, TOPBARHEIGHT - 1, FULLWIDTH, TOPBARHEIGHT - 1, rgbTo565(130, 130, 130));
 }
 
 // fps, 1000.0 / shared->millisForOneFFT, displayAnalyzeData->loudnessDivider
-void Display::Display::updateFPS(const float loudnessDivider, const double framesPerSecond,
-                                 const double ledsUpdatesPerSecond) {
-    tft.setTextColor(TFT_WHITE, TFT_CASET);
-    tft.setCursor(200, 15);
-    tft.print(loudnessDivider, 2);
-    tft.print(" DIV   ");
+void Display::Display::updateFPS(const uint16_t loudnessDivider, const uint16_t framesPerSecond,
+                                 const uint16_t ledsUpdatesPerSecond) {
+    tft.setTextColor(rgbTo565(14, 145, 243), rgbTo565(20, 20, 25));
+    tft.setCursor(205, 15);
+    tft.print(loudnessDivider);
+    tft.print(" DIV    ");
 
-    tft.setCursor(200, 25);
-    tft.print(framesPerSecond, 2);
-    tft.print(" FPS");
+    tft.setCursor(205, 25);
+    tft.print(framesPerSecond);
+    tft.print(" FPS ");
 
-    tft.setCursor(200, 35);
-    tft.print(ledsUpdatesPerSecond, 2);
-    tft.print(" UPS");
+    tft.setCursor(205, 35);
+    tft.print(ledsUpdatesPerSecond);
+    tft.print(" UPS ");
 }
 
 void Display::Display::addInfoString(const char *infoString, const bool replace) {
@@ -149,8 +115,109 @@ void Display::Display::addInfoString(const char *infoString, const bool replace)
     Console::println(infoString);
 
     spr.setTextFont(4);
-    spr.setTextColor(TFT_WHITE, TFT_OLIVE);
-    spr.setCursor(35, 25 * messageCount - 17);
+    spr.setTextColor(TFT_WHITE, rgbTo565(40, 40, 54));
+    spr.setCursor(15, messageCount * 25 - 17);
     spr.print(infoString);
     dmaWrite();
+}
+
+void Display::Display::drawRawAudio(const int32_t streamBuffer[Consts::Samples], const bool off) {
+    int32_t startSample = 0;
+    const uint32_t color = off ? ILI9341_RED : ILI9341_GREEN;
+
+    for (uint16_t x = 0; x < spriteWidth; x += 1) {
+        spr.drawLine(
+            x,
+            max(0, min(spriteHeight, spriteHeight / 2 - streamBuffer[startSample] / rawDivider)),
+            x + 1,
+            max(0, min(spriteHeight, spriteHeight / 2 - streamBuffer[startSample + 1] / rawDivider)),
+            color);
+        startSample++;
+        if (startSample >= Consts::Samples - 1)
+            break;
+    }
+}
+
+void Display::Display::draw(const AnalyzeData *data) {
+    spr.fillSprite(rgbTo565(10, 10, 15));
+    const auto results = data->results;
+    const auto peaks = data->peaks;
+
+    for (uint32_t i = 0; i < Consts::SamplesUsable; i++) {
+        if (i * WIDTH_BAR >= 270)
+            break;
+        uint32_t hr = results[i] / fftDivider;
+        if (hr > spriteHeight)
+            hr = spriteHeight;
+        if (hr < 2)
+            hr = 0;
+        spr.fillRect(WIDTH_BAR * i, spriteHeight - hr, WIDTH_BAR, hr, ILI9341_WHITE);
+
+        uint32_t hp = peaks[i] / fftDivider;
+        if (hp > spriteHeight)
+            hp = spriteHeight;
+        if (hp < 2)
+            hp = 0;
+        spr.fillRect(WIDTH_BAR * i, spriteHeight - hp, WIDTH_BAR, hp - hr, rainbowColor(90 + max(hp * 0.72, 20), true));
+        // spr.fillRect(WIDTH_BAR * i, spriteHeight - hp, WIDTH_BAR, hp - hr, rainbowColor200(hp));
+        // spr.fillRect(WIDTH_BAR * i, spriteHeight - hp, WIDTH_BAR, hp - hr, rainbowColor(hp));
+    }
+}
+
+// max x = 320
+void Display::Display::drawDebugBars(const AnalyzeData *data) {
+    spr.drawLine(270, 0, 270, spriteHeight, rgbTo565(130, 130, 130));
+
+    spr.fillRect(273, 0, 8, min(spriteHeight, data->floatingAverageMin / FFT_SCALE), ILI9341_ORANGE);
+    spr.fillRect(283, 0, 8, min(spriteHeight, data->floatingAverage / FFT_SCALE), ILI9341_RED);
+
+    const auto height = spriteHeight * (static_cast<float>(data->peakFrequencyValue) / static_cast<float>(data->
+                                            floatingAverage));
+    spr.fillRect(291, spriteHeight - min(spriteHeight, height), 8, max(0, spriteHeight - height), ILI9341_GREEN);
+
+    spr.fillRect(301, 0, 8, min(spriteHeight, data->peakFrequencyValue / FFT_SCALE), ILI9341_PINK);
+    spr.fillRect(311, 0, 8, min(spriteHeight, data->results[data->peakFrequencyIndex] / FFT_SCALE), ILI9341_WHITE);
+
+    // Draw for peakFreaquencyIndex (white)
+    spr.fillRect(WIDTH_BAR * data->peakFrequencyIndex, 2, WIDTH_BAR, 4, ILI9341_WHITE);
+
+    // Draw for peakFreaquencyIndexFloat (orange)
+    spr.fillRect(WIDTH_BAR * data->peakFrequencyIndexFloat, 8, WIDTH_BAR, 4, ILI9341_ORANGE);
+
+    // Draw for peakFreaquencyIndexLazy (red)
+    spr.fillRect(WIDTH_BAR * data->peakFrequencyIndexLazy, 14, WIDTH_BAR, 4, ILI9341_RED);
+}
+
+
+void Display::Display::drawDebugLines(const AnalyzeData *data) {
+    spr.drawLine(270 - 10, spriteHeight / 2, 270, spriteHeight / 2, TFT_GREEN);
+
+    const int off = max(0, min(spriteHeight, spriteHeight / 2 - Consts::RawMinForOff / rawDivider));
+    spr.drawLine(270 - 10, off, 270 - 3, off, TFT_RED);
+#ifdef DoubleDebugLines
+    const int off2 = max(0, min(spriteHeight, spriteHeight / 2 + Consts::RawMinForOff / rawDivider));
+    // spr.drawLine(270 - 10, off2, 270 - 3, off2, TFT_RED);
+#endif
+
+
+    const int maxV = max(0, min(spriteHeight, spriteHeight / 2 - data->rawDataMax / rawDivider));
+    spr.drawLine(270 - 10, maxV, 270 - 3, maxV, rgbTo565(14, 145, 243));
+#ifdef DoubleDebugLines
+    const int maxV2 = max(0, min(spriteHeight, spriteHeight / 2 + data->rawDataMax / rawDivider));
+    // spr.drawLine(270 - 10, maxV2, 270 - 3, maxV2, rgbTo565(14, 145, 243));
+#endif
+
+    const int inc = max(0, min(spriteHeight, spriteHeight / 2 - Consts::IncreaseDivider / rawDivider));
+    spr.drawLine(270 - 10, inc, 270 - 3, inc, TFT_MAGENTA);
+#ifdef DoubleDebugLines
+    const int inc2 = max(0, min(spriteHeight, spriteHeight / 2 + Consts::IncreaseDivider / rawDivider));
+    // spr.drawLine(270 - 10, inc2, 270 - 3, inc2, TFT_MAGENTA);
+#endif
+
+    const int div = max(0, min(spriteHeight, spriteHeight / 2 - Consts::DecreaseDivider / rawDivider));
+    spr.drawLine(270 - 10, div, 270 - 3, div, TFT_ORANGE);
+#ifdef DoubleDebugLines
+    const int div2 = max(0, min(spriteHeight, spriteHeight / 2 + Consts::DecreaseDivider / rawDivider));
+    // spr.drawLine(270 - 10, div2, 270 - 3, div2, TFT_ORANGE);
+#endif
 }

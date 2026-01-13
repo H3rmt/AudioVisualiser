@@ -2,28 +2,34 @@
 
 #include "MultiplexedStrip.hpp"
 
-auto one = MultiplexedStrip(D5, 72, 72, 72, 72);
-auto two = MultiplexedStrip(D4, 2, 62, 2, 62);
+constexpr int STRIP1OUT = 12;
+constexpr int STRIP2OUT = 13;
+constexpr int SELECT1 = 14;
+constexpr int SELECT2 = 15;
+
+auto one = MultiplexedStrip(STRIP2OUT, SELECT1, SELECT2, 1, 2, 3, 4);
+// auto one = MultiplexedStrip(STRIP1OUT, 72, 72, 72, 72);
+// auto two = MultiplexedStrip(STRIP2OUT, 2, 62, 2, 62);
 
 void setupLeds() {
-    pinMode(D2, OUTPUT);
-    pinMode(D3, OUTPUT);
-    digitalWrite(D2, LOW);
-    digitalWrite(D3, LOW);
+    pinMode(SELECT1, OUTPUT);
+    pinMode(SELECT2, OUTPUT);
+    digitalWrite(SELECT1, LOW);
+    digitalWrite(SELECT2, LOW);
     one.begin();
-    two.begin();
+    // two.begin();
 
     one.setReversed(0, true);
     one.setReversed(1, true);
     one.setReversed(2, true);
     one.setReversed(3, true);
 
-    two.setReversed(1, true);
+    // two.setReversed(1, true);
 }
 
 void testLeds(const int index) {
     one.test(index);
-    two.test(index);
+    // two.test(index);
 }
 
 void drawLEDsOff() {
@@ -44,11 +50,11 @@ void drawLEDs(const uint32_t input, const uint32_t avg) {
     // unknown
     // two.normal(0, input, avg);
     // front right
-    two.circle(1, input, avg, 8, 2, 0.12, true);
+    // two.circle(1, input, avg, 8, 2, 0.12, true);
     // unknown
     // two.normal(2, input, avg);
     // front left
-    two.circle(3, input, avg, 8, 2, 0.12, true);
+    // two.circle(3, input, avg, 8, 2, 0.12, true);
 
     // sub.pulse(input, avg, false);
     // sideo.centre(input, avg);

@@ -1,15 +1,15 @@
 #pragma once
 
-#define DIVIDER_MIN 0.7f
-#define DIVIDER_MAX 4.0f
-#define INCREASE_DIVIDER_PEAK 8200
-#define DECREASE_DIVIDER_PEAK 4500
-#define DECREASE_DIVIDER_SECONDS 10
+constexpr uint16_t divider_min = 5;
+constexpr uint16_t divider_max = 40;
 
-#define OFF_THRESHOLD 2500
+constexpr int decreaseDividerSeconds = 15;
+
 #define OFF_SECONDS 30
 
-#define ESTIMATE_SAMPLES_PER_SECOND 40
+// #define FLOATING_AVG_MIN_BASE 2000
+// added / 10 because divider is *10
+#define FLOATING_AVG_MIN_BASE 300
 
-#define FLOATING_AVG_MIN_BASE 90000
-// #define FLOATING_AVG_MIN_BASE 30000
+// constexpr int maxAvgFreq = 45;
+constexpr int maxAvgFreq = 60;

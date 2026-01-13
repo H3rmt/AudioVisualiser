@@ -9,44 +9,55 @@ namespace Console {
 
     void print(int value);
 
+    void print(float value);
+
     void println(const char str[]);
 
     void println(const String &s);
 
     void println(int value);
 
-    void printf(const char *format, ...);
+    void println(float value);
+
+    size_t printf(const char *format, ...);
 }
 
 namespace Consts {
-    constexpr int Samples = 512;
-    constexpr int SamplesUsable = 256;
-    constexpr int SamplingFrequency = 44100;
+    // constexpr int32_t Samples = 256;
+    constexpr int32_t Samples = 512;
+    // constexpr int32_t Samples = 1024;
+    constexpr int32_t SamplesRaw = Samples * 4;
+    constexpr int32_t SamplesUsable = Samples / 2;
+    constexpr int32_t SamplingFrequency = 44100;
+
+    constexpr uint32_t RawMinForOff = 8000000;
+    constexpr uint32_t IncreaseDivider = 35000000;
+    constexpr uint32_t DecreaseDivider = 20000000;
 }
 
 
 /// Data structure for analyzed audio data
 struct AnalyzeData {
+    /// Points to one of the two buffers with raw audio data
+    int32_t *rawDataPointer = nullptr;
+
     /// Approximate FFT buffer
-    int results[Consts::SamplesUsable]{};
+    uint32_t results[Consts::SamplesUsable]{};
 
     /// Amplitude peak buffer
-    int peaks[Consts::SamplesUsable]{};
+    uint32_t peaks[Consts::SamplesUsable]{};
 
-    /// Maximum value in the streamBuffer
-    int resultMax = 0;
+    /// Maximum value inside the raw Buffer
+    int32_t rawDataMax = 0;
 
-    /// Amount of samples with maximum of all frequencies lower than OFF_THRESHOLD (if this exceeds OFF_SECONDS * ESTIMATE_SAMPLES_PER_SECOND, the system is considered "off")
-    uint16_t lessThanOffCounter = 0;
+    /// Maximum value in the results array
+    uint32_t resultMax = 0;
 
     /// No sound is detected over some time
-    bool off = false;
+    bool off = true;
 
-    /// Divider used for incoming sample values from the Microphone
-    // float loudnessDivider = 0.8;
-
-    /// Iterations where loudness is less than DECREASE_DIVIDER_PEAK
-    // uint16_t lessThanLoudnessDividerDecreaseCounter = 0;
+    /// Divider*10 used for incoming sample values from the Microphone
+    uint16_t loudnessDividerN = 8;
 
     /// Index of the peak frequency Average that is adjusted to move towards the detected peak
     uint8_t peakFrequencyIndexFloat = 0;
@@ -61,10 +72,10 @@ struct AnalyzeData {
     int peakFrequencyValue = 0;
 
     /// Value of the current floating average, calculated from floatingAverage and peakFrequency value
-    int floatingAverage = 0;
+    uint32_t floatingAverage = 0;
 
     /// Minimum value of the floating average, calculated from peakFrequencyIndex and loudnessDivider
-    int floatingAverageMin = 0;
+    uint32_t floatingAverageMin = 0;
 };
 
 /// Program-wide shared data structure
@@ -75,6 +86,9 @@ struct Shared {
     /// If Display has progressed the old data, this is set to true
     bool allowNewDataForDisplay = true;
 
-    /// Time it took for one FFT iteration
-    uint16_t millisForOneFFT = 0;
+    /// Number of Display refreshes (reset every second)
+    uint16_t DisplayRefreshCount = 0;
+
+    /// Number of FFTs (reset every second)
+    uint16_t FFTCount = 0;
 };

@@ -1,29 +1,10 @@
 call_recipe := just_executable() + " --justfile=\"" + justfile() + "\""
 
-build env="dfu":
+build env="wired":
     platformio run -e {{ env }}
 
-upload-whired port: (build "dfu")
-    #!/usr/bin/env bash
-    platformio run -e dfu -t nobuild -t upload --upload-port {{ port }}
-
-upload-whireless:
-    #!/usr/bin/env bash
-    [ -f .env ] && source .env
-    export PLATFORMIO_UPLOAD_FLAGS="--auth='${OTA_PASSWORD}'"
-    {{ call_recipe }} build "ota"
-    platformio run -e ota -t nobuild -t upload --upload-port ${ESP_HOSTNAME}
-
-upload:
-    #!/usr/bin/env bash
-    device=$(ls /dev/ttyUSB* /dev/ttyACM* 2>/dev/null | head -n1) || true;
-    if [ -n "$device" ]; then
-      echo "Uploading via wired connection to $device"
-      {{ call_recipe }} upload-whired "$device"
-    else
-      echo "No wired device found, uploading via wireless"
-      {{ call_recipe }} upload-whireless
-    fi
+upload *args:
+    platformio run -e wired -t upload {{ args }}
 
 monitor device="auto":
     #!/usr/bin/env bash
@@ -34,3 +15,11 @@ monitor device="auto":
       device="{{ device }}";
     fi;
     exec minicom -D "$device" -b 115200
+
+monitor-pio:
+    platformio device monitor -e wired -b 115200
+
+setup:
+    picotool partition create main.json ./tmp/pt.uf2
+    picotool load ./tmp/pt.uf2
+    picotool reboot -u

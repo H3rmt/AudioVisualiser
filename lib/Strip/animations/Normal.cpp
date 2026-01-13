@@ -7,7 +7,7 @@
 
 void MultiplexedStrip::normal(uint8_t index, uint32_t lvl, uint32_t maxLvlAvg)
 {
-    StripData *current = getCurrentStrip(index);
+    StripData *current = selectStrip(index);
     if (current == nullptr)
         return;
 

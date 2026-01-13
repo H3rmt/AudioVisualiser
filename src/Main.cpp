@@ -14,11 +14,7 @@
 
 #include "Light.hpp"
 
-Shared globalShared = {
-    .newDataForDisplay = false,
-    .allowNewDataForDisplay = true,
-    .millisForOneFFT = 0,
-};
+Shared globalShared;
 
 // Two analyze data structures for double buffering
 AnalyzeData analyzeData1;
@@ -34,7 +30,7 @@ uint32_t last_ota_time = 0;
 
 void connectWifi() {
     Console::println("Connecting to WiFi: ");
-    WiFiClass::setHostname(ESP_HOSTNAME);
+    WiFi.setHostname(ESP_HOSTNAME);
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
     while (WiFi.waitForConnectResult() != WL_CONNECTED) {
         delay(250);
@@ -42,7 +38,7 @@ void connectWifi() {
     }
     Console::println("");
     const IPAddress ip = WiFi.localIP();
-    Console::printf("IP: %s, hostname: %s\r\n", ip.toString().c_str(), WiFiClass::getHostname());
+    Console::printf("IP: %s, hostname: %s\r\n", ip.toString().c_str(), WiFi.getHostname());
     ArduinoOTA.onStart([] {
         Console::println("Start OTA update");
     });
@@ -68,7 +64,6 @@ void connectWifi() {
     });
     ArduinoOTA.setPassword(OTA_PASSWORD);
     ArduinoOTA.setHostname(ESP_HOSTNAME);
-    ArduinoOTA.setMdnsEnabled(true);
     ArduinoOTA.begin();
     Console::printf("OTA started with Password %s started\r\n", OTA_PASSWORD);
 }
@@ -77,88 +72,47 @@ void connectWifi() {
 }
 #endif
 
-
-void displayUpdate(Shared *shared, AnalyzeData *data) {
-    // wait for next FFT to swap buffers
-    if (!shared->newDataForDisplay) {
-        return;
-    }
-    shared->newDataForDisplay = false;
-    shared->allowNewDataForDisplay = false;
-
-    // Display::dmaWait();
-    // drawSpriteIndizes(data->peakFrequencyIndexFloat, data->peakFrequencyIndex, data->peakFrequencyIndexLazy);
-    // drawSpriteBars(data->results, data->peaks);
-    // drawSpriteAudio(spr, data->streamBuffer, data->off); // Doesnt exist any more
-    // drawDebugBars(data, data->results);
-    // Display::dmaWrite();
-
-    shared->allowNewDataForDisplay = true;
-}
-
-// Timer for FPS
-unsigned long startMillis = millis();
-// Limit FPS to update every 10 ms
-unsigned long limitFPSMillis = millis();
-unsigned int counter = 0;
-
-[[noreturn]] void displayLoop(void *parameter) {
-    while (true) {
-        if (limitFPSMillis + 10 < millis()) {
-            limitFPSMillis = millis();
-            counter++;
-
-#ifdef UPLOAD_OTA
-            ArduinoOTA.handle();
-#endif
-
-            // TODO remove
-            display.draw(displayAnalyzeData);
-
-            if (startMillis + 1000 < millis()) {
-                startMillis = millis();
-                // display.updateFPS(displayAnalyzeData->loudnessDivider, fps, 1000.0 / shared->millisForOneFFT);
-                display.updateFPS(1.0, counter, 20);
-                counter = 0;
-            }
-            // Console::println("update display");
-        }
-    }
-}
-
-// Timer for FFT
-unsigned long readMillis = millis();
+int validFFTs = 0;
 
 void fftResult(AudioFFTBase &fft) {
-    globalShared.millisForOneFFT = millis() - readMillis;
-    readMillis = millis();
+    if (validFFTs > 200) {
+        globalShared.FFTCount++;
+        // added * 10 because divider is *10
+        // const uint32_t div = 10000 / liveAnalyzeData->loudnessDividerN;
+        const uint32_t div = 100000 / liveAnalyzeData->loudnessDividerN;
+        for (int i = 0; i < Consts::SamplesUsable; i++) {
+            const auto value = static_cast<uint32_t>(fft.magnitude(i) * div);
+            liveAnalyzeData->results[i] = value;
+        }
 
-    for (int i = 0; i < Consts::SamplesUsable; i += 10) {
-        const int value = static_cast<int>(fft.magnitude(i) * 1000000); // TODO  / liveAnalyzeData->loudnessDivider;
-        liveAnalyzeData->results[i] = value;
+        Analyze::checkOff(liveAnalyzeData);
+        Analyze::checkLoudnessDivider(liveAnalyzeData);
+        Analyze::analyzeFrequencies(liveAnalyzeData);
+
+        // if ((liveAnalyzeData)->off)analyzeFrequencies
+        // drawLEDsOff();
+        // else
+        // drawLEDs(liveAnalyzeData->peakFrequencyValue, liveAnalyzeData->floatingAverage);
+    } else {
+        validFFTs++;
     }
 
-    // checkOff(liveAnalyzeData);
-    // checkLoudnessDivider(liveAnalyzeData); // TODO
-    Analyze::analyzeFrequencies(liveAnalyzeData);
 
-    Serial.print(liveAnalyzeData->peakFrequencyValue);
-    Serial.print(" ");
-    Serial.println(liveAnalyzeData->floatingAverage);
-
-    // if ((liveAnalyzeData)->off)analyzeFrequencies
-    // drawLEDsOff();
-    // else
-    drawLEDs(liveAnalyzeData->peakFrequencyValue, liveAnalyzeData->floatingAverage);
+    // while (!globalShared.allowNewDataForDisplay) {
+    // }
 
     if (globalShared.allowNewDataForDisplay) {
         globalShared.allowNewDataForDisplay = false;
-        AnalyzeData *tmp = liveAnalyzeData;
-        liveAnalyzeData = displayAnalyzeData;
-        displayAnalyzeData = tmp;
+
+        liveAnalyzeData->rawDataPointer = Mic::getRawValuesBuffer();
+        Mic::switchBuffers();
+
+        memcpy(displayAnalyzeData, liveAnalyzeData, sizeof(AnalyzeData));
         globalShared.newDataForDisplay = true;
     }
 }
+
+volatile bool started = false;
 
 void setup() {
     Debug::setupOnboardLeds();
@@ -174,9 +128,14 @@ void setup() {
     Serial.read();
 #endif
 #endif
-    Console::printf("Serial initialized, running on core: %d\r\n", xPortGetCoreID());
+    Console::println("\n\n");
 
+#ifdef TEST_LEDS
     display.init(true);
+#else
+    display.init(false);
+#endif
+
     Debug::progress(1);
     Console::println("Display setup complete");
     display.addInfoString("display setup finished", true);
@@ -206,6 +165,7 @@ void setup() {
     display.addInfoString("LED setup complete");
     delay(150);
 
+#ifdef TEST_LEDS
     display.addInfoString("testing LED 1/4");
     testLeds(0);
     Console::println("LEDs 1/4 tested");
@@ -214,7 +174,6 @@ void setup() {
     testLeds(1);
     Console::println("LEDs 2/4 tested");
     delay(150);
-
     display.addInfoString("testing LED 3/4", true);
     testLeds(2);
     Console::println("LEDs 3/4 tested");
@@ -223,6 +182,7 @@ void setup() {
     testLeds(3);
     Console::println("LEDs 4/4 tested");
     delay(150);
+#endif
 
     display.addInfoString("LED testing finished", true);
     Console::println("LEDs tested");
@@ -236,13 +196,70 @@ void setup() {
     Debug::progress(7);
     delay(750);
     const auto str = String("Host: ") + ESP_HOSTNAME;
-    display.addInfoString(str.c_str(), true);
+    display.addInfoString(str.c_str());
     delay(250);
 
-    constexpr int stackSize = 10000;
-    xTaskCreatePinnedToCore(displayLoop, "DisplayLoop", stackSize, nullptr, 0, nullptr, 0);
+    started = true;
 }
 
+bool displayUpdate(Shared *shared, const AnalyzeData *data) {
+    // wait for next FFT to swap buffers
+    if (!shared->newDataForDisplay) {
+        return false;
+    }
+    shared->newDataForDisplay = false;
+    shared->allowNewDataForDisplay = false;
+
+    display.dmaWait();
+    display.draw(data);
+    display.drawRawAudio(data->rawDataPointer, data->off);
+
+    // drawSpriteIndizes(data->peakFrequencyIndexFloat, data->peakFrequencyIndex, data->peakFrequencyIndexLazy);
+    // drawSpriteBars(data->results, data->peaks);
+    // drawSpriteAudio(spr, data->streamBuffer, data->off); // Doesnt exist any more
+    display.drawDebugBars(data);
+    display.drawDebugLines(data);
+    // Display::dmaWrite();
+
+    display.dmaWrite();
+    shared->allowNewDataForDisplay = true;
+    return true;
+}
+
+// Timer for FPS
+unsigned long updateBarInfoMillis = millis();
+// Limit FPS to update every 10 ms
+unsigned long limitFPSMillis = millis();
+
 void loop() {
+    // if (limitFPSMillis + 5 < millis()) {
+    // limitFPSMillis = millis();
+
+    if (!displayUpdate(&globalShared, displayAnalyzeData)) {
+        return;
+    }
+    globalShared.DisplayRefreshCount++;
+#ifdef UPLOAD_OTA
+    ArduinoOTA.handle();
+#endif
+
+    if (updateBarInfoMillis + 1000 < millis()) {
+        updateBarInfoMillis = millis();
+        display.updateFPS(displayAnalyzeData->loudnessDividerN, globalShared.DisplayRefreshCount,
+                          globalShared.FFTCount);
+        globalShared.DisplayRefreshCount = 0;
+        globalShared.FFTCount = 0;
+    }
+    // }
+}
+
+void setup1() {
+    while (!started) {
+        delay(500);
+    }
+    Console::println("Starting loop1");
+}
+
+void loop1() {
     Mic::runMicStep();
 }

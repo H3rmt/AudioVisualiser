@@ -22,4 +22,7 @@ namespace Debug {
 
     /// @brief Indicate error and halt execution with onboard leds
     [[noreturn]] void errorExit(int code);
+
+    /// @brief Loops forever
+    [[noreturn]] void loop();
 } // namespace Debug
