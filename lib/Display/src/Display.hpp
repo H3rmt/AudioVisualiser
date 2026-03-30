@@ -1,6 +1,7 @@
 #pragma once
 
 #include <TFT_eSPI.h>
+#include <stdint.h>
 
 #include "Core.hpp"
 
@@ -80,10 +81,14 @@ namespace Display {
         /// start DMA write
         void dmaWrite();
 
-        /// Poll touchscreen (no IRQ) and remember a new touch.
-        /// When a new touch-down is detected, a small box is shown at the touch
-        /// position for a short time (see implementation).
-        void touchStep();
+        /// draw settings UI
+        void drawSettingsUI();
+
+        /// Poll touchscreen (no IRQ) and handle top-bar actions.
+        void checkSettingsToggle();
+
+        /// Whether the settings UI is currently shown instead of the audio visualiser.
+        bool isSettingsMode() const { return settingsMode; }
 
     private:
         TFT_eSPI tft = TFT_eSPI();
@@ -97,6 +102,18 @@ namespace Display {
         uint16_t lastTouchY = 0;
         uint32_t lastTouchMillis = 0;
 #endif
+
+        bool settingsMode = false;
+        uint8_t settingsPage = 0;
+        static constexpr uint8_t settingsPageCount = 5;
+
+        // Settings icon hitbox (centered at iconX/iconY, see drawTopBar()).
+        static constexpr int settingsIconX = fullWidth - 23;
+        static constexpr int settingsIconY = 23;
+        static constexpr int settingsIconHitHalf = 20;
+        static constexpr uint32_t settingsToggleCooldownMs = 1000;
+
+        uint32_t lastSettingsToggleMillis = 0;
 
         /// draw Top bar on display
         void drawTopBar();

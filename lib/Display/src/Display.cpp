@@ -1,5 +1,8 @@
 #include "Display.hpp"
 
+#include "Icons.hpp"
+#include "SettingsUI.hpp"
+
 #include <Util.hpp>
 
 #include "../../Strip/Util.hpp"
@@ -52,7 +55,7 @@ void Display::Display::init(const bool startAnimation) {
     addInfoString("display started");
 }
 
-void Display::Display::touchStep() {
+void Display::Display::checkSettingsToggle() {
 #if !defined(TOUCH_CS)
     return;
 #else
@@ -69,37 +72,44 @@ void Display::Display::touchStep() {
         lastTouchY = y;
         lastTouchMillis = millis();
 
-        // Only log on a new touch so we don't spam Serial.
-        Console::println("touch: x=" + String(lastTouchX) + " y=" + String(lastTouchY));
-    }
-    touchWasDown = down;
+        const bool hitSettings =
+                (static_cast<int>(lastTouchX) >= (settingsIconX - settingsIconHitHalf)) &&
+                (static_cast<int>(lastTouchX) <= (settingsIconX + settingsIconHitHalf)) &&
+                (static_cast<int>(lastTouchY) >= (settingsIconY - settingsIconHitHalf)) &&
+                (static_cast<int>(lastTouchY) <= (settingsIconY + settingsIconHitHalf));
+        // Better toggle system:
+        // - must release and press again (we only act on the up->down edge)
+        // - must wait at least 1s between toggles
+        const bool cooldownPassed = (lastSettingsToggleMillis == 0) ||
+                                    ((millis() - lastSettingsToggleMillis) >= settingsToggleCooldownMs);
 
-    // Draw a small box for a short time after a new touch.
-    if (lastTouchMillis != 0 && (millis() - lastTouchMillis) < 1000) {
-        // Touch coords are full-screen (0..319/239). Sprite is offset by TOPBARHEIGHT.
-        const int box = 10;
-        const int sx = lastTouchX;
-        const int fullSy = lastTouchY;
-        const int sy = fullSy - TOPBARHEIGHT;
+        if (hitSettings && cooldownPassed) {
+            settingsMode = !settingsMode;
+            settingsPage = 0;
+            lastSettingsToggleMillis = millis();
+            Console::println(String("settings icon pressed -> settingsMode=") + (settingsMode ? "1" : "0"));
+        }
 
-        if (fullSy >= 0 && fullSy < TOPBARHEIGHT && sx >= 0 && sx < fullWidth) {
-            // Top bar is drawn directly to TFT (sprite does not cover it).
-            tft.drawRect(
-                max(0, sx - box / 2),
-                max(0, fullSy - box / 2),
-                box,
-                box,
-                ILI9341_YELLOW);
-        } else if (sy >= 0 && sy < spriteHeight && sx >= 0 && sx < spriteWidth) {
-            // Main area is rendered via the sprite.
-            spr.drawRect(
-                max(0, sx - box / 2),
-                max(0, sy - box / 2),
-                box,
-                box,
-                ILI9341_YELLOW);
+        // When in settings mode, also handle presses inside the sprite UI.
+        if (settingsMode && static_cast<int>(lastTouchY) >= TOPBARHEIGHT) {
+            const int sx = static_cast<int>(lastTouchX);
+            const int sy = static_cast<int>(lastTouchY) - TOPBARHEIGHT;
+
+            const auto action = SettingsUI::actionForTouch(sx, sy, spriteWidth, spriteHeight);
+            if (action == SettingsUI::Action::PageUp) {
+                if (settingsPage > 0) {
+                    settingsPage--;
+                    Console::println(String("settings page -> ") + (settingsPage + 1));
+                }
+            } else if (action == SettingsUI::Action::PageDown) {
+                if (settingsPage + 1 < settingsPageCount) {
+                    settingsPage++;
+                    Console::println(String("settings page -> ") + (settingsPage + 1));
+                }
+            }
         }
     }
+    touchWasDown = down;
 #endif
 }
 
@@ -127,37 +137,42 @@ void Display::Display::dmaWrite() {
 void Display::Display::drawTopBar() {
     tft.setTextColor(TFT_WHITE, rgbTo565(20, 20, 25));
     tft.setFreeFont(&FreeSans18pt7b);
-    tft.setCursor(0, 35);
+    tft.setCursor(4, 35);
     tft.print("Wuzhi Audio");
     tft.setFreeFont(nullptr);
 
     const String str2 = String(Consts::SamplingFrequency / 1000) + " kHz";
-    tft.setCursor(205, 5);
+    tft.setCursor(207, 5);
     tft.print(str2);
 
     const String str3 = String(Consts::Samples) + " smpls";
-    tft.setCursor(205, 15);
+    tft.setCursor(207, 15);
     tft.print(str3);
 
     tft.drawLine(270, 0, 270, TOPBARHEIGHT - 1, rgbTo565(130, 130, 130));
-    // drawSettingsIcon(Display::tft, Display::tft.width() - 23, 23, TFT_WHITE);
+    drawSettingsIcon(tft, settingsIconX, settingsIconY, TFT_WHITE);
 
     tft.drawLine(0, TOPBARHEIGHT - 1, FULLWIDTH, TOPBARHEIGHT - 1, rgbTo565(130, 130, 130));
+}
+
+void Display::Display::drawSettingsUI() {
+    // Empty settings page for now; UI chrome only.
+    SettingsUI::draw(spr, settingsPage, settingsPageCount);
 }
 
 // fps, 1000.0 / shared->millisForOneFFT, displayAnalyzeData->loudnessDivider
 void Display::Display::updateFPS(const uint16_t loudnessDivider, const uint16_t framesPerSecond,
                                  const uint16_t ledsUpdatesPerSecond) {
     tft.setTextColor(rgbTo565(14, 145, 243), rgbTo565(20, 20, 25));
-    tft.setCursor(205, 15);
+    tft.setCursor(207, 15);
     tft.print(loudnessDivider);
     tft.print(" DIV    ");
 
-    tft.setCursor(205, 25);
+    tft.setCursor(207, 25);
     tft.print(framesPerSecond);
     tft.print(" FPS ");
 
-    tft.setCursor(205, 35);
+    tft.setCursor(207, 35);
     tft.print(ledsUpdatesPerSecond);
     tft.print(" UPS ");
 }
@@ -195,6 +210,12 @@ void Display::Display::drawRawAudio(const int32_t streamBuffer[Consts::Samples],
 }
 
 void Display::Display::draw(const AnalyzeData *data) {
+    checkSettingsToggle();
+    if (settingsMode) {
+        drawSettingsUI();
+        return;
+    }
+
     spr.fillSprite(rgbTo565(10, 10, 15));
     const auto results = data->results;
     const auto peaks = data->peaks;
@@ -218,9 +239,6 @@ void Display::Display::draw(const AnalyzeData *data) {
         // spr.fillRect(WIDTH_BAR * i, spriteHeight - hp, WIDTH_BAR, hp - hr, rainbowColor200(hp));
         // spr.fillRect(WIDTH_BAR * i, spriteHeight - hp, WIDTH_BAR, hp - hr, rainbowColor(hp));
     }
-
-    // Overlay touch indicator last so it stays visible.
-    touchStep();
 }
 
 // max x = 320

@@ -203,12 +203,23 @@ void setup() {
 }
 
 bool displayUpdate(Shared *shared, const AnalyzeData *data) {
+    if (display.isSettingsMode()) {
+        display.dmaWait();
+        display.drawSettingsUI();
+        display.checkSettingsToggle();
+        display.dmaWrite();
+        return true;
+    }
+
     // wait for next FFT to swap buffers
     if (!shared->newDataForDisplay) {
         return false;
     }
     shared->newDataForDisplay = false;
     shared->allowNewDataForDisplay = false;
+
+    // check of settings enter
+    display.checkSettingsToggle();
 
     display.dmaWait();
     display.draw(data);

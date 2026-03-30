@@ -1,5 +1,7 @@
 #include "Icons.hpp"
 
+#include "Util.hpp"
+
 void drawPauseIcon(TFT_eSPI &tft, uint16_t x, uint16_t y, uint16_t color)
 {
     // Calculate positions for the two rectangles
@@ -48,8 +50,7 @@ void drawSettingsIcon(TFT_eSPI &tft, uint16_t x, uint16_t y, uint16_t color)
     uint8_t radius = 13;
     uint8_t border = 20;
 
-    tft.fillRect(x - border, y - border, border * 2, border * 2, TFT_BLACK);
-    // tft.drawRect(x - border, y - border, border * 2, border * 2, ILI9341_WHITE);
+    tft.fillRect(x - border, y - border, border * 2, border * 2, rgbTo565(20, 20, 25));
 
     tft.drawCircle(x, y, radius - 1, color);
     tft.drawCircle(x, y, radius / 2, color);
