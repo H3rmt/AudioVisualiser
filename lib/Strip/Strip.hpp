@@ -24,7 +24,7 @@ public:
 	void test3();
 	void test4();
 	void off();
-	void offAnimiation();
+	void offAnimation();
 
 	void normal(uint32_t lvl, uint32_t maxLvlAvg);
 	void centre(uint32_t lvl, uint32_t maxLvlAvg);

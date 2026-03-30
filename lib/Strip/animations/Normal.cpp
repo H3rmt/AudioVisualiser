@@ -5,13 +5,13 @@
 #include <Arduino.h>
 #include <Adafruit_NeoPixel.h>
 
-void MultiplexedStrip::normal(uint8_t index, uint32_t lvl, uint32_t maxLvlAvg)
+void MultiplexedStrip::normal(const uint8_t index, const uint32_t lvl, const uint32_t maxLvlAvg)
 {
     StripData *current = selectStrip(index);
     if (current == nullptr)
         return;
 
-    uint16_t height = map(lvl, 0, maxLvlAvg, 0, current->ledCount);
+    const uint16_t height = map(lvl, 0, maxLvlAvg, 0, current->ledCount);
     updateColorOffset(current);
 
     for (uint16_t i = 0; i < current->ledCount; i++)

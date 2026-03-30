@@ -7,170 +7,55 @@ constexpr int STRIP2OUT = 13;
 constexpr int SELECT1 = 14;
 constexpr int SELECT2 = 15;
 
-auto one = MultiplexedStrip(STRIP2OUT, SELECT1, SELECT2, 1, 2, 3, 4);
-// auto one = MultiplexedStrip(STRIP1OUT, 72, 72, 72, 72);
-// auto two = MultiplexedStrip(STRIP2OUT, 2, 62, 2, 62);
+// auto one = MultiplexedStrip(STRIP1OUT, SELECT1, SELECT2, 1, 2, 3, 4);
+auto two = MultiplexedStrip(STRIP2OUT, SELECT1, SELECT2, 1, 2, 3, 4);
 
 void setupLeds() {
     pinMode(SELECT1, OUTPUT);
     pinMode(SELECT2, OUTPUT);
     digitalWrite(SELECT1, LOW);
     digitalWrite(SELECT2, LOW);
-    one.begin();
-    // two.begin();
+    // one.begin();
+    two.begin();
 
-    one.setReversed(0, true);
-    one.setReversed(1, true);
-    one.setReversed(2, true);
-    one.setReversed(3, true);
-
-    // two.setReversed(1, true);
+    // one.setReversed(1, true);
+    two.setReversed(0, true);
+    two.setReversed(1, true);
+    two.setReversed(2, true);
+    two.setReversed(3, true);
 }
 
 void testLeds(const int index) {
-    one.test(index);
-    // two.test(index);
+    // one.test(index);
+    two.test(index);
 }
 
 void drawLEDsOff() {
-    // TODO
+    two.offAnimation(0);
+    delay(1);
+    two.offAnimation(1);
+    delay(1);
+    two.offAnimation(2);
+    delay(1);
+    two.offAnimation(3);
+    delay(1);
 }
 
 void drawLEDs(const uint32_t input, const uint32_t avg) {
     // left front back
-    one.centre(0, input, avg);
+    two.centre(0, input, avg);
+    delay(1);
     // right middle
-    one.centre(1, input, avg);
+    two.centre(1, input, avg);
+    delay(1);
     // right front back
-    one.centre(2, input, avg);
+    two.centre(2, input, avg);
+    delay(1);
     // left middle
-    one.centre(3, input, avg);
-
-
-    // unknown
-    // two.normal(0, input, avg);
-    // front right
-    // two.circle(1, input, avg, 8, 2, 0.12, true);
-    // unknown
-    // two.normal(2, input, avg);
-    // front left
-    // two.circle(3, input, avg, 8, 2, 0.12, true);
-
-    // sub.pulse(input, avg, false);
-    // sideo.centre(input, avg);
-    // midl.circle(input, avg, 4, 2, 0.12, true);
-    // sidem.centre(input, avg);
-    // midr.circle(input, avg, 4, 2, 0.12, true);
-    // sideo.centre(input, avg);
-    // sidem.centre(input, avg);
+    two.centre(3, input, avg);
+    delay(1);
 }
 
-#ifdef BBB
-
-void start() {
-    while (true) {
-        Serial.println("Starting test");
-        selectChannel(0);
-        one.off();
-        two.off();
-        selectChannel(1);
-        one.off();
-        two.off();
-        selectChannel(2);
-        one.off();
-        two.off();
-        selectChannel(3);
-        one.off();
-        two.off();
-        for (uint32_t i = 0; i < 65535; i += 514) {
-            auto color = Adafruit_NeoPixel::ColorHSV(i, 255, 255);
-            uint32_t index = map(i, 0, 65535, 0, 70);
-            Serial.println("index" + String(index));
-
-            selectChannel(0);
-            one.pixels.setPixelColor(index, color);
-            one.pixels.show();
-            two.pixels.setPixelColor(index, color);
-            two.pixels.show();
-            selectChannel(1);
-            one.pixels.setPixelColor(index, color);
-            one.pixels.show();
-            two.pixels.setPixelColor(index, color);
-            two.pixels.show();
-            selectChannel(2);
-            one.pixels.setPixelColor(index, color);
-            one.pixels.show();
-            two.pixels.setPixelColor(index, color);
-            two.pixels.show();
-            selectChannel(3);
-            one.pixels.setPixelColor(index, color);
-            one.pixels.show();
-            two.pixels.setPixelColor(index, color);
-            two.pixels.show();
-
-            delay(25);
-        }
-        Serial.println("Finished");
-        delay(500);
-    }
-}
-
-void testLedsSingle() {
-    delay(500);
-    Serial.println("LEDS start");
-    while (true) {
-        selectChannel(0);
-        Serial.println("Ch 1");
-        one.setMaxBrightness(255); // left front back
-        one.setLength(72);
-        one.test4();
-        one.off();
-        two.setMaxBrightness(50);
-        two.setLength(61); // ??
-        two.test4();
-        two.off();
-        delay(400);
-
-        selectChannel(1);
-        Serial.println("Ch 1");
-        one.setMaxBrightness(255); // right middle
-        one.setLength(72);
-        one.test4();
-        one.off();
-        two.setMaxBrightness(50);
-        two.setLength(61); // front right
-        two.test4();
-        two.off();
-
-        selectChannel(2);
-        Serial.println("Ch 1");
-        one.setMaxBrightness(255); // right front back
-        one.setLength(72);
-        one.test4();
-        one.off();
-        two.setMaxBrightness(50);
-        two.setLength(61); // ??
-        two.test4();
-        two.off();
-        delay(400);
-
-        selectChannel(3);
-        Serial.println("Ch 1");
-        one.setMaxBrightness(255); // ??
-        one.setLength(72);
-        one.test4();
-        one.off();
-        two.setMaxBrightness(50);
-        two.setLength(62); // front left
-        two.test4();
-        two.off();
-        delay(400);
-
-        Serial.println("LEDS complete");
-    }
-}
-
-#endif
 
 #ifdef AAA
 

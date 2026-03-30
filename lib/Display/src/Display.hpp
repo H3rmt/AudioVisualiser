@@ -80,11 +80,23 @@ namespace Display {
         /// start DMA write
         void dmaWrite();
 
+        /// Poll touchscreen (no IRQ) and remember a new touch.
+        /// When a new touch-down is detected, a small box is shown at the touch
+        /// position for a short time (see implementation).
+        void touchStep();
+
     private:
         TFT_eSPI tft = TFT_eSPI();
         TFT_eSprite spr = TFT_eSprite(&tft);
         uint16_t *sptr = nullptr;
         uint16_t messageCount = 0;
+
+#if defined(TOUCH_CS)
+        bool touchWasDown = false;
+        uint16_t lastTouchX = 0;
+        uint16_t lastTouchY = 0;
+        uint32_t lastTouchMillis = 0;
+#endif
 
         /// draw Top bar on display
         void drawTopBar();

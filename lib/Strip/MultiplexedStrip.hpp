@@ -9,9 +9,13 @@ struct CircleAnimState {
     uint32_t circlePosition = 0; // current position in the circle
 };
 
+struct OffAnimState {
+    float circle_position = 0;
+};
+
 struct StripData {
     // set once
-    uint16_t ledCount;
+    uint32_t ledCount;
     bool reversed;
     bool rainbow;
     bool adaptiveBrightness;
@@ -21,6 +25,7 @@ struct StripData {
     // change
     uint32_t colorOffset = 0;
     CircleAnimState circleAnimState;
+    OffAnimState offAnimState;
 };
 
 class MultiplexedStrip {
@@ -45,6 +50,8 @@ public:
     // void off(uint8_t index);
     // void offAnimiation(uint8_t index);
 
+    void offAnimation(uint8_t index);
+
     void normal(uint8_t index, uint32_t lvl, uint32_t maxLvlAvg);
 
     void centre(uint8_t index, uint32_t lvl, uint32_t maxLvlAvg);
@@ -67,5 +74,5 @@ private:
 
     StripData *selectStrip(uint8_t index);
 
-    void updateColorOffset(StripData *current);
+    static void updateColorOffset(StripData *current);
 };

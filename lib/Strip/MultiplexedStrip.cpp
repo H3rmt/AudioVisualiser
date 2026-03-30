@@ -93,7 +93,7 @@ void MultiplexedStrip::updateColorOffset(StripData *current) {
     }
 }
 
-void MultiplexedStrip::setReversed(uint8_t index, bool reverse) {
+void MultiplexedStrip::setReversed(const uint8_t index, const bool reverse) {
     StripData *current = selectStrip(index);
     if (current == nullptr)
         return;

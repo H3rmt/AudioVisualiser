@@ -89,10 +89,10 @@ void fftResult(AudioFFTBase &fft) {
         Analyze::checkLoudnessDivider(liveAnalyzeData);
         Analyze::analyzeFrequencies(liveAnalyzeData);
 
-        // if ((liveAnalyzeData)->off)analyzeFrequencies
-        // drawLEDsOff();
-        // else
-        // drawLEDs(liveAnalyzeData->peakFrequencyValue, liveAnalyzeData->floatingAverage);
+        if (liveAnalyzeData->off)
+            drawLEDsOff();
+        else
+            drawLEDs(liveAnalyzeData->peakFrequencyValue, liveAnalyzeData->floatingAverage);
     } else {
         validFFTs++;
     }

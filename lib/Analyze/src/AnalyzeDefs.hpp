@@ -3,7 +3,7 @@
 constexpr uint16_t divider_min = 5;
 constexpr uint16_t divider_max = 40;
 
-constexpr int decreaseDividerSeconds = 15;
+constexpr int decreaseDividerSeconds = 10;
 
 #define OFF_SECONDS 30
 

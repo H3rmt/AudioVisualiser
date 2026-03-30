@@ -18,6 +18,11 @@ void Display::Display::init(const bool startAnimation) {
     tft.setRotation(3);
     tft.initDMA();
 
+#if defined(TOUCH_CS)
+    // Keep the testing self-contained.
+    // If you already have calibration values somewhere else, setTouch() there.
+#endif
+
     Console::println("TFT started");
     tft.fillScreen(TFT_CASET);
     delay(250);
@@ -45,6 +50,57 @@ void Display::Display::init(const bool startAnimation) {
         spr.fillSprite(rgbTo565(40, 40, 54));
     }
     addInfoString("display started");
+}
+
+void Display::Display::touchStep() {
+#if !defined(TOUCH_CS)
+    return;
+#else
+    // TFT_eSPI provides calibrated screen coordinates via getTouch().
+    // We treat a transition up->down as a "new touch".
+    uint16_t x = 0;
+    uint16_t y = 0;
+
+    const bool down = tft.getTouch(&x, &y);
+    if (down && !touchWasDown) {
+        // Your touch panel reports Y inverted relative to the display coordinate system.
+        y = (fullHeight - 1) - y;
+        lastTouchX = x;
+        lastTouchY = y;
+        lastTouchMillis = millis();
+
+        // Only log on a new touch so we don't spam Serial.
+        Console::println("touch: x=" + String(lastTouchX) + " y=" + String(lastTouchY));
+    }
+    touchWasDown = down;
+
+    // Draw a small box for a short time after a new touch.
+    if (lastTouchMillis != 0 && (millis() - lastTouchMillis) < 1000) {
+        // Touch coords are full-screen (0..319/239). Sprite is offset by TOPBARHEIGHT.
+        const int box = 10;
+        const int sx = lastTouchX;
+        const int fullSy = lastTouchY;
+        const int sy = fullSy - TOPBARHEIGHT;
+
+        if (fullSy >= 0 && fullSy < TOPBARHEIGHT && sx >= 0 && sx < fullWidth) {
+            // Top bar is drawn directly to TFT (sprite does not cover it).
+            tft.drawRect(
+                max(0, sx - box / 2),
+                max(0, fullSy - box / 2),
+                box,
+                box,
+                ILI9341_YELLOW);
+        } else if (sy >= 0 && sy < spriteHeight && sx >= 0 && sx < spriteWidth) {
+            // Main area is rendered via the sprite.
+            spr.drawRect(
+                max(0, sx - box / 2),
+                max(0, sy - box / 2),
+                box,
+                box,
+                ILI9341_YELLOW);
+        }
+    }
+#endif
 }
 
 
@@ -162,6 +218,9 @@ void Display::Display::draw(const AnalyzeData *data) {
         // spr.fillRect(WIDTH_BAR * i, spriteHeight - hp, WIDTH_BAR, hp - hr, rainbowColor200(hp));
         // spr.fillRect(WIDTH_BAR * i, spriteHeight - hp, WIDTH_BAR, hp - hr, rainbowColor(hp));
     }
+
+    // Overlay touch indicator last so it stays visible.
+    touchStep();
 }
 
 // max x = 320
