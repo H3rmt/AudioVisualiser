@@ -37,28 +37,15 @@ public:
 
     void setReversed(uint8_t index, bool reverse);
 
-    // void setRainbow(uint8_t index, bool rainbow);
-    // void setAdaptiveBrightness(uint8_t index, bool adaptive);
-    // void setColorChangeSpeed(uint8_t index, uint16_t speed);
-    // void setMaxBrightness(uint8_t index, uint8_t maxBrightness);
-
     void test(uint8_t index);
-
-    // void test2(uint8_t index);
-    // void test3(uint8_t index);
-    // void test4(uint8_t index);
-    // void off(uint8_t index);
-    // void offAnimiation(uint8_t index);
 
     void offAnimation(uint8_t index);
 
-    void normal(uint8_t index, uint32_t lvl, uint32_t maxLvlAvg);
+    void normal(uint8_t index, uint32_t lvl);
 
-    void centre(uint8_t index, uint32_t lvl, uint32_t maxLvlAvg);
+    void centre(uint8_t index, uint32_t lvl);
 
-    // void pulse(uint8_t index, uint32_t lvl, uint32_t maxLvlAvg, bool onlyPeak);
-    void circle(uint8_t index, uint32_t lvl, uint32_t maxLvlAvg, uint16_t width, uint16_t bars, float moveSpeed,
-                bool reverseOnPeak);
+    // void setMaxBrightness(long brightness);
 
 private:
     Adafruit_NeoPixel pixels;

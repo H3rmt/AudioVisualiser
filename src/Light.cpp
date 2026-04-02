@@ -1,5 +1,6 @@
 #include "Light.hpp"
 
+#include "Core.hpp"
 #include "MultiplexedStrip.hpp"
 
 constexpr int STRIP1OUT = 12;
@@ -7,26 +8,29 @@ constexpr int STRIP2OUT = 13;
 constexpr int SELECT1 = 14;
 constexpr int SELECT2 = 15;
 
-// auto one = MultiplexedStrip(STRIP1OUT, SELECT1, SELECT2, 1, 2, 3, 4);
-auto two = MultiplexedStrip(STRIP2OUT, SELECT1, SELECT2, 1, 2, 3, 4);
+auto one = MultiplexedStrip(STRIP1OUT, SELECT1, SELECT2, 139, 0, 62, 61);
+auto two = MultiplexedStrip(STRIP2OUT, SELECT1, SELECT2, 72, 72, 72, 72);
 
 void setupLeds() {
     pinMode(SELECT1, OUTPUT);
     pinMode(SELECT2, OUTPUT);
     digitalWrite(SELECT1, LOW);
     digitalWrite(SELECT2, LOW);
-    // one.begin();
+    one.begin();
     two.begin();
 
-    // one.setReversed(1, true);
-    two.setReversed(0, true);
+    one.setReversed(0, true);
+    one.setReversed(2, true);
+    one.setReversed(3, true);
+    // one.setReversed(3, false);
+    two.setReversed(0, false);
     two.setReversed(1, true);
-    two.setReversed(2, true);
+    two.setReversed(2, false);
     two.setReversed(3, true);
 }
 
 void testLeds(const int index) {
-    // one.test(index);
+    one.test(index);
     two.test(index);
 }
 
@@ -42,18 +46,28 @@ void drawLEDsOff() {
 }
 
 void drawLEDs(const uint32_t input, const uint32_t avg) {
+    const auto read = analogRead(26);
+    // Console::printf("read %d\r\n", read);
+    const auto brightness = map(read, 0, 1023, 1, 255);
+    two.setMaxBrightness(brightness);
+    one.setMaxBrightness(brightness);
+
+    const uint32_t level = map((uint32_t) input, (uint32_t) 0, (uint32_t) avg, (uint32_t) 0, (uint32_t) UINT32_MAX);
+
     // left front back
-    two.centre(0, input, avg);
-    delay(1);
+    two.centre(0, level);
+    one.centre(0, level);
+
     // right middle
-    two.centre(1, input, avg);
-    delay(1);
+    two.centre(1, level);
+
     // right front back
-    two.centre(2, input, avg);
-    delay(1);
+    two.centre(2, level);
+    one.centre(2, level);
+
     // left middle
-    two.centre(3, input, avg);
-    delay(1);
+    two.centre(3, level);
+    one.centre(3, level);
 }
 
 

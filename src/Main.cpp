@@ -118,6 +118,7 @@ void setup() {
     Debug::setupOnboardLeds();
     Debug::testOnboardLeds();
     Debug::progress(0);
+    randomSeed(analogRead(26) * micros());
 
 #ifdef CDEBUG
     Serial.begin(115200);
