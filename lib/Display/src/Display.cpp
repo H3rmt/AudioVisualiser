@@ -5,8 +5,6 @@
 
 #include <Util.hpp>
 
-#include "../../Strip/animations/Util.hpp"
-
 void Display::Display::init(const bool startAnimation) {
     Console::print("starting TFT on TFT_SCLK: ");
     Console::println(TFT_SCLK);

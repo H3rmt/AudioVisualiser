@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Arduino.h>
+#include <cstdint>
 
 uint16_t rainbowColor(uint8_t spectrum, bool wrap);
 

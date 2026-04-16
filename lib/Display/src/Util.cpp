@@ -1,12 +1,14 @@
 #include "Util.hpp"
 
+#include <algorithm>
+
 // If 'spectrum' is in the range 0-159 it is converted to a spectrum colour
 // from 0 = red through to 127 = blue to 159 = violet
 uint16_t rainbowColor(uint8_t spectrum, const bool wrap) {
     if (wrap) {
         spectrum = spectrum % 192;
     } else {
-        spectrum = min(spectrum, 159);
+        spectrum = std::min(spectrum, static_cast<uint8_t>(159));
     }
 
     uint8_t red = 0; // Red is the top 5 bits of a 16 bit colour spectrum

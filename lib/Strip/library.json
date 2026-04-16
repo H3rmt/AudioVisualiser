@@ -1,0 +1,11 @@
+{
+  "name": "Strip",
+  "dependencies": [
+    {
+      "name": "Core"
+    },
+    {
+      "name": "Animations"
+    }
+  ]
+}
