@@ -18,7 +18,11 @@ const uint32_t padding = AnimationsUtil::ColorH(42);
 void printPixels(const std::vector<uint32_t> &pixels) {
     std::printf("pixels (%lu): ", pixels.size());
     for (size_t i = 0; i < pixels.size(); ++i) {
-        std::printf("%u(%" PRIu32 ")", ColorToHue(pixels[i]), pixels[i]);
+        const uint32_t color = pixels[i];
+        const uint8_t r = static_cast<uint8_t>((color >> 16) & 0xFFu);
+        const uint8_t g = static_cast<uint8_t>((color >> 8) & 0xFFu);
+        const uint8_t b = static_cast<uint8_t>(color & 0xFFu);
+        std::printf("\033[38;2;%u;%u;%um%u\033[0m(%" PRIu32 ")", r, g, b, ColorToHue(color), color);
         if (i + 1 < pixels.size()) {
             std::printf(", ");
         }
@@ -54,4 +58,16 @@ std::vector<uint32_t> prepare(const RenderCase &testCase) {
     pixels[totalBytes + 2] = padding;
     pixels[totalBytes + 3] = padding;
     return pixels;
+}
+
+Animations::StripData createStripData() {
+    Animations::StripData stripData;
+    stripData.ledCount = 0;
+    stripData.reversed = false;
+    stripData.rainbow = false;
+    stripData.adaptiveBrightness = false;
+    stripData.colorChangeSpeed = 0;
+    stripData.perLedColorChange = 0;
+    stripData.maxBrightness = 0;
+    return stripData;
 }

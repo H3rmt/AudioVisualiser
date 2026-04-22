@@ -23,3 +23,6 @@ RenderCase makeCase(
 
 
 std::vector<uint32_t> prepare(const RenderCase &testCase);
+
+
+Animations::StripData createStripData();

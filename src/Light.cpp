@@ -22,7 +22,7 @@ void setupLeds() {
     one.setReversed(0, true);
     one.setReversed(2, true);
     one.setReversed(3, true);
-    // one.setReversed(3, false);
+
     two.setReversed(0, false);
     two.setReversed(1, true);
     two.setReversed(2, false);
@@ -48,26 +48,27 @@ void drawLEDsOff() {
 void drawLEDs(const uint32_t input, const uint32_t avg) {
     const auto read = analogRead(26);
     // Console::printf("read %d\r\n", read);
-    const auto brightness = map(read, 0, 1023, 1, 255);
-    two.setMaxBrightness(brightness);
-    one.setMaxBrightness(brightness);
+    // const auto brightness = map(read, 0, 1023, 1, 255);
+    // two.setMaxBrightness(brightness);
+    // one.setMaxBrightness(brightness);
 
-    const uint32_t level = map((uint32_t) input, (uint32_t) 0, (uint32_t) avg, (uint32_t) 0, (uint32_t) UINT32_MAX);
+    // const uint32_t level = map((uint32_t) input, (uint32_t) 0, (uint32_t) avg, (uint32_t) 0, (uint32_t) UINT32_MAX);
+    const uint32_t level = UINT32_MAX / 2;
 
     // left front back
-    two.centre(0, level);
-    one.centre(0, level);
+    // two.centre(0, level);
+    // one.centre(0, level);
 
     // right middle
-    two.centre(1, level);
+    // two.centre(1, level);
 
     // right front back
-    two.centre(2, level);
-    one.centre(2, level);
+    two.normal(2, level);
+    // one.centre(2, level);
 
     // left middle
-    two.centre(3, level);
-    one.centre(3, level);
+    // two.centre(3, level);
+    // one.centre(3, level);
 }
 
 

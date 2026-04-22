@@ -14,7 +14,7 @@ monitor device="auto":
     else
       device="{{ device }}";
     fi;
-    exec minicom -D "$device" -b 115200
+    exec minicom -con -D "$device" -b 115200
 
 monitor-pio:
     platformio device monitor -e wired -b 115200

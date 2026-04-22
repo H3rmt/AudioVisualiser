@@ -13,21 +13,24 @@ namespace Animations {
     };
 
     struct StripData {
-        // set once
-        uint32_t ledCount;
-        bool reversed;
-        bool rainbow;
-        bool adaptiveBrightness;
-        uint16_t colorChangeSpeed;
-        uint8_t maxBrightness;
+        // fix
+        uint32_t ledCount = 0;
 
-        // change
+        // configurable
+        bool reversed = false;
+        bool rainbow = false;
+        bool adaptiveBrightness = false;
+        uint16_t colorChangeSpeed = 0;
+        uint16_t perLedColorChange = 0;
+        uint8_t maxBrightness = 0;
+
+        // change during animation
         uint32_t colorOffset = 0;
         CircleAnimState circleAnimState;
         OffAnimState offAnimState;
     };
 
-    void renderCircle(uint32_t *pixels, const StripData *config, uint32_t lvl);
+    void renderCircle(uint8_t *pixels, const StripData *config, uint32_t lvl);
 
-    void renderNormal(uint32_t *pixels, const StripData *config, uint32_t lvl);
+    void renderNormal(uint8_t *pixels, const StripData *config, uint32_t lvl);
 }

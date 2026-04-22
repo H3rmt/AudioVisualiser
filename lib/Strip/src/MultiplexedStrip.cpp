@@ -5,6 +5,8 @@
 #include <Normal.cpp>
 #include <Circle.cpp>
 
+#include "Core.hpp"
+
 Animations::StripData *MultiplexedStrip::selectStrip(const uint8_t index) {
     digitalWrite(selectA, index & 0x01);
     digitalWrite(selectB, index >> 1 & 0x01);
@@ -28,10 +30,10 @@ MultiplexedStrip::MultiplexedStrip(int16_t pin, uint16_t selectA, uint16_t selec
       maxLength(max(ledCount1, max(ledCount2, max(ledCount3, ledCount4)))),
       selectA(selectA),
       selectB(selectB) {
-    first = {ledCount1, false, true, false, 400, 255};
-    second = {ledCount2, false, true, false, 400, 255};
-    third = {ledCount3, false, true, false, 400, 255};
-    fourth = {ledCount4, false, true, false, 400, 255};
+    first = {ledCount1, false, true, false, 400, 3000, 255};
+    second = {ledCount2, false, true, false, 400, 3000, 255};
+    third = {ledCount3, false, true, false, 400, 3000, 255};
+    fourth = {ledCount4, false, true, false, 400, 3000, 255};
 }
 
 void MultiplexedStrip::begin() {
@@ -124,7 +126,7 @@ void MultiplexedStrip::centre(const uint8_t index, const uint32_t lvl) {
     if (current == nullptr || current->ledCount == 0)
         return;
     updateColorOffset(current);
-    Animations::renderCircle(reinterpret_cast<uint32_t *>(pixels.getPixels()), current, lvl);
+    Animations::renderCircle(pixels.getPixels(), current, lvl);
 
     // pixels.setBrightness(lvl, maxLvlAvg);
     pixels.show();
@@ -136,7 +138,21 @@ void MultiplexedStrip::normal(const uint8_t index, const uint32_t lvl) {
     if (current == nullptr || current->ledCount == 0)
         return;
     updateColorOffset(current);
-    Animations::renderNormal(reinterpret_cast<uint32_t *>(pixels.getPixels()), current, lvl);
+
+    auto p = pixels.getPixels();
+    for (int i = 0; i < pixels.numPixels() * 3; i++) {
+        Console::print(p[i]);
+        Console::print(" ");
+    }
+    Console::println("");
+    Animations::renderNormal(pixels.getPixels(), current, lvl);
+    for (int i = 0; i < pixels.numPixels() * 3; i++) {
+        Console::print(p[i]);
+        Console::print(" ");
+    }
+    Console::println("");
+    delay(2000);
+    return;
 
     // pixels.setBrightness(lvl, maxLvlAvg);
     pixels.show();

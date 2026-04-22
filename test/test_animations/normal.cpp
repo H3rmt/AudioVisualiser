@@ -208,9 +208,9 @@ void test_renderNormal() {
 
     for (const auto &testCase: cases) {
         std::printf("[normal] case: %s (%" PRIu32 "/%" PRIu32 " = %d%% = [%d/%d])\n", testCase.name, testCase.lvl,
-                    UINT32_MAX,
-                    AnimationsUtil::map(testCase.lvl, UINT32_MAX, 100),
-                    AnimationsUtil::map(testCase.lvl, UINT32_MAX, testCase.config.ledCount), testCase.config.ledCount
+            UINT32_MAX,
+            AnimationsUtil::map(testCase.lvl, UINT32_MAX, 100),
+            AnimationsUtil::map(testCase.lvl, UINT32_MAX, testCase.config.ledCount), testCase.config.ledCount
         );
         auto elements = prepare(testCase);
         printPixels(elements);
