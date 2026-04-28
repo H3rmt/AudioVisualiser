@@ -62,7 +62,7 @@ namespace Display {
         void drawDebugLines(const AnalyzeData *data);
 
         // TODO
-        void drawRawAudio(const int32_t streamBuffer[Consts::Samples], bool off = false);
+        void drawRawAudio(const int32_t rawBuffer[Consts::Samples], bool off = false);
 
         /// update FPS counter in top bar
         /// @param loudnessDivider value of samples divider

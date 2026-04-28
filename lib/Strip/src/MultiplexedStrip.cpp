@@ -3,7 +3,7 @@
 #include <Adafruit_NeoPixel.h>
 
 #include <Normal.cpp>
-#include <Circle.cpp>
+#include <Centre.cpp>
 
 #include "Core.hpp"
 
@@ -30,10 +30,10 @@ MultiplexedStrip::MultiplexedStrip(int16_t pin, uint16_t selectA, uint16_t selec
       maxLength(max(ledCount1, max(ledCount2, max(ledCount3, ledCount4)))),
       selectA(selectA),
       selectB(selectB) {
-    first = {ledCount1, false, true, false, 400, 3000, 255};
-    second = {ledCount2, false, true, false, 400, 3000, 255};
-    third = {ledCount3, false, true, false, 400, 3000, 255};
-    fourth = {ledCount4, false, true, false, 400, 3000, 255};
+    first = {ledCount1, false, true, false, static_cast<uint16_t>(UINT16_MAX / ledCount1), 255};
+    second = {ledCount2, false, true, false,  static_cast<uint16_t>(UINT16_MAX / ledCount2), 255};
+    third = {ledCount3, false, true, false, static_cast<uint16_t>(UINT16_MAX / ledCount3), 255};
+    fourth = {ledCount4, false, true, false, static_cast<uint16_t>(UINT16_MAX / ledCount4), 255};
 }
 
 void MultiplexedStrip::begin() {
@@ -102,11 +102,18 @@ void MultiplexedStrip::test(const uint8_t index) {
     delay(100);
 }
 
-void MultiplexedStrip::updateColorOffset(Animations::StripData *current) {
-    current->colorOffset += current->colorChangeSpeed;
-    if (current->colorOffset >= 65535) {
-        current->colorOffset = 0;
-    }
+void MultiplexedStrip::setMaxBrightness(const uint8_t index, const uint8_t brightness) {
+    Animations::StripData *current = selectStrip(index);
+    if (current == nullptr || current->ledCount == 0)
+        return;
+    current->maxBrightness = brightness;
+}
+
+void MultiplexedStrip::setMaxHWBrightness(const uint8_t index, const uint8_t brightness) {
+    Animations::StripData *current = selectStrip(index);
+    if (current == nullptr || current->ledCount == 0)
+        return;
+    current->maxHWBrightness = brightness;
 }
 
 void MultiplexedStrip::setReversed(const uint8_t index, const bool reverse) {
@@ -117,44 +124,46 @@ void MultiplexedStrip::setReversed(const uint8_t index, const bool reverse) {
     current->reversed = reverse;
 }
 
-void MultiplexedStrip::setMaxBrightness(const long brightness) {
-    pixels.setBrightness(brightness);
-}
-
-void MultiplexedStrip::centre(const uint8_t index, const uint32_t lvl) {
+void MultiplexedStrip::setPerLedColorChange(const uint8_t index, const uint16_t change) {
     Animations::StripData *current = selectStrip(index);
     if (current == nullptr || current->ledCount == 0)
         return;
-    updateColorOffset(current);
-    Animations::renderCircle(pixels.getPixels(), current, lvl);
+    current->perLedColorChange = change;
+}
 
-    // pixels.setBrightness(lvl, maxLvlAvg);
+void MultiplexedStrip::centre(const uint8_t index, const uint16_t lvl, const uint16_t colorOffset) {
+    Animations::StripData *current = selectStrip(index);
+    if (current == nullptr || current->ledCount == 0)
+        return;
+    Animations::renderCentre(reinterpret_cast<Animations::Rgb *>(pixels.getPixels()), current, lvl, colorOffset);
+
     pixels.show();
 }
 
 
-void MultiplexedStrip::normal(const uint8_t index, const uint32_t lvl) {
+void MultiplexedStrip::normal(const uint8_t index, const uint16_t lvl, const uint16_t colorOffset) {
     Animations::StripData *current = selectStrip(index);
     if (current == nullptr || current->ledCount == 0)
         return;
-    updateColorOffset(current);
 
-    auto p = pixels.getPixels();
-    for (int i = 0; i < pixels.numPixels() * 3; i++) {
-        Console::print(p[i]);
-        Console::print(" ");
-    }
-    Console::println("");
-    Animations::renderNormal(pixels.getPixels(), current, lvl);
-    for (int i = 0; i < pixels.numPixels() * 3; i++) {
-        Console::print(p[i]);
-        Console::print(" ");
-    }
-    Console::println("");
-    delay(2000);
-    return;
+    // Console::print("pixels: ");
+    // auto p = pixels.getPixels();
+    // for (int i = 0; i < pixels.numPixels() * 3; i++) {
+    //     Console::print(p[i]);
+    //     if (i % 3 == 2)
+    //         Console::print("|");
+    //     Console::print(" ");
+    //
+    // }
+    // Console::println("\nafter: ");
+    Animations::renderNormal(reinterpret_cast<Animations::Rgb *>(pixels.getPixels()), current, lvl, colorOffset);
+    // for (int i = 0; i < pixels.numPixels() * 3; i++) {
+    //     Console::print(p[i]);
+    //     Console::print(" ");
+    // }
+    // Console::println("\n");
+    // delay(1000);
 
-    // pixels.setBrightness(lvl, maxLvlAvg);
     pixels.show();
 }
 

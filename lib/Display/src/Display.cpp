@@ -190,20 +190,31 @@ void Display::Display::addInfoString(const char *infoString, const bool replace)
     dmaWrite();
 }
 
-void Display::Display::drawRawAudio(const int32_t streamBuffer[Consts::Samples], const bool off) {
-    int32_t startSample = 0;
+void Display::Display::drawRawAudio(const int32_t rawBuffer[Consts::Samples], const bool off) {
+    int32_t startSample = 100;
     const uint32_t color = off ? ILI9341_RED : ILI9341_GREEN;
 
-    for (uint16_t x = 0; x < spriteWidth; x += 1) {
+    for (uint16_t x = 0; x < 230; x += 1) {
         spr.drawLine(
             x,
-            max(0, min(spriteHeight, spriteHeight / 2 - streamBuffer[startSample] / rawDivider)),
+            max(0, min(spriteHeight, (spriteHeight / 3) - (rawBuffer[startSample] / rawDivider))),
             x + 1,
-            max(0, min(spriteHeight, spriteHeight / 2 - streamBuffer[startSample + 1] / rawDivider)),
+            max(0, min(spriteHeight, (spriteHeight / 3) - (rawBuffer[startSample + 1] / rawDivider))),
             color);
-        startSample++;
+        startSample += 1;
         if (startSample >= Consts::Samples - 1)
-            break;
+            return;
+    }
+    for (uint16_t x = 0; x < 230; x += 1) {
+        spr.drawLine(
+            x,
+            max(0, min(spriteHeight, (spriteHeight / 3 * 2) - (rawBuffer[startSample] / rawDivider))),
+            x + 1,
+            max(0, min(spriteHeight, (spriteHeight / 3 * 2) - (rawBuffer[startSample + 1] / rawDivider))),
+            color);
+        startSample += 1;
+        if (startSample >= Consts::Samples - 1)
+            return;
     }
 }
 
@@ -218,7 +229,7 @@ void Display::Display::draw(const AnalyzeData *data) {
     const auto results = data->results;
     const auto peaks = data->peaks;
 
-    for (uint32_t i = 0; i < Consts::SamplesUsable; i++) {
+    for (uint16_t i = 0; i < Consts::SamplesUsable; i++) {
         if (i * WIDTH_BAR >= 270)
             break;
         uint32_t hr = results[i] / fftDivider;

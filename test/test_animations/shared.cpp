@@ -67,7 +67,7 @@ Animations::StripData createStripData() {
     stripData.rainbow = false;
     stripData.adaptiveBrightness = false;
     stripData.colorChangeSpeed = 0;
-    stripData.perLedColorChange = 0;
+    stripData.perLedColorChange = 5000;
     stripData.maxBrightness = 0;
     return stripData;
 }

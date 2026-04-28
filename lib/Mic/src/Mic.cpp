@@ -35,8 +35,7 @@ void Mic::setupMic(void (*callback)(AudioFFTBase &fft)) {
 
     auto fcfg = fft.defaultConfig(TX_MODE);
     fcfg.copyFrom(info);
-    fcfg.window_function_fft = new Hamming();
-    // fcfg.window_function_fft = &window;
+    fcfg.window_function_fft = new Hann();
     fcfg.length = Consts::Samples;
     fcfg.callback = callback;
     fft.begin(fcfg);

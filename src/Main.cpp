@@ -72,24 +72,28 @@ void connectWifi() {
 }
 #endif
 
+// first couple of ffts are invalid
 int validFFTs = 0;
 
 void fftResult(AudioFFTBase &fft) {
     if (validFFTs > 200) {
         globalShared.FFTCount++;
-        // added * 10 because divider is *10
-        // const uint32_t div = 10000 / liveAnalyzeData->loudnessDividerN;
-        const uint32_t div = 100000 / liveAnalyzeData->loudnessDividerN;
         for (int i = 0; i < Consts::SamplesUsable; i++) {
-            const auto value = static_cast<uint32_t>(fft.magnitude(i) * div);
+            const auto value = static_cast<uint32_t>(fft.magnitude(i) * 100000 / liveAnalyzeData->loudnessDividerN);
             liveAnalyzeData->results[i] = value;
         }
+        Analyze::calculate(liveAnalyzeData);
+        Analyze::updatePeaks(liveAnalyzeData);
 
-        Analyze::checkOff(liveAnalyzeData);
-        Analyze::checkLoudnessDivider(liveAnalyzeData);
+        const auto off = Analyze::checkOff(liveAnalyzeData);
+        liveAnalyzeData->off = off;
+
+        const auto update = Analyze::checkLoudnessDivider(liveAnalyzeData);
+        liveAnalyzeData->loudnessDividerN += update;
+
         Analyze::analyzeFrequencies(liveAnalyzeData);
 
-        if (liveAnalyzeData->off)
+        if (off)
             drawLEDsOff();
         else
             drawLEDs(liveAnalyzeData->peakFrequencyValue, liveAnalyzeData->floatingAverage);
@@ -240,13 +244,8 @@ bool displayUpdate(Shared *shared, const AnalyzeData *data) {
 
 // Timer for FPS
 unsigned long updateBarInfoMillis = millis();
-// Limit FPS to update every 10 ms
-unsigned long limitFPSMillis = millis();
 
 void loop() {
-    // if (limitFPSMillis + 5 < millis()) {
-    // limitFPSMillis = millis();
-
     if (!displayUpdate(&globalShared, displayAnalyzeData)) {
         return;
     }
@@ -262,7 +261,6 @@ void loop() {
         globalShared.DisplayRefreshCount = 0;
         globalShared.FFTCount = 0;
     }
-    // }
 }
 
 void setup1() {
