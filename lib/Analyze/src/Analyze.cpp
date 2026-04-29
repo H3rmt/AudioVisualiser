@@ -2,7 +2,6 @@
 #include <Core.hpp>
 
 #include "Analyze.hpp"
-#include "AnalyzeDefs.hpp"
 
 unsigned long startDecreaseLoudTriggered = 0;
 unsigned long startIncreaseLoudTriggered = 0;
@@ -64,8 +63,9 @@ void Analyze::checkChanges(AnalyzeData *data) {
         Console::print("checking decrease: ");
         int32_t avg = 0;
         // summ over last 10 seconds
-        for (uint8_t i = 0; i < (4 * 10); i++) {
-            avg += averages[(slot - i) % size];
+        for (uint8_t i = 0; i < 4 * 10; i++) {
+            // use positive index arithmetic to avoid negative values when subtracting
+            avg += averages[(slot + size - i) % size];
         }
         avg /= (4 * 10);
         Console::println(String(avg));
@@ -79,7 +79,8 @@ void Analyze::checkChanges(AnalyzeData *data) {
         int32_t avg = 0;
         // sum over last 1 second
         for (uint8_t i = 0; i < 4; i++) {
-            avg += averages[(slot - i) % size];
+            // avoid negative index by adding size before modulo
+            avg += averages[(slot + size - i) % size];
         }
         avg /= 4;
         Console::println(String(avg));
@@ -93,7 +94,8 @@ void Analyze::checkChanges(AnalyzeData *data) {
         int32_t avg = 0;
         // sum over last 20 seconds
         for (uint8_t i = 0; i < (4 * 20); i++) {
-            avg += averages[(slot - i) % size];
+            // wrap safely to previous slots
+            avg += averages[(slot + size - i) % size];
         }
         avg /= (4 * 20);
         Console::println(String(avg));
@@ -106,8 +108,9 @@ void Analyze::checkChanges(AnalyzeData *data) {
         Console::print("checking on: ");
         int32_t avg = 0;
         // sum over last 20 seconds
-        for (uint8_t i = 0; i < (4 * 2); i++) {
-            avg += averages[(slot - i) % size];
+        for (uint8_t i = 0; i < 4 * 2; i++) {
+            // wrap safely when subtracting
+            avg += averages[(slot + size - i) % size];
         }
         avg /= (4 * 2);
         Console::println(String(avg));
