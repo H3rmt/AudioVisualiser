@@ -69,7 +69,7 @@ struct AnalyzeData {
     uint8_t peakFrequencyIndex = 0;
 
     /// Value of the peak frequency
-    int peakFrequencyValue = 0;
+    uint16_t peakFrequencyValue = 0;
 
     /// Value of the current floating average, calculated from floatingAverage and peakFrequency value
     uint16_t floatingAverage = 0;

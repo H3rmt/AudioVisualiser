@@ -84,22 +84,22 @@ bool fftResult(int16_t *raw, AudioFFTBase &fft) {
         Analyze::checkChanges(liveAnalyzeData);
         Analyze::analyzeFrequencies(liveAnalyzeData);
 
-        // if (off)
-        //     drawLEDsOff();
-        // else
-        //     drawLEDs(liveAnalyzeData->peakFrequencyValue, liveAnalyzeData->floatingAverage);
+        if (liveAnalyzeData->off)
+            drawLEDsOff();
+        else
+            drawLEDs(liveAnalyzeData->peakFrequencyValue, liveAnalyzeData->floatingAverage);
     } else {
         validFFTs++;
     }
 
-
+    auto switchB = false;
     if (globalShared.allowNewDataForDisplay) {
         globalShared.allowNewDataForDisplay = false;
         memcpy(displayAnalyzeData, liveAnalyzeData, sizeof(AnalyzeData));
         globalShared.newDataForDisplay = true;
-        return true;
+        switchB = true;
     }
-    return false;
+    return switchB;
 }
 
 volatile bool started = false;
@@ -243,7 +243,7 @@ void loop() {
     if (updateBarInfoMillis + 1000 < millis()) {
         updateBarInfoMillis = millis();
         display.updateFPS(displayAnalyzeData->loudnessDividerN, globalShared.DisplayRefreshCount,
-                          globalShared.FFTCount);
+                          globalShared.FFTCount, millis() / 1000);
         globalShared.DisplayRefreshCount = 0;
         globalShared.FFTCount = 0;
     }

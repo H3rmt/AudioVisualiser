@@ -18,11 +18,16 @@ public:
 
     void test(uint8_t index);
 
+    void resetOff(uint8_t index);
+
     void offAnimation(uint8_t index);
 
     void normal(uint8_t index, uint16_t lvl, uint16_t colorOffset);
 
-    void centre(uint8_t index, uint16_t lvl, uint16_t colorOffset);
+    void centre(uint8_t index, uint16_t lvl, uint16_t colorOffset, float percentMaxChangeDivider = 20);
+
+    void circle(uint8_t index, uint16_t lvl, uint16_t colorOffset, uint16_t width = 5, uint16_t bars = 2,
+                float moveSpeed = 0.1f, bool reverseOnPeak = false);
 
     void setMaxBrightness(uint8_t index, uint8_t brightness);
 

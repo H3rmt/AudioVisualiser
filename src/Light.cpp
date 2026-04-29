@@ -21,9 +21,7 @@ void setupLeds() {
 
     one.setReversed(0, true);
     one.setReversed(2, true);
-    // one.setPerLedColorChange(2, 25000);
-    one.setReversed(3, true);
-    // one.setPerLedColorChange(3, 25000);
+    one.setReversed(3, false);
 
     two.setReversed(0, true);
     two.setReversed(1, true);
@@ -39,20 +37,23 @@ void testLeds(const int index) {
 }
 
 void drawLEDsOff() {
+    one.offAnimation(0);
     two.offAnimation(0);
-    delay(1);
+    // delay(1);
     two.offAnimation(1);
-    delay(1);
+    // delay(1);
+    one.offAnimation(2);
     two.offAnimation(2);
-    delay(1);
+    // delay(1);
+    one.offAnimation(3);
     two.offAnimation(3);
     delay(1);
 }
 
 uint16_t level = 0;
-uint8_t lastBrightness  = 0;
+uint8_t lastBrightness = 0;
 
-void drawLEDs(const uint32_t input, const uint32_t avg) {
+void drawLEDs(const uint16_t input, const uint16_t avg) {
     const auto read = analogRead(26);
     if (const uint8_t brightness = map(read, 0, 1023, 5, 255); brightness != lastBrightness) {
         lastBrightness = brightness;
@@ -65,42 +66,30 @@ void drawLEDs(const uint32_t input, const uint32_t avg) {
         two.setMaxHWBrightness(2, brightness);
         two.setMaxHWBrightness(3, brightness);
     }
+    one.resetOff(0);
+    two.resetOff(0);
+    two.resetOff(1);
+    one.resetOff(2);
+    two.resetOff(2);
+    one.resetOff(3);
+    two.resetOff(3);
 
-    // const uint32_t level = map((uint32_t) input, (uint32_t) 0, (uint32_t) avg, (uint32_t) 0, (uint32_t) UINT32_MAX);
-    // const uint16_t level = (UINT16_MAX / 40) * 2;
-    // const uint16_t level = (UINT16_MAX / 40) * 39;
-    // const uint16_t level = (UINT16_MAX / 40) * 30;
-    if (level % (UINT16_MAX / 2) < 150) {
-        // delay(2000);
-    }
-    if (level == UINT16_MAX) {
-        level = 0;
-    }
-    if (level > UINT16_MAX - 150)
-        level = UINT16_MAX;
-    else
-        level += 150;
-
+    const uint16_t level = input == 0 || avg == 0 ? 0 : static_cast<uint32_t>(input) * UINT16_MAX / avg;
     const uint16_t offset = millis() * 12 % UINT16_MAX;
 
     // left front back
-    two.centre(0, level, offset);
-    one.centre(0, level, offset);
-    delay(1);
-
+    two.centre(0, level, offset, 5);
+    one.centre(0, level, offset, 20);
     // right middle
-    two.centre(1, level, offset);
-    delay(1);
-
-    // right front back
-    two.centre(2, level, offset);
-    one.centre(2, level, offset);
-    delay(1);
+    two.centre(1, level, offset, 5);
 
     // left middle
-    two.centre(3, level, offset);
-    one.centre(3, level, offset);
-    delay(1);
+    two.centre(2, level, offset, 5);
+    one.circle(2, level, offset, 10, 3, 1.3, true);
+
+    // right front back
+    two.centre(3, level, offset, 5);
+    one.circle(3, level, offset, 10, 3, 1.3, true);
 }
 
 

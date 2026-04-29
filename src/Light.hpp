@@ -3,7 +3,7 @@
 #include <Arduino.h>
 
 void updateMaxBright(uint8_t maxBrightness);
-void drawLEDs(uint32_t input, uint32_t avg);
+void drawLEDs(uint16_t input, uint16_t avg);
 void drawLEDsOff();
 void setupLeds();
 void testLeds(int index);

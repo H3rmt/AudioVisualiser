@@ -155,8 +155,25 @@ void Display::Display::drawSettingsUI() {
 
 // fps, 1000.0 / shared->millisForOneFFT, displayAnalyzeData->loudnessDivider
 void Display::Display::updateFPS(const uint16_t loudnessDivider, const uint16_t framesPerSecond,
-                                 const uint16_t ledsUpdatesPerSecond) {
+                                 const uint16_t ledsUpdatesPerSecond, const uint32_t uptime_seconds) {
     tft.setTextColor(rgbTo565(14, 145, 243), rgbTo565(20, 20, 25));
+    tft.setCursor(207, 5);
+    const uint32_t hours = uptime_seconds / 3600;
+    const uint32_t minutes = (uptime_seconds % 3600) / 60;
+    const uint32_t seconds = uptime_seconds % 60;
+
+    if (hours > 0) {
+        tft.print(hours);
+        tft.print("h ");
+        tft.print(minutes);
+        tft.print("m  ");
+    } else {
+        tft.print(minutes);
+        tft.print("m ");
+        tft.print(seconds);
+        tft.print("s  ");
+    }
+
     tft.setCursor(207, 15);
     tft.print(loudnessDivider);
     tft.print(" DIV    ");
@@ -228,7 +245,8 @@ void Display::Display::draw(const AnalyzeData *data) {
             hp = spriteHeight;
         if (hp < 2)
             hp = 0;
-        spr.fillRect(1 + WIDTH_BAR * i, spriteHeight - hp, WIDTH_BAR, hp - hr, rainbowColor(95 + max(hp * 0.72, 20), true));
+        spr.fillRect(1 + WIDTH_BAR * i, spriteHeight - hp, WIDTH_BAR, hp - hr,
+                     rainbowColor(95 + max(hp * 0.72, 20), true));
         // spr.fillRect(WIDTH_BAR * i, spriteHeight - hp, WIDTH_BAR, hp - hr, rainbowColor200(hp));
         // spr.fillRect(WIDTH_BAR * i, spriteHeight - hp, WIDTH_BAR, hp - hr, rainbowColor(hp));
     }
@@ -243,7 +261,7 @@ void Display::Display::drawDebugBars(const AnalyzeData *data) {
 
     const auto height = spriteHeight * (static_cast<float>(data->peakFrequencyValue) / static_cast<float>(data->
                                             floatingAverage));
-    spr.fillRect(291, spriteHeight - min(spriteHeight, height), 8, max(0, spriteHeight - height), ILI9341_GREEN);
+    spr.fillRect(291, spriteHeight - min(spriteHeight, height), 8, height, ILI9341_GREEN);
 
     spr.fillRect(301, 0, 8, min(spriteHeight, data->peakFrequencyValue), ILI9341_PINK);
     spr.fillRect(311, 0, 8, min(spriteHeight, data->results[data->peakFrequencyIndex]), ILI9341_WHITE);

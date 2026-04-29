@@ -1,10 +1,25 @@
 #include "Animations.hpp"
 #include "AnimationsUtil.hpp"
 
-void Animations::renderCentre(Rgb *pixels, const StripData *config, const uint16_t lvl, const uint16_t colorOffset) {
+void Animations::renderCentre(Rgb *pixels, StripData *config, const uint16_t lvl, const uint16_t colorOffset,
+                              const float percentMaxChangeDivider) {
     AnimationsUtil::clearRgbPixels(pixels, config->ledCount);
     const uint16_t halfLeds = config->ledCount / 2;
-    const uint16_t coloredPixels = AnimationsUtil::map(lvl, UINT16_MAX, halfLeds);
+    const uint16_t targetColoredPixels = AnimationsUtil::map(lvl, UINT16_MAX, halfLeds);
+    const float step = config->ledCount / percentMaxChangeDivider;
+    if (config->centreAnimState.coloredPixels < targetColoredPixels) {
+        config->centreAnimState.coloredPixels += step;
+        if (config->centreAnimState.coloredPixels > targetColoredPixels) {
+            config->centreAnimState.coloredPixels = targetColoredPixels;
+        }
+    } else if (config->centreAnimState.coloredPixels > targetColoredPixels) {
+        config->centreAnimState.coloredPixels -= step;
+        if (config->centreAnimState.coloredPixels < targetColoredPixels) {
+            config->centreAnimState.coloredPixels = targetColoredPixels;
+        }
+    }
+
+    const uint16_t coloredPixels = config->centreAnimState.coloredPixels;
     if (!config->rainbow) {
         const Rgb color = AnimationsUtil::ColorH(colorOffset, config->maxHWBrightness);
         if (config->reversed) {

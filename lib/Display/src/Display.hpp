@@ -29,8 +29,8 @@ namespace Display {
     constexpr int spriteWidth = 320;
     constexpr int spriteHeight = 190;
 
-    constexpr bool dma = true;
-    // constexpr bool dma = false;
+    // constexpr bool dma = true;
+    constexpr bool dma = false;
 
     class Display {
     public:
@@ -62,7 +62,8 @@ namespace Display {
         /// @param loudnessDivider value of samples divider
         /// @param framesPerSecond calculated frames per second
         /// @param ledsUpdatesPerSecond calculated leds updates per second
-        void updateFPS(uint16_t loudnessDivider, uint16_t framesPerSecond, uint16_t ledsUpdatesPerSecond);
+        /// @param uptime_seconds uptime of the program in seconds
+        void updateFPS(uint16_t loudnessDivider, uint16_t framesPerSecond, uint16_t ledsUpdatesPerSecond, uint32_t uptime_seconds);
 
         /// Adds info string to display
         /// @param infoString string to add

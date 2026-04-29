@@ -31,7 +31,7 @@ MultiplexedStrip::MultiplexedStrip(int16_t pin, uint16_t selectA, uint16_t selec
       selectA(selectA),
       selectB(selectB) {
     first = {ledCount1, false, true, false, static_cast<uint16_t>(UINT16_MAX / ledCount1), 255};
-    second = {ledCount2, false, true, false,  static_cast<uint16_t>(UINT16_MAX / ledCount2), 255};
+    second = {ledCount2, false, true, false, static_cast<uint16_t>(UINT16_MAX / ledCount2), 255};
     third = {ledCount3, false, true, false, static_cast<uint16_t>(UINT16_MAX / ledCount3), 255};
     fourth = {ledCount4, false, true, false, static_cast<uint16_t>(UINT16_MAX / ledCount4), 255};
 }
@@ -131,18 +131,28 @@ void MultiplexedStrip::setPerLedColorChange(const uint8_t index, const uint16_t 
     current->perLedColorChange = change;
 }
 
-void MultiplexedStrip::centre(const uint8_t index, const uint16_t lvl, const uint16_t colorOffset) {
+void MultiplexedStrip::centre(const uint8_t index, const uint16_t lvl, const uint16_t colorOffset, const float percentMaxChangeDivider) {
     Animations::StripData *current = selectStrip(index);
     if (current == nullptr || current->ledCount == 0)
         return;
-    Animations::renderCentre(reinterpret_cast<Animations::Rgb *>(pixels.getPixels()), current, lvl, colorOffset);
+    Animations::renderCentre(reinterpret_cast<Animations::Rgb *>(pixels.getPixels()), current, lvl, colorOffset, percentMaxChangeDivider);
 
+    pixels.show();
+}
+
+void MultiplexedStrip::circle(const uint8_t index, const uint16_t lvl, const uint16_t colorOffset, const uint16_t width,
+                              const uint16_t bars, const float moveSpeed, const bool reverseOnPeak) {
+    Animations::StripData *current = selectStrip(index);
+    if (current == nullptr || current->ledCount == 0)
+        return;
+    Animations::renderCircle(reinterpret_cast<Animations::Rgb *>(pixels.getPixels()), current, lvl, colorOffset, width,
+                             bars, moveSpeed, reverseOnPeak);
     pixels.show();
 }
 
 
 void MultiplexedStrip::normal(const uint8_t index, const uint16_t lvl, const uint16_t colorOffset) {
-    Animations::StripData *current = selectStrip(index);
+    const Animations::StripData *current = selectStrip(index);
     if (current == nullptr || current->ledCount == 0)
         return;
 
@@ -167,17 +177,40 @@ void MultiplexedStrip::normal(const uint8_t index, const uint16_t lvl, const uin
     pixels.show();
 }
 
+void MultiplexedStrip::resetOff(const uint8_t index) {
+    Animations::StripData *current = selectStrip(index);
+    if (current == nullptr || current->ledCount == 0)
+        return;
+    current->offAnimState.starting = 0;
+}
+
 void MultiplexedStrip::offAnimation(const uint8_t index) {
     Animations::StripData *current = selectStrip(index);
     if (current == nullptr || current->ledCount == 0)
         return;
+    current->offAnimState.circle_position += static_cast<float>(current->ledCount) / 2000.0f;
+    if (current->offAnimState.starting < 250) {
+        current->offAnimState.starting++;
+    }
+    const uint8_t brightness_value = current->offAnimState.starting / 5;
+    const uint8_t nonlinear_brightness = static_cast<uint16_t>(brightness_value) * brightness_value / 60;
 
-    // clearRgbPixels(pixels.getPixels(), pixels.numPixels());
-    // pixels.setBrightness(30);
-    // current->offAnimState.circle_position += 0.03;
-    // const uint16_t start = static_cast<uint16_t>(current->offAnimState.circle_position) % current->ledCount;
-    // const uint32_t color = Adafruit_NeoPixel::Color(200, 0, 70);
-    // pixels.getPixels()[start] = color;
-    // pixels.getPixels()[(start + current->ledCount - 1) % current->ledCount] = color;
-    // pixels.show();
+    pixels.setBrightness(nonlinear_brightness);
+    pixels.clear();
+    int32_t start = static_cast<int16_t>(current->offAnimState.circle_position) % current->ledCount;
+    if (current->reversed) {
+        start = current->ledCount - 1 - start;
+    }
+    pixels.setPixelColor((start - 5 + current->ledCount) % current->ledCount, Adafruit_NeoPixel::Color(100, 0, 255));
+    pixels.setPixelColor((start - 4 + current->ledCount) % current->ledCount, Adafruit_NeoPixel::Color(80, 0, 255));
+    pixels.setPixelColor((start - 3 + current->ledCount) % current->ledCount, Adafruit_NeoPixel::Color(60, 20, 255));
+    pixels.setPixelColor((start - 2 + current->ledCount) % current->ledCount, Adafruit_NeoPixel::Color(40, 40, 255));
+    pixels.setPixelColor((start - 1 + current->ledCount) % current->ledCount, Adafruit_NeoPixel::Color(10, 50, 255));
+    pixels.setPixelColor(start, Adafruit_NeoPixel::Color(0, 60, 255));
+    pixels.setPixelColor((start + 1) % current->ledCount, Adafruit_NeoPixel::Color(10, 50, 255));
+    pixels.setPixelColor((start + 2) % current->ledCount, Adafruit_NeoPixel::Color(40, 40, 255));
+    pixels.setPixelColor((start + 3) % current->ledCount, Adafruit_NeoPixel::Color(60, 20, 255));
+    pixels.setPixelColor((start + 4) % current->ledCount, Adafruit_NeoPixel::Color(80, 0, 255));
+    pixels.setPixelColor((start + 5) % current->ledCount, Adafruit_NeoPixel::Color(100, 0, 255));
+    pixels.show();
 }

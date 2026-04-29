@@ -9,12 +9,18 @@ namespace Animations {
     };
 
     struct CircleAnimState {
-        float movement = 0.0; // movement speed
+        float movement = 20; // movement speed
         uint32_t last_dir_change = 0; // last direction change
-        uint32_t circlePosition = 0; // current position in the circle
+        float circlePosition = 0; // current position in the circle
+    };
+
+    struct CentreAnimState {
+        float movement = 0; // movement speed
+        float coloredPixels = 0; // current position in the circle
     };
 
     struct OffAnimState {
+        uint8_t starting = 0;
         float circle_position = 0;
     };
 
@@ -32,10 +38,16 @@ namespace Animations {
 
         // change during animation
         CircleAnimState circleAnimState;
+        CentreAnimState centreAnimState;
         OffAnimState offAnimState;
     };
 
-    void renderCentre(Rgb *pixels, const StripData *config, uint16_t lvl, uint16_t colorOffset);
 
     void renderNormal(Rgb *pixels, const StripData *config, uint16_t lvl, uint16_t colorOffset);
+
+    void renderCentre(Rgb *pixels, StripData *config, uint16_t lvl, uint16_t colorOffset,
+                      float percentMaxChangeDivider);
+
+    void renderCircle(Rgb *pixels, StripData *config, uint16_t lvl, uint16_t colorOffset, uint16_t width,
+                      uint16_t bars, float moveSpeed, bool reverseOnPeak);
 }
