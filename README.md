@@ -1,6 +1,6 @@
 # AudioVisualiser
 
-This is curently being rewirtten in the main branch to work on the nano ~~RP2040 nano~~ Esp32 nano
+This is curently being rewirtten in the main branch to work on the nano ~~RP2040 nano~~ ~~Esp32 nano~~ RP2350 Pico 2W
 
 ### Program to control multiple LED-Strips with an Arduino nano (every) using a microphone as input
 
