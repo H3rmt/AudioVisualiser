@@ -1,62 +1,43 @@
+#!/usr/bin/env python3
+
 import datetime
-import wave
 import serial
-import time
-import struct
+import wave
 
-ser = serial.Serial('/dev/ttyACM0', 115200, timeout=1)
-print("Waiting for serial connection...")
+PORT = "/dev/ttyACM0"
+BAUD = 921600
+SAMPLE_RATE = 44100
+CHANNELS = 1
+SAMPLE_WIDTH = 2  # 32-bit
+BLOCK_SAMPLES = 512
+BLOCK_BYTES = BLOCK_SAMPLES * SAMPLE_WIDTH
 
-channels = 1
-sample_width = 2  # 16-bit
+filename = (
+    f"recording_{datetime.datetime.now().strftime('n%Y-%m-%d_%H-%M-%S')}.wav"
+)
 
-now = datetime.datetime.now()
-filename = f"recording_oo{now.strftime('%Y-%m-%d_%H-%M-%S')}.wav"
+ser = serial.Serial(PORT, BAUD, timeout=2)
+print("Waiting for data...")
 
-samples = []
-print(f"Reading data...")
+written = 0
 
-start = None
-got_any = False
-while True:
-    line = ser.readline()
-    if not line:
-        if not got_any:
-            # no data yet — keep waiting for first sample
-            time.sleep(0.01)
-            continue
-        # we had data before and now got no data — stop reading
-        break
-    if not got_any:
-        start = time.time()
-        print("Started capturing samples...")
-        got_any = True
-    try:
-        val = int(line) >> 14
-        samples.append(val)
-    except ValueError:
-        continue
+with wave.open(filename, "wb") as wf:
+    wf.setnchannels(CHANNELS)
+    wf.setsampwidth(SAMPLE_WIDTH)
+    wf.setframerate(SAMPLE_RATE)
 
-elapsed = time.time() - start
-sample_rate = int(len(samples) / elapsed)
-print(f"Captured {len(samples)} samples in {elapsed:.2f}s (~{sample_rate} Hz)")
+    while True:
+        try:
+            chunk = ser.read(BLOCK_BYTES)
+        except serial.SerialException:
+            chunk = None
+        if not chunk:
+            print("Timeout")
+            break
+        wf.writeframes(chunk)
+        written += len(chunk)
+        print(f"\rWritten {written} bytes", end="")
 
-if sample_rate <= 0:
-    print("No samples captured, exiting.")
-    ser.close()
-    exit(1)
-
-# Write WAV file
-with wave.open(filename, 'wb') as wf:
-    wf.setnchannels(channels)
-    wf.setsampwidth(sample_width)
-    wf.setframerate(44100)
-    for v in samples:
-        try: 
-            wf.writeframes(struct.pack('<h', v))
-        except Exception as e:
-            print(f"Error writing frame: {e}")
-            continue
-
-print(f"Saved {filename} with sample_rate={sample_rate}")
+print()
 ser.close()
+print(f"Saved {filename}")

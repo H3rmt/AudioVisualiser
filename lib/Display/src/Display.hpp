@@ -12,13 +12,10 @@
 #define TOPBARHEIGHT 50
 // #define SPRITEHEIGHT 190
 
-#define FFT_SCALE 100
-
 // Pixelwidth of one bar in the sprite
 #define WIDTH_BAR 2
 // Width of the line in the trace in sprite
 #define WIDTH_TRACE 1
-
 
 // 0 to MAXAVGFREQ Frequencies are used to calculate the peak frequency
 // #define MAXAVGFREQ (SAMPLES_USABLE / 2)
@@ -31,9 +28,6 @@ namespace Display {
     constexpr int spriteY = 50;
     constexpr int spriteWidth = 320;
     constexpr int spriteHeight = 190;
-
-    constexpr int rawDivider = 500000;
-    constexpr int fftDivider = 80;
 
     constexpr bool dma = true;
     // constexpr bool dma = false;
@@ -62,7 +56,7 @@ namespace Display {
         void drawDebugLines(const AnalyzeData *data);
 
         // TODO
-        void drawRawAudio(const int32_t rawBuffer[Consts::Samples], bool off = false);
+        void drawRawAudio(const int16_t rawBuffer[Consts::Samples], bool off);
 
         /// update FPS counter in top bar
         /// @param loudnessDivider value of samples divider

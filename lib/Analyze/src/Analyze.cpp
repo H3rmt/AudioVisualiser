@@ -8,96 +8,121 @@ unsigned long startDecreaseLoudTriggered = 0;
 unsigned long startIncreaseLoudTriggered = 0;
 
 
-void Analyze::calculate(AnalyzeData *data) {
+void Analyze::calculate(AnalyzeData *data, const float *magnitudes) {
+    data->rawDataMax = 0;
+    data->resultMax = 0;
+    data->peakFrequencyIndex = 0;
     for (int32_t i = 0; i < Consts::Samples; i++) {
+        data->rawDataPointer[i] /= data->loudnessDividerN;
         if (const int32_t t = abs(data->rawDataPointer[i]); t > data->rawDataMax) {
             data->rawDataMax = t;
         }
     }
-    for (int i = 0; i < Consts::SamplesUsable; i++) {
+    for (int i = 0; i < Consts::FrequenciesUsable; i++) {
+        // increase small value
+        const auto value = static_cast<uint16_t>(
+            magnitudes[i] * Consts::FrequenciesUsable * 4 / data->loudnessDividerN);
+
         // adjust the amplitude of the approxBuffer (increase higher frequencies)
-        const auto a = static_cast<double>(i) / 50.0;
-        data->results[i] = static_cast<uint32_t>((0.7 + a * a) * static_cast<double>(data->results[i]));
+        const auto a = static_cast<double>(i) / 60.0;
+        const auto res = static_cast<uint32_t>((0.7 + a * a) * value);
+        data->results[i] = res;
 
-        if (data->results[i] > data->resultMax) {
-            data->resultMax = data->results[i];
+        if (res > data->resultMax) {
+            data->resultMax = res;
+            data->peakFrequencyIndex = i;
         }
-    }
-}
 
-int Analyze::checkLoudnessDivider(const AnalyzeData *data) {
-    if (data->rawDataMax > Consts::IncreaseDivider) {
-        startDecreaseLoudTriggered = 0;
-        if (startIncreaseLoudTriggered == 0) {
-            startIncreaseLoudTriggered = millis();
-        }
-        if (startIncreaseLoudTriggered + 1000 < millis()) {
-            startIncreaseLoudTriggered = 0;
-            if (data->loudnessDividerN < divider_max) {
-                return 1;
-            }
-        }
-    } else if (data->rawDataMax < Consts::DecreaseDivider) {
-        startIncreaseLoudTriggered = 0;
-        if (startDecreaseLoudTriggered == 0) {
-            startDecreaseLoudTriggered = millis();
-        }
-        if (startDecreaseLoudTriggered + (10 * 1000) < millis()) {
-            startDecreaseLoudTriggered = 0;
-            if (data->loudnessDividerN > divider_min) {
-                return -1;
-            }
-        }
-    } else {
-        startDecreaseLoudTriggered = 0;
-        startIncreaseLoudTriggered = 0;
-    }
-    return 0;
-}
-
-unsigned long startOffTriggered = 0;
-
-bool Analyze::checkOff(const AnalyzeData *data) {
-    if (data->rawDataMax < Consts::RawMinForOff) {
-        if (startOffTriggered == 0) {
-            startOffTriggered = millis();
-        }
-        if (startOffTriggered + OFF_SECONDS * 1000 < millis()) {
-            return true;
-        }
-    } else {
-        if (startOffTriggered != 0) {
-            startOffTriggered = 0;
-        }
-    }
-    return false;
-}
-
-uint32_t getAverageMinValue(const uint8_t frequency, const uint16_t loudnessDivider) {
-    // Map frequency (0..SAMPLES_USABLE) to a divider between 1.9 (at 0) and 0.5 (at SAMPLES_USABLE)
-    const float frequency_divider = 1.9f - ((1.4f * frequency) / Consts::SamplesUsable);
-    // Console::print(frequency_divider);
-    // Console::print(" ");
-    const uint16_t loud_divider = max(8, min(20, map(loudnessDivider, divider_min, divider_max, 6, 30)));
-    // Console::println(loud_divider);
-    return static_cast<uint32_t>(FLOATING_AVG_MIN_BASE * loud_divider * frequency_divider);
-}
-
-
-void Analyze::updatePeaks(AnalyzeData *data) {
-    for (int i = 0; i < Consts::SamplesUsable; i++) {
-        if (data->results[i] > data->peaks[i])
-            data->peaks[i] = data->results[i];
+        if (res > data->peaks[i])
+            data->peaks[i] = res;
         else // fall slowly
             data->peaks[i] = static_cast<uint32_t>(
-                static_cast<float>(data->peaks[i]) * 0.987 + static_cast<float>(data->results[i]) * 0.016);
+                static_cast<float>(data->peaks[i]) * 0.987 + static_cast<float>(res) * 0.016);
+    }
+}
 
-        if (i < Consts::SamplesUsable / 4) {
-            if (data->peaks[i] > data->peaks[data->peakFrequencyIndex]) {
-                data->peakFrequencyIndex = i;
-            }
+
+// 4 averages per second for 20 seconds
+// millis() % is used
+constexpr int size = 4 * 20;
+auto averages = new int32_t[size]{};
+uint8_t lastIndex = 50;
+
+void Analyze::checkChanges(AnalyzeData *data) {
+    const uint8_t sec = millis() / 1000 % 20;
+    const uint8_t msecSlot = millis() % 1000 / 250;
+    const uint8_t slot = sec * 4 + msecSlot;
+    if (slot == lastIndex)
+        return;
+    lastIndex = slot;
+    Console::println(
+        String("new slot: ") + slot + "  sec:" + sec + "  msec:" + msecSlot + "; current: " + data->rawDataMax);
+    averages[slot] = data->rawDataMax;
+
+    // check decrease average every 10 seconds
+    if (slot % (10 * 4) == 0) {
+        Console::print("checking decrease: ");
+        int32_t avg = 0;
+        // summ over last 10 seconds
+        for (uint8_t i = 0; i < (4 * 10); i++) {
+            avg += averages[(slot - i) % size];
+        }
+        avg /= (4 * 10);
+        Console::println(String(avg));
+        if (avg <= Consts::RawDecreaseDivider) {
+            data->loudnessDividerN -= 1;
         }
     }
+    // check increase every 1s
+    if (slot % 4 == 0) {
+        Console::print("checking increase: ");
+        int32_t avg = 0;
+        // sum over last 1 second
+        for (uint8_t i = 0; i < 4; i++) {
+            avg += averages[(slot - i) % size];
+        }
+        avg /= 4;
+        Console::println(String(avg));
+        if (avg > Consts::RawIncreaseDivider) {
+            data->loudnessDividerN += 1;
+        }
+    }
+    // check off every 20 seconds
+    if (slot == 0) {
+        Console::print("checking off: ");
+        int32_t avg = 0;
+        // sum over last 20 seconds
+        for (uint8_t i = 0; i < (4 * 20); i++) {
+            avg += averages[(slot - i) % size];
+        }
+        avg /= (4 * 20);
+        Console::println(String(avg));
+        if (avg <= Consts::RawMinOff) {
+            data->off = true;
+        }
+    }
+    // check on every 2 seconds
+    if (slot % (2 * 4) == 0) {
+        Console::print("checking on: ");
+        int32_t avg = 0;
+        // sum over last 20 seconds
+        for (uint8_t i = 0; i < (4 * 2); i++) {
+            avg += averages[(slot - i) % size];
+        }
+        avg /= (4 * 2);
+        Console::println(String(avg));
+        if (avg > Consts::RawMinOff) {
+            data->off = false;
+        }
+    }
+}
+
+
+uint32_t getAverageMinValue(const uint8_t frequency) {
+    const float frequency_divider = 0.7f + (
+                                        static_cast<float>(frequency) / static_cast<float>(Consts::FrequenciesUsable)
+                                    ) * (1.7f - 0.7f);
+    return static_cast<uint32_t>(60 * frequency_divider);
 }
 
 void Analyze::analyzeFrequencies(AnalyzeData *data) {
@@ -105,8 +130,8 @@ void Analyze::analyzeFrequencies(AnalyzeData *data) {
     const int diff = data->peakFrequencyIndex - data->peakFrequencyIndexFloat;
     if (diff > 0) {
         data->peakFrequencyIndexFloat += max(1, diff / 5);
-        if (data->peakFrequencyIndexFloat > maxAvgFreq)
-            data->peakFrequencyIndexFloat = maxAvgFreq;
+        // if (data->peakFrequencyIndexFloat > maxAvgFreq)
+        // data->peakFrequencyIndexFloat = maxAvgFreq;
     } else if (diff < 0) {
         const int move = max(1, -diff / 3);
         if (data->peakFrequencyIndexFloat > move)
@@ -123,10 +148,9 @@ void Analyze::analyzeFrequencies(AnalyzeData *data) {
     data->peakFrequencyValue = data->results[data->peakFrequencyIndexLazy];
 
     // Update floating average to follow the peak value, with min clamp
-    data->floatingAverageMin = getAverageMinValue(data->peakFrequencyIndex, data->loudnessDividerN);
+    data->floatingAverageMin = getAverageMinValue(data->peakFrequencyIndexLazy);
     data->floatingAverage = max(
-        data->peakFrequencyValue,
-        max(
-            data->floatingAverageMin,
-            static_cast<int>(data->floatingAverage * 0.99f + data->peakFrequencyValue * 0.022f)));
+        data->floatingAverageMin,
+        static_cast<int>(data->floatingAverage * 0.99f + data->peakFrequencyValue * 0.022f)
+    );
 }

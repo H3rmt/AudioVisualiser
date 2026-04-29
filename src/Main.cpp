@@ -75,45 +75,31 @@ void connectWifi() {
 // first couple of ffts are invalid
 int validFFTs = 0;
 
-void fftResult(AudioFFTBase &fft) {
+bool fftResult(int16_t *raw, AudioFFTBase &fft) {
     if (validFFTs > 200) {
         globalShared.FFTCount++;
-        for (int i = 0; i < Consts::SamplesUsable; i++) {
-            const auto value = static_cast<uint32_t>(fft.magnitude(i) * 100000 / liveAnalyzeData->loudnessDividerN);
-            liveAnalyzeData->results[i] = value;
-        }
-        Analyze::calculate(liveAnalyzeData);
-        Analyze::updatePeaks(liveAnalyzeData);
-
-        const auto off = Analyze::checkOff(liveAnalyzeData);
-        liveAnalyzeData->off = off;
-
-        const auto update = Analyze::checkLoudnessDivider(liveAnalyzeData);
-        liveAnalyzeData->loudnessDividerN += update;
-
+        const auto mags = fft.magnitudes();
+        liveAnalyzeData->rawDataPointer = raw;
+        Analyze::calculate(liveAnalyzeData, mags);
+        Analyze::checkChanges(liveAnalyzeData);
         Analyze::analyzeFrequencies(liveAnalyzeData);
 
-        if (off)
-            drawLEDsOff();
-        else
-            drawLEDs(liveAnalyzeData->peakFrequencyValue, liveAnalyzeData->floatingAverage);
+        // if (off)
+        //     drawLEDsOff();
+        // else
+        //     drawLEDs(liveAnalyzeData->peakFrequencyValue, liveAnalyzeData->floatingAverage);
     } else {
         validFFTs++;
     }
 
 
-    // while (!globalShared.allowNewDataForDisplay) {
-    // }
-
     if (globalShared.allowNewDataForDisplay) {
         globalShared.allowNewDataForDisplay = false;
-
-        liveAnalyzeData->rawDataPointer = Mic::getRawValuesBuffer();
-        Mic::switchBuffers();
-
         memcpy(displayAnalyzeData, liveAnalyzeData, sizeof(AnalyzeData));
         globalShared.newDataForDisplay = true;
+        return true;
     }
+    return false;
 }
 
 volatile bool started = false;
@@ -125,7 +111,8 @@ void setup() {
     randomSeed(analogRead(26) * micros());
 
 #ifdef CDEBUG
-    Serial.begin(115200);
+    // Serial.begin(115200);
+    Serial.begin(921600);
 #ifdef WAIT_FOR_SERIAL
     while (!Serial.available()) {
         Debug::testOnboardLeds();
@@ -235,7 +222,6 @@ bool displayUpdate(Shared *shared, const AnalyzeData *data) {
     // drawSpriteAudio(spr, data->streamBuffer, data->off); // Doesnt exist any more
     display.drawDebugBars(data);
     display.drawDebugLines(data);
-    // Display::dmaWrite();
 
     display.dmaWrite();
     shared->allowNewDataForDisplay = true;

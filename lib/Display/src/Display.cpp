@@ -19,11 +19,6 @@ void Display::Display::init(const bool startAnimation) {
     tft.setRotation(3);
     tft.initDMA();
 
-#if defined(TOUCH_CS)
-    // Keep the testing self-contained.
-    // If you already have calibration values somewhere else, setTouch() there.
-#endif
-
     Console::println("TFT started");
     tft.fillScreen(TFT_CASET);
     delay(250);
@@ -190,30 +185,19 @@ void Display::Display::addInfoString(const char *infoString, const bool replace)
     dmaWrite();
 }
 
-void Display::Display::drawRawAudio(const int32_t rawBuffer[Consts::Samples], const bool off) {
+void Display::Display::drawRawAudio(const int16_t rawBuffer[Consts::Samples], const bool off) {
     int32_t startSample = 100;
     const uint32_t color = off ? ILI9341_RED : ILI9341_GREEN;
 
-    for (uint16_t x = 0; x < 230; x += 1) {
+    for (uint16_t x = 20; x < 250; x += 1) {
         spr.drawLine(
             x,
-            max(0, min(spriteHeight, (spriteHeight / 3) - (rawBuffer[startSample] / rawDivider))),
+            max(0, min(spriteHeight, (spriteHeight / 2) - (rawBuffer[startSample]))),
             x + 1,
-            max(0, min(spriteHeight, (spriteHeight / 3) - (rawBuffer[startSample + 1] / rawDivider))),
+            max(0, min(spriteHeight, (spriteHeight / 2) - (rawBuffer[startSample + 2]))),
             color);
-        startSample += 1;
-        if (startSample >= Consts::Samples - 1)
-            return;
-    }
-    for (uint16_t x = 0; x < 230; x += 1) {
-        spr.drawLine(
-            x,
-            max(0, min(spriteHeight, (spriteHeight / 3 * 2) - (rawBuffer[startSample] / rawDivider))),
-            x + 1,
-            max(0, min(spriteHeight, (spriteHeight / 3 * 2) - (rawBuffer[startSample + 1] / rawDivider))),
-            color);
-        startSample += 1;
-        if (startSample >= Consts::Samples - 1)
+        startSample += 2;
+        if (startSample >= Consts::Samples - 2)
             return;
     }
 }
@@ -229,22 +213,22 @@ void Display::Display::draw(const AnalyzeData *data) {
     const auto results = data->results;
     const auto peaks = data->peaks;
 
-    for (uint16_t i = 0; i < Consts::SamplesUsable; i++) {
+    for (uint16_t i = 0; i < Consts::FrequenciesUsable; i++) {
         if (i * WIDTH_BAR >= 270)
             break;
-        uint32_t hr = results[i] / fftDivider;
+        uint32_t hr = results[i];
         if (hr > spriteHeight)
             hr = spriteHeight;
         if (hr < 2)
             hr = 0;
-        spr.fillRect(WIDTH_BAR * i, spriteHeight - hr, WIDTH_BAR, hr, ILI9341_WHITE);
+        spr.fillRect(1 + WIDTH_BAR * i, spriteHeight - hr, WIDTH_BAR, hr, ILI9341_WHITE);
 
-        uint32_t hp = peaks[i] / fftDivider;
+        uint32_t hp = peaks[i];
         if (hp > spriteHeight)
             hp = spriteHeight;
         if (hp < 2)
             hp = 0;
-        spr.fillRect(WIDTH_BAR * i, spriteHeight - hp, WIDTH_BAR, hp - hr, rainbowColor(90 + max(hp * 0.72, 20), true));
+        spr.fillRect(1 + WIDTH_BAR * i, spriteHeight - hp, WIDTH_BAR, hp - hr, rainbowColor(95 + max(hp * 0.72, 20), true));
         // spr.fillRect(WIDTH_BAR * i, spriteHeight - hp, WIDTH_BAR, hp - hr, rainbowColor200(hp));
         // spr.fillRect(WIDTH_BAR * i, spriteHeight - hp, WIDTH_BAR, hp - hr, rainbowColor(hp));
     }
@@ -254,15 +238,15 @@ void Display::Display::draw(const AnalyzeData *data) {
 void Display::Display::drawDebugBars(const AnalyzeData *data) {
     spr.drawLine(270, 0, 270, spriteHeight, rgbTo565(130, 130, 130));
 
-    spr.fillRect(273, 0, 8, min(spriteHeight, data->floatingAverageMin / FFT_SCALE), ILI9341_ORANGE);
-    spr.fillRect(283, 0, 8, min(spriteHeight, data->floatingAverage / FFT_SCALE), ILI9341_RED);
+    spr.fillRect(273, 0, 8, min(spriteHeight, data->floatingAverageMin), ILI9341_ORANGE);
+    spr.fillRect(283, 0, 8, min(spriteHeight, data->floatingAverage), ILI9341_RED);
 
     const auto height = spriteHeight * (static_cast<float>(data->peakFrequencyValue) / static_cast<float>(data->
                                             floatingAverage));
     spr.fillRect(291, spriteHeight - min(spriteHeight, height), 8, max(0, spriteHeight - height), ILI9341_GREEN);
 
-    spr.fillRect(301, 0, 8, min(spriteHeight, data->peakFrequencyValue / FFT_SCALE), ILI9341_PINK);
-    spr.fillRect(311, 0, 8, min(spriteHeight, data->results[data->peakFrequencyIndex] / FFT_SCALE), ILI9341_WHITE);
+    spr.fillRect(301, 0, 8, min(spriteHeight, data->peakFrequencyValue), ILI9341_PINK);
+    spr.fillRect(311, 0, 8, min(spriteHeight, data->results[data->peakFrequencyIndex]), ILI9341_WHITE);
 
     // Draw for peakFreaquencyIndex (white)
     spr.fillRect(WIDTH_BAR * data->peakFrequencyIndex, 2, WIDTH_BAR, 4, ILI9341_WHITE);
@@ -276,34 +260,33 @@ void Display::Display::drawDebugBars(const AnalyzeData *data) {
 
 
 void Display::Display::drawDebugLines(const AnalyzeData *data) {
-    spr.drawLine(270 - 10, spriteHeight / 2, 270, spriteHeight / 2, TFT_GREEN);
+    spr.drawLine(267, spriteHeight / 2, 270, spriteHeight / 2, TFT_GREEN);
 
-    const int off = max(0, min(spriteHeight, spriteHeight / 2 - Consts::RawMinForOff / rawDivider));
+    const int off = max(0, min(spriteHeight, spriteHeight / 2 - Consts::RawMinOff));
     spr.drawLine(270 - 10, off, 270 - 3, off, TFT_RED);
 #ifdef DoubleDebugLines
-    const int off2 = max(0, min(spriteHeight, spriteHeight / 2 + Consts::RawMinForOff / rawDivider));
+    const int off2 = max(0, min(spriteHeight, spriteHeight / 2 + Consts::RawMinOff));
     // spr.drawLine(270 - 10, off2, 270 - 3, off2, TFT_RED);
 #endif
 
-
-    const int maxV = max(0, min(spriteHeight, spriteHeight / 2 - data->rawDataMax / rawDivider));
+    const int maxV = max(0, min(spriteHeight, spriteHeight / 2 - data->rawDataMax));
     spr.drawLine(270 - 10, maxV, 270 - 3, maxV, rgbTo565(14, 145, 243));
 #ifdef DoubleDebugLines
-    const int maxV2 = max(0, min(spriteHeight, spriteHeight / 2 + data->rawDataMax / rawDivider));
+    const int maxV2 = max(0, min(spriteHeight, spriteHeight / 2 + data->rawDataMax));
     // spr.drawLine(270 - 10, maxV2, 270 - 3, maxV2, rgbTo565(14, 145, 243));
 #endif
 
-    const int inc = max(0, min(spriteHeight, spriteHeight / 2 - Consts::IncreaseDivider / rawDivider));
+    const int inc = max(0, min(spriteHeight, spriteHeight / 2 - Consts::RawIncreaseDivider));
     spr.drawLine(270 - 10, inc, 270 - 3, inc, TFT_MAGENTA);
 #ifdef DoubleDebugLines
-    const int inc2 = max(0, min(spriteHeight, spriteHeight / 2 + Consts::IncreaseDivider / rawDivider));
+    const int inc2 = max(0, min(spriteHeight, spriteHeight / 2 + Consts::RawIncreaseDivider));
     // spr.drawLine(270 - 10, inc2, 270 - 3, inc2, TFT_MAGENTA);
 #endif
 
-    const int div = max(0, min(spriteHeight, spriteHeight / 2 - Consts::DecreaseDivider / rawDivider));
+    const int div = max(0, min(spriteHeight, spriteHeight / 2 - Consts::RawDecreaseDivider));
     spr.drawLine(270 - 10, div, 270 - 3, div, TFT_ORANGE);
 #ifdef DoubleDebugLines
-    const int div2 = max(0, min(spriteHeight, spriteHeight / 2 + Consts::DecreaseDivider / rawDivider));
+    const int div2 = max(0, min(spriteHeight, spriteHeight / 2 + Consts::RawDecreaseDivider));
     // spr.drawLine(270 - 10, div2, 270 - 3, div2, TFT_ORANGE);
 #endif
 }

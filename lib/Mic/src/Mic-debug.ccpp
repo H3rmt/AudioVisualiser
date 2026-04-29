@@ -1,40 +1,27 @@
-#include <AudioTools.h>
-#include <AudioTools/AudioLibs/AudioRealFFT.h>
 #include <I2S.h>
-
 #include <Core.hpp>
 
 #include "Mic.hpp"
-
-AudioInfo info(Consts::SamplingFrequency, 1, Consts::BitsPerSample);
 
 bool secondBuffer = false;
 int16_t buf[Consts::Samples] = {};
 int16_t bufSecond[Consts::Samples] = {};
 
-bool (*ccallback)(int16_t *, AudioFFTBase &) = nullptr;
-
-BufferedWindow window(new Hann());
-AudioRealFFT fft;
+bool (*ccallback)(int16_t *) = nullptr;
 
 auto in = I2S(INPUT);
 
-void Mic::setupMic(bool (*callback)(int16_t *, AudioFFTBase &)) {
+void Mic::setupMic(bool (*callback)(int16_t *)) {
     in.setDATA(D6);
     in.setBCLK(D7);
     in.setMCLK(D8);
     // LRCLK = BCLK + 1
-    in.setBitsPerSample(Consts::BitsPerSample);
-    in.setFrequency(Consts::SamplingFrequency);
+    in.setBitsPerSample(32);
+    in.setFrequency(44100);
     in.setStereo(false);
     in.begin();
 
     ccallback = callback;
-    auto fcfg = fft.defaultConfig(TX_MODE);
-    fcfg.copyFrom(info);
-    fcfg.window_function_fft = &window;
-    fcfg.length = Consts::Samples;
-    fft.begin(fcfg);
 
     memset(buf, 0, Consts::Samples * sizeof(int16_t));
     memset(bufSecond, 0, Consts::Samples * sizeof(int16_t));
@@ -51,8 +38,12 @@ void Mic::runMicStep() {
     activeBuf[counter] = s;
 
     if (counter == Consts::Samples - 1) {
-        fft.write(reinterpret_cast<const uint8_t *>(activeBuf), Consts::Samples * sizeof(int16_t));
-        const bool switchBuffer = ccallback(activeBuf, fft);
+        // Serial.write(
+        //     reinterpret_cast<uint8_t *>(activeBuf),
+        //     Consts::Samples * sizeof(int16_t)
+        // );
+
+        const bool switchBuffer = ccallback(activeBuf);
         if (switchBuffer)
             secondBuffer = !secondBuffer;
         counter = 0;

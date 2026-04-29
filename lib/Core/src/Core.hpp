@@ -23,35 +23,35 @@ namespace Console {
 }
 
 namespace Consts {
-    // constexpr int32_t Samples = 256;
     constexpr int32_t Samples = 512;
-    // constexpr int32_t Samples = 1024;
-    constexpr int32_t SamplesRaw = Samples * 4;
-    constexpr int32_t SamplesUsable = Samples / 2;
+    // In theory yes
+    // constexpr int32_t FrequenciesUsable = Samples / 2;
+    constexpr int32_t FrequenciesUsable = 134;
     constexpr int32_t SamplingFrequency = 44100;
+    constexpr int32_t BitsPerSample = 32;
 
-    constexpr uint32_t RawMinForOff = 8000000;
-    constexpr uint32_t IncreaseDivider = 35000000;
-    constexpr uint32_t DecreaseDivider = 20000000;
+    constexpr uint32_t RawMinOff = 20;
+    constexpr uint32_t RawIncreaseDivider = 70;
+    constexpr uint32_t RawDecreaseDivider = 35;
 }
 
 
 /// Data structure for analyzed audio data
 struct AnalyzeData {
     /// Points to one of the two buffers with raw audio data
-    int32_t *rawDataPointer = nullptr;
+    int16_t *rawDataPointer = nullptr;
 
     /// Approximate FFT buffer
-    uint32_t results[Consts::SamplesUsable]{};
+    uint16_t results[Consts::FrequenciesUsable]{};
 
     /// Amplitude peak buffer
-    uint32_t peaks[Consts::SamplesUsable]{};
+    uint16_t peaks[Consts::FrequenciesUsable]{};
 
     /// Maximum value inside the raw Buffer
     int32_t rawDataMax = 0;
 
     /// Maximum value in the results array
-    uint32_t resultMax = 0;
+    uint16_t resultMax = 0;
 
     /// No sound is detected over some time
     bool off = true;
@@ -72,10 +72,10 @@ struct AnalyzeData {
     int peakFrequencyValue = 0;
 
     /// Value of the current floating average, calculated from floatingAverage and peakFrequency value
-    uint32_t floatingAverage = 0;
+    uint16_t floatingAverage = 0;
 
     /// Minimum value of the floating average, calculated from peakFrequencyIndex and loudnessDivider
-    uint32_t floatingAverageMin = 0;
+    uint16_t floatingAverageMin = 0;
 };
 
 /// Program-wide shared data structure
