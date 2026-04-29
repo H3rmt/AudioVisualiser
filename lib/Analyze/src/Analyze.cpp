@@ -69,7 +69,7 @@ void Analyze::checkChanges(AnalyzeData *data) {
         }
         avg /= (4 * 10);
         Console::println(String(avg));
-        if (avg <= Consts::RawDecreaseDivider) {
+        if (avg <= Consts::RawDecreaseDivider && data->loudnessDividerN > 5) {
             data->loudnessDividerN -= 1;
         }
     }
@@ -84,7 +84,7 @@ void Analyze::checkChanges(AnalyzeData *data) {
         }
         avg /= 4;
         Console::println(String(avg));
-        if (avg > Consts::RawIncreaseDivider) {
+        if (avg > Consts::RawIncreaseDivider && data->loudnessDividerN < 40) {
             data->loudnessDividerN += 1;
         }
     }
