@@ -116,6 +116,22 @@ void MultiplexedStrip::setMaxHWBrightness(const uint8_t index, const uint8_t bri
     current->maxHWBrightness = brightness;
 }
 
+void MultiplexedStrip::setRainbow(const uint8_t index, const bool rainbow) {
+    Animations::StripData *current = selectStrip(index);
+    if (current == nullptr || current->ledCount == 0)
+        return;
+    current->rainbow = rainbow;
+}
+
+void MultiplexedStrip::off(uint8_t index) {
+    Animations::StripData *current = selectStrip(index);
+    if (current == nullptr || current->ledCount == 0)
+        return;
+
+    pixels.clear();
+    pixels.show();
+}
+
 void MultiplexedStrip::setReversed(const uint8_t index, const bool reverse) {
     Animations::StripData *current = selectStrip(index);
     if (current == nullptr || current->ledCount == 0)
@@ -131,20 +147,24 @@ void MultiplexedStrip::setPerLedColorChange(const uint8_t index, const uint16_t 
     current->perLedColorChange = change;
 }
 
-void MultiplexedStrip::normal(const uint8_t index, const uint16_t lvl, const uint16_t colorOffset, const float percentMaxChangeDivider) {
+void MultiplexedStrip::normal(const uint8_t index, const uint16_t lvl, const uint16_t colorOffset,
+                              const float percentMaxChangeDivider) {
     Animations::StripData *current = selectStrip(index);
     if (current == nullptr || current->ledCount == 0)
         return;
 
-    Animations::renderNormal(reinterpret_cast<Animations::Rgb *>(pixels.getPixels()), current, lvl, colorOffset, percentMaxChangeDivider);
+    Animations::renderNormal(reinterpret_cast<Animations::Rgb *>(pixels.getPixels()), current, lvl, colorOffset,
+                             percentMaxChangeDivider);
     pixels.show();
 }
 
-void MultiplexedStrip::centre(const uint8_t index, const uint16_t lvl, const uint16_t colorOffset, const float percentMaxChangeDivider) {
+void MultiplexedStrip::centre(const uint8_t index, const uint16_t lvl, const uint16_t colorOffset,
+                              const float percentMaxChangeDivider) {
     Animations::StripData *current = selectStrip(index);
     if (current == nullptr || current->ledCount == 0)
         return;
-    Animations::renderCentre(reinterpret_cast<Animations::Rgb *>(pixels.getPixels()), current, lvl, colorOffset, percentMaxChangeDivider);
+    Animations::renderCentre(reinterpret_cast<Animations::Rgb *>(pixels.getPixels()), current, lvl, colorOffset,
+                             percentMaxChangeDivider);
 
     pixels.show();
 }

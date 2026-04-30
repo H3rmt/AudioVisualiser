@@ -129,25 +129,25 @@ struct Settings {
     };
     LEDSettings leftMiddle{
         .mode = LEDMode::Centre,
-        .reversed = false,
+        .reversed = true,
         .rainbow = true,
         .brightness = 200,
     };
     LEDSettings leftFrontBack{
         .mode = LEDMode::Centre,
-        .reversed = false,
+        .reversed = true,
         .rainbow = true,
         .brightness = 200,
     };
     LEDSettings rightMiddle{
         .mode = LEDMode::Centre,
-        .reversed = false,
+        .reversed = true,
         .rainbow = true,
         .brightness = 200,
     };
     LEDSettings rightFrontBack{
         .mode = LEDMode::Centre,
-        .reversed = false,
+        .reversed = true,
         .rainbow = true,
         .brightness = 200,
     };

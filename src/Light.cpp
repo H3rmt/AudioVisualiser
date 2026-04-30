@@ -18,17 +18,6 @@ void setupLeds() {
     digitalWrite(SELECT2, LOW);
     one.begin();
     two.begin();
-
-    one.setReversed(0, true);
-    one.setReversed(2, true);
-    one.setReversed(3, false);
-
-    two.setReversed(0, true);
-    two.setReversed(1, true);
-    two.setReversed(2, true);
-    // two.setReversed(2, false);
-    two.setReversed(3, true);
-    // two.setReversed(3, false);
 }
 
 void testLeds(const int index) {
@@ -53,7 +42,7 @@ void drawLEDsOff() {
 uint16_t level = 0;
 uint8_t lastBrightness = 0;
 
-void drawLEDs(const uint16_t input, const uint16_t avg) {
+void drawLEDs(const uint16_t input, const uint16_t avg, const Settings *const settings) {
     const auto read = analogRead(26);
     if (const uint8_t brightness = map(read, 0, 1023, 5, 255); brightness != lastBrightness) {
         lastBrightness = brightness;
@@ -74,22 +63,144 @@ void drawLEDs(const uint16_t input, const uint16_t avg) {
     one.resetOff(3);
     two.resetOff(3);
 
+    one.setMaxBrightness(2, settings->frontLeft.brightness);
+    one.setMaxBrightness(3, settings->frontRight.brightness);
+    two.setMaxBrightness(2, settings->rightMiddle.brightness);
+    two.setMaxBrightness(3, settings->rightFrontBack.brightness);
+
+    one.setReversed(2, settings->frontLeft.reversed);
+    one.setReversed(3, settings->frontRight.reversed);
+    two.setReversed(2, settings->rightMiddle.reversed);
+    two.setReversed(3, settings->rightFrontBack.reversed);
+
     const uint16_t level = input == 0 || avg == 0 ? 0 : static_cast<uint32_t>(input) * UINT16_MAX / avg;
     const uint16_t offset = millis() * 12 % UINT16_MAX;
 
-    // left front back
-    two.centre(0, level, offset, 5);
-    one.centre(0, level, offset, 20);
-    // right middle
-    two.centre(1, level, offset, 5);
+    one.setReversed(0, settings->frontCentre.reversed);
+    one.setMaxBrightness(0, settings->frontCentre.brightness);
+    one.setRainbow(0, settings->frontCentre.rainbow);
+    switch (settings->frontCentre.mode) {
+        case LEDMode::Normal:
+            one.normal(0, level, offset, 20);
+            break;
+        case LEDMode::Centre:
+            one.centre(0, level, offset, 20);
+            break;
+        case LEDMode::Circle:
+            one.circle(0, level, offset, 15, 3, 1.3, true);
+            break;
+        case LEDMode::Off:
+            one.off(0);
+    }
+    two.setReversed(0, settings->leftFrontBack.reversed);
+    two.setMaxBrightness(0, settings->leftFrontBack.brightness);
+    two.setRainbow(0, settings->leftFrontBack.rainbow);
+    switch (settings->leftFrontBack.mode) {
+        case LEDMode::Normal:
+            two.normal(0, level, offset, 5);
+            break;
+        case LEDMode::Centre:
+            two.centre(0, level, offset, 5);
+            break;
+        case LEDMode::Circle:
+            two.circle(0, level, offset, 15, 2, 1.0, true);
+            break;
+        case LEDMode::Off:
+            two.off(0);
+    }
+    delay(1);
 
-    // left middle
-    two.centre(2, level, offset, 5);
-    one.circle(2, level, offset, 10, 3, 1.3, true);
+    // -----------------------------------------------------------------------------------------------------------------
 
-    // right front back
-    two.centre(3, level, offset, 5);
-    one.circle(3, level, offset, 10, 3, 1.3, true);
+    two.setReversed(1, settings->rightFrontBack.reversed);
+    two.setMaxBrightness(1, settings->rightFrontBack.brightness);
+    two.setRainbow(1, settings->rightFrontBack.rainbow);
+    switch (settings->rightFrontBack.mode) {
+        case LEDMode::Normal:
+            two.normal(1, level, offset, 5);
+            break;
+        case LEDMode::Centre:
+            two.centre(1, level, offset, 5);
+            break;
+        case LEDMode::Circle:
+            two.circle(1, level, offset, 15, 2, 1.0, true);
+            break;
+        case LEDMode::Off:
+            two.off(1);
+    }
+    delay(1);
+
+    // -----------------------------------------------------------------------------------------------------------------
+
+    one.setReversed(2, settings->frontLeft.reversed);
+    one.setMaxBrightness(2, settings->frontLeft.brightness);
+    one.setRainbow(2, settings->frontLeft.rainbow);
+    switch (settings->frontLeft.mode) {
+        case LEDMode::Normal:
+            one.normal(2, level, offset, 20);
+            break;
+        case LEDMode::Centre:
+            one.centre(2, level, offset, 20);
+            break;
+        case LEDMode::Circle:
+            one.circle(2, level, offset, 8, 3, 1.3, true);
+            break;
+        case LEDMode::Off:
+            one.off(2);
+    }
+    two.setReversed(2, settings->rightMiddle.reversed);
+    two.setMaxBrightness(2, settings->rightMiddle.brightness);
+    two.setRainbow(2, settings->rightMiddle.rainbow);
+    switch (settings->rightMiddle.mode) {
+        case LEDMode::Normal:
+            two.normal(2, level, offset, 5);
+            break;
+        case LEDMode::Centre:
+            two.centre(2, level, offset, 5);
+            break;
+        case LEDMode::Circle:
+            two.circle(2, level, offset, 15, 2, 1.0, true);
+            break;
+        case LEDMode::Off:
+            two.off(2);
+    }
+    delay(1);
+
+    // -----------------------------------------------------------------------------------------------------------------
+
+    one.setReversed(3, settings->frontRight.reversed);
+    one.setMaxBrightness(3, settings->frontRight.brightness);
+    one.setRainbow(3, settings->frontRight.rainbow);
+    switch (settings->frontRight.mode) {
+        case LEDMode::Normal:
+            one.normal(3, level, offset, 20);
+            break;
+        case LEDMode::Centre:
+            one.centre(3, level, offset, 20);
+            break;
+        case LEDMode::Circle:
+            one.circle(3, level, offset, 8, 3, 1.3, true);
+            break;
+        case LEDMode::Off:
+            one.off(3);
+    }
+    two.setReversed(3, settings->leftMiddle.reversed);
+    two.setMaxBrightness(3, settings->leftMiddle.brightness);
+    two.setRainbow(3, settings->leftMiddle.rainbow);
+    switch (settings->leftMiddle.mode) {
+        case LEDMode::Normal:
+            two.normal(3, level, offset, 5);
+            break;
+        case LEDMode::Centre:
+            two.centre(3, level, offset, 5);
+            break;
+        case LEDMode::Circle:
+            two.circle(3, level, offset, 15, 2, 1.0, true);
+            break;
+        case LEDMode::Off:
+            two.off(3);
+    }
+    delay(1);
 }
 
 

@@ -86,10 +86,11 @@ bool fftResult(int16_t *raw, AudioFFTBase &fft) {
         Analyze::checkChanges(liveAnalyzeData);
         Analyze::analyzeFrequencies(liveAnalyzeData);
 
+        const Settings *const sett = &settings;
         if (liveAnalyzeData->off)
             drawLEDsOff();
         else
-            drawLEDs(liveAnalyzeData->peakFrequencyValue, liveAnalyzeData->floatingAverage);
+            drawLEDs(liveAnalyzeData->peakFrequencyValue, liveAnalyzeData->floatingAverage, sett);
     } else {
         validFFTs++;
     }
