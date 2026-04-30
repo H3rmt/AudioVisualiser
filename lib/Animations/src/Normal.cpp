@@ -21,7 +21,7 @@ void Animations::renderNormal(Rgb *pixels, StripData *config, const uint16_t lvl
     const uint16_t coloredPixels = config->centreAnimState.coloredPixels;
     if (!config->rainbow) {
         const Rgb color = AnimationsUtil::ColorH(colorOffset,
-                                                 config->maxHWBrightness);
+                                                 maxBright(config));
         if (config->reversed) {
             std::fill_n(pixels + (config->ledCount - coloredPixels), coloredPixels, color);
         } else {
@@ -31,12 +31,12 @@ void Animations::renderNormal(Rgb *pixels, StripData *config, const uint16_t lvl
         for (uint16_t i = 0; i < coloredPixels; i++) {
             pixels[config->ledCount - i - 1] = AnimationsUtil::ColorH(
                 i * config->perLedColorChange + colorOffset,
-                config->maxHWBrightness);
+                maxBright(config));
         }
     } else {
         for (uint16_t i = 0; i < coloredPixels; i++) {
             pixels[i] = AnimationsUtil::ColorH(i * config->perLedColorChange + colorOffset,
-                                               config->maxHWBrightness);
+                                               maxBright(config));
         }
     }
 }

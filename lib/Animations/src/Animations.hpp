@@ -51,4 +51,8 @@ namespace Animations {
 
     void renderCircle(Rgb *pixels, StripData *config, uint16_t lvl, uint16_t colorOffset, uint16_t width,
                       uint16_t bars, float moveSpeed, bool reverseOnPeak);
+
+    inline uint8_t maxBright(const StripData *config) {
+        return config->maxBrightness < config->maxHWBrightness ? config->maxBrightness : config->maxHWBrightness;
+    }
 }

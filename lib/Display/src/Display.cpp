@@ -51,7 +51,7 @@ void Display::Display::init(const bool startAnimation, Settings *settings) {
 }
 
 void Display::Display::handleTouch() {
-    Timing::start(Timing::Id::DisplayHandleTouch);
+    Timing::start(Timing::Id::DisplayHandleTouch, 0);
     // TFT_eSPI provides calibrated screen coordinates via getTouch().
     // We treat a transition up->down as a "new touch".
     uint16_t x = 0;
@@ -90,7 +90,7 @@ void Display::Display::handleTouch() {
         }
     }
     touchWasDown = down;
-    Timing::stop(Timing::Id::DisplayHandleTouch);
+    Timing::stop(Timing::Id::DisplayHandleTouch, 0);
 }
 
 
@@ -100,21 +100,21 @@ void Display::Display::drawBars() {
 }
 
 void Display::Display::dmaWait() {
-    Timing::start(Timing::Id::DisplayDmaWait);
+    Timing::start(Timing::Id::DisplayDmaWait, 0);
     if (dma)
         tft.dmaWait();
-    Timing::stop(Timing::Id::DisplayDmaWait);
+    Timing::stop(Timing::Id::DisplayDmaWait, 0);
 }
 
 void Display::Display::dmaWrite() {
-    Timing::start(Timing::Id::DisplayDmaWrite);
+    Timing::start(Timing::Id::DisplayDmaWrite, 0);
     tft.startWrite();
     if (dma)
         tft.pushImageDMA(spriteX, spriteY, spriteWidth, spriteHeight, sptr);
     else
         tft.pushImage(spriteX, spriteY, spriteWidth, spriteHeight, sptr);
     tft.endWrite();
-    Timing::stop(Timing::Id::DisplayDmaWrite);
+    Timing::stop(Timing::Id::DisplayDmaWrite, 0);
 }
 
 
@@ -142,7 +142,6 @@ void Display::Display::drawTopBar() {
 // fps, 1000.0 / shared->millisForOneFFT, displayAnalyzeData->loudnessDivider
 void Display::Display::updateFPS(const uint16_t loudnessDivider, const uint16_t framesPerSecond,
                                  const uint16_t ledsUpdatesPerSecond, const uint32_t uptime_seconds) {
-    Timing::start(Timing::Id::DisplayUpdateFps);
     tft.setTextColor(rgbTo565(14, 145, 243), rgbTo565(20, 20, 25));
     tft.setCursor(207, 5);
     const uint32_t hours = uptime_seconds / 3600;
@@ -172,7 +171,6 @@ void Display::Display::updateFPS(const uint16_t loudnessDivider, const uint16_t 
     tft.setCursor(207, 35);
     tft.print(ledsUpdatesPerSecond);
     tft.print(" UPS ");
-    Timing::stop(Timing::Id::DisplayUpdateFps);
 }
 
 void Display::Display::addInfoString(const char *infoString, const bool replace) {
@@ -191,7 +189,7 @@ void Display::Display::addInfoString(const char *infoString, const bool replace)
 }
 
 void Display::Display::drawRawAudio(const int16_t rawBuffer[Consts::Samples], const bool off) {
-    Timing::start(Timing::Id::DisplayRawAudio);
+    Timing::start(Timing::Id::DisplayRawAudio, 0);
     int32_t startSample = 100;
     const uint32_t color = off ? ILI9341_RED : ILI9341_GREEN;
 
@@ -206,17 +204,18 @@ void Display::Display::drawRawAudio(const int16_t rawBuffer[Consts::Samples], co
         if (startSample >= Consts::Samples - 2)
             break;
     }
-    Timing::stop(Timing::Id::DisplayRawAudio);
+    Timing::stop(Timing::Id::DisplayRawAudio, 0);
+}
+
+
+void Display::Display::drawSettings() {
+    handleTouch();
+    settingsUI.draw(spr);
 }
 
 void Display::Display::drawMain(const AnalyzeData *data) {
-    Timing::start(Timing::Id::DisplayMain);
     handleTouch();
-    if (settingsMode) {
-        settingsUI.draw(spr);
-        Timing::stop(Timing::Id::DisplayMain);
-        return;
-    }
+    Timing::start(Timing::Id::DisplayMain, 0);
 
     spr.fillSprite(rgbTo565(10, 10, 15));
     const auto results = data->results;
@@ -242,12 +241,12 @@ void Display::Display::drawMain(const AnalyzeData *data) {
         // spr.fillRect(WIDTH_BAR * i, spriteHeight - hp, WIDTH_BAR, hp - hr, rainbowColor200(hp));
         // spr.fillRect(WIDTH_BAR * i, spriteHeight - hp, WIDTH_BAR, hp - hr, rainbowColor(hp));
     }
-    Timing::stop(Timing::Id::DisplayMain);
+    Timing::stop(Timing::Id::DisplayMain, 0);
 }
 
 // max x = 320
 void Display::Display::drawDebugBars(const AnalyzeData *data) {
-    Timing::start(Timing::Id::DisplayDebugBars);
+    Timing::start(Timing::Id::DisplayDebugBars, 0);
     spr.drawLine(270, 0, 270, spriteHeight, rgbTo565(130, 130, 130));
 
     spr.fillRect(273, 0, 8, min(spriteHeight, data->floatingAverageMin), ILI9341_ORANGE);
@@ -268,12 +267,12 @@ void Display::Display::drawDebugBars(const AnalyzeData *data) {
 
     // Draw for peakFreaquencyIndexLazy (red)
     spr.fillRect(WIDTH_BAR * data->peakFrequencyIndexLazy, 14, WIDTH_BAR, 4, ILI9341_RED);
-    Timing::stop(Timing::Id::DisplayDebugBars);
+    Timing::stop(Timing::Id::DisplayDebugBars, 0);
 }
 
 
 void Display::Display::drawDebugLines(const AnalyzeData *data) {
-    Timing::start(Timing::Id::DisplayDebugLines);
+    Timing::start(Timing::Id::DisplayDebugLines, 0);
     spr.drawLine(267, spriteHeight / 2, 270, spriteHeight / 2, TFT_GREEN);
 
     const int off = max(0, min(spriteHeight, spriteHeight / 2 - Consts::RawMinOff));
@@ -303,5 +302,5 @@ void Display::Display::drawDebugLines(const AnalyzeData *data) {
     const int div2 = max(0, min(spriteHeight, spriteHeight / 2 + Consts::RawDecreaseDivider));
     // spr.drawLine(270 - 10, div2, 270 - 3, div2, TFT_ORANGE);
 #endif
-    Timing::stop(Timing::Id::DisplayDebugLines);
+    Timing::stop(Timing::Id::DisplayDebugLines, 0);
 }

@@ -9,7 +9,7 @@ unsigned long startIncreaseLoudTriggered = 0;
 
 
 void Analyze::calculate(AnalyzeData *data, const float *magnitudes) {
-    Timing::start(Timing::Id::AnalyzeCalculate);
+    Timing::start(Timing::Id::AnalyzeCalculate, 1);
     data->rawDataMax = 0;
     data->resultMax = 0;
     data->peakFrequencyIndex = 0;
@@ -46,7 +46,7 @@ void Analyze::calculate(AnalyzeData *data, const float *magnitudes) {
             data->resultMax = res;
         }
     }
-    Timing::stop(Timing::Id::AnalyzeCalculate);
+    Timing::stop(Timing::Id::AnalyzeCalculate, 1);
 }
 
 
@@ -57,12 +57,14 @@ auto averages = new int32_t[size]{};
 uint8_t lastIndex = 50;
 
 void Analyze::checkChanges(AnalyzeData *data) {
-    Timing::start(Timing::Id::AnalyzeCheckChanges);
+    Timing::start(Timing::Id::AnalyzeCheckChanges, 1);
     const uint8_t sec = millis() / 1000 % 20;
     const uint8_t msecSlot = millis() % 1000 / 250;
     const uint8_t slot = sec * 4 + msecSlot;
-    if (slot == lastIndex)
+    if (slot == lastIndex) {
+        Timing::stop(Timing::Id::AnalyzeCheckChanges, 1);
         return;
+    }
     lastIndex = slot;
     Console::println(
         String("new slot: ") + slot + "  sec:" + sec + "  msec:" + msecSlot + "; current: " + data->rawDataMax);
@@ -83,8 +85,8 @@ void Analyze::checkChanges(AnalyzeData *data) {
             data->loudnessDividerN -= 1;
         }
     }
-    // check increase every 1s, for last 2 seconds
-    if (slot % 4 == 0) {
+    // check increase every 2s, for last 2 seconds
+    if (slot % 8 == 0) {
         Console::print("checking increase: ");
         int32_t avg = 0;
         // sum over last 1 second
@@ -128,7 +130,7 @@ void Analyze::checkChanges(AnalyzeData *data) {
             data->off = false;
         }
     }
-    Timing::stop(Timing::Id::AnalyzeCheckChanges);
+    Timing::stop(Timing::Id::AnalyzeCheckChanges, 1);
 }
 
 
@@ -140,7 +142,7 @@ uint32_t getAverageMinValue(const uint8_t frequency) {
 }
 
 void Analyze::analyzeFrequencies(AnalyzeData *data) {
-    Timing::start(Timing::Id::AnalyzeFrequencies);
+    Timing::start(Timing::Id::AnalyzeFrequencies, 1);
     // only move of value is above threshold
     if (data->resultMax > 40) {
         // Move floating index towards peak index gradually
@@ -170,5 +172,5 @@ void Analyze::analyzeFrequencies(AnalyzeData *data) {
             static_cast<int>(data->floatingAverage * 0.99f + data->peakFrequencyValue * 0.022f)
         )
     );
-    Timing::stop(Timing::Id::AnalyzeFrequencies);
+    Timing::stop(Timing::Id::AnalyzeFrequencies, 1);
 }

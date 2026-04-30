@@ -214,15 +214,11 @@ SettingsUI::Action SettingsUI::SettingsUI::actionForTouch(const int x, const int
 void SettingsUI::SettingsUI::handleTouch(const int x, const int y, const int spriteW, const int spriteH) {
     auto action = actionForTouch(x, y, spriteW, spriteH);
     if (action == Action::PageUp) {
-        if (pageIndex > 0) {
-            pageIndex--;
-            Console::println(String("settings page -> ") + (pageIndex + 1));
-        }
+        pageIndex = (pageIndex == 0) ? (pageCount - 1) : (pageIndex - 1);
+        Console::println(String("settings page -> ") + (pageIndex + 1));
     } else if (action == Action::PageDown) {
-        if (pageIndex + 1 < pageCount) {
-            pageIndex++;
-            Console::println(String("settings page -> ") + (pageIndex + 1));
-        }
+        pageIndex = (pageIndex + 1 >= pageCount) ? 0 : (pageIndex + 1);
+        Console::println(String("settings page -> ") + (pageIndex + 1));
     } else {
         LEDSettings *setting = settingForPage(settings, pageIndex);
         if (setting == nullptr) return;
@@ -256,7 +252,7 @@ void SettingsUI::SettingsUI::handleTouch(const int x, const int y, const int spr
 }
 
 void SettingsUI::SettingsUI::draw(TFT_eSprite &spr) {
-    Timing::start(Timing::Id::SettingsDraw);
+    Timing::start(Timing::Id::SettingsDraw, 0);
     const int h = spr.height();
     const int w = spr.width();
 
@@ -349,10 +345,13 @@ void SettingsUI::SettingsUI::draw(TFT_eSprite &spr) {
         case 6:
             drawLEDPage(spr, "Right Front Back", &settings->rightFrontBack, contentW, h);
             break;
-        default: drawPage8(spr, contentW, h);
+        case 7:
+            drawPage8(spr, contentW, h);
+            break;
+        default: drawPage9(spr, contentW, h);
             break;
     }
-    Timing::stop(Timing::Id::SettingsDraw);
+    Timing::stop(Timing::Id::SettingsDraw, 0);
 }
 
 void SettingsUI::SettingsUI::drawPage8(TFT_eSprite &spr, const int contentW, const int contentH) {
@@ -363,17 +362,53 @@ void SettingsUI::SettingsUI::drawPage8(TFT_eSprite &spr, const int contentW, con
     spr.fillRect(0, 0, contentW, contentH, bg);
     spr.setTextFont(2);
     spr.setTextColor(text, bg);
-    spr.drawString("Timing / Heap", 10, 14);
+    spr.drawString("Timing", 10, 10);
+    spr.drawString("C0", 160, 10);
 
-    int y = 34;
+    int y = 28;
     for (uint8_t i = 0; i < Timing::count(); ++i) {
         const auto id = static_cast<Timing::Id>(i);
+        if (Timing::timeMs(id, 0) == 0) {
+            continue;
+        }
+        char line2[40];
+        snprintf(line2, sizeof(line2), "%013.2f", Timing::timeMs(id, 0));
         spr.setTextColor(accent, bg);
         spr.drawString(Timing::name(id), 10, y);
         spr.setTextColor(text, bg);
-        spr.drawString(String(Timing::timeMs(id), 3) + " ms", 170, y);
+        spr.drawString(line2, 160, y);
         y += 16;
-        if (y > contentH - 18) {
+        if (y > contentH - 5) {
+            break;
+        }
+    }
+}
+
+void SettingsUI::SettingsUI::drawPage9(TFT_eSprite &spr, const int contentW, const int contentH) {
+    const uint16_t bg = rgbTo565(14, 14, 18);
+    const uint16_t text = rgbTo565(200, 200, 210);
+    const uint16_t accent = rgbTo565(55, 125, 235);
+
+    spr.fillRect(0, 0, contentW, contentH, bg);
+    spr.setTextFont(2);
+    spr.setTextColor(text, bg);
+    spr.drawString("Timing", 10, 10);
+    spr.drawString("C0", 160, 10);
+
+    int y = 28;
+    for (uint8_t i = 0; i < Timing::count(); ++i) {
+        const auto id = static_cast<Timing::Id>(i);
+        if (Timing::timeMs(id, 1) == 0) {
+            continue;
+        }
+        char line2[40];
+        snprintf(line2, sizeof(line2), "%013.2f", Timing::timeMs(id, 1));
+        spr.setTextColor(accent, bg);
+        spr.drawString(Timing::name(id), 10, y);
+        spr.setTextColor(text, bg);
+        spr.drawString(line2, 160, y);
+        y += 16;
+        if (y > contentH - 5) {
             break;
         }
     }

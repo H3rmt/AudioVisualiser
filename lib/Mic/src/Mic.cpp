@@ -45,7 +45,7 @@ uint16_t counter = 0;
 
 
 void Mic::runMicStep() {
-    Timing::start(Timing::Id::MicStep);
+    Timing::start(Timing::Id::MicStep, 1);
     int32_t l, r;
     in.read32(&l, &r);
     const int16_t s = l >> 14;
@@ -54,14 +54,14 @@ void Mic::runMicStep() {
 
     if (counter == Consts::Samples - 1) {
         fft.write(reinterpret_cast<const uint8_t *>(activeBuf), Consts::Samples * sizeof(int16_t));
-        Timing::stop(Timing::Id::MicStep);
+        Timing::stop(Timing::Id::MicStep, 1);
         const bool switchBuffer = ccallback(activeBuf, fft);
-        Timing::start(Timing::Id::MicStep);
+        Timing::start(Timing::Id::MicStep, 1);
         if (switchBuffer)
             secondBuffer = !secondBuffer;
         counter = 0;
     } else {
         counter++;
     }
-    Timing::stop(Timing::Id::MicStep);
+    Timing::stop(Timing::Id::MicStep, 1);
 }

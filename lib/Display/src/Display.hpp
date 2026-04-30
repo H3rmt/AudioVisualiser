@@ -58,6 +58,8 @@ namespace Display {
         // TODO
         void drawRawAudio(const int16_t rawBuffer[Consts::Samples], bool off);
 
+        void drawSettings();
+
         /// update FPS counter in top bar
         /// @param loudnessDivider value of samples divider
         /// @param framesPerSecond calculated frames per second

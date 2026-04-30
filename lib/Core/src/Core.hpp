@@ -31,7 +31,7 @@ namespace Consts {
     constexpr int32_t BitsPerSample = 32;
 
     constexpr uint32_t RawMinOff = 20;
-    constexpr uint32_t RawIncreaseDivider = 70;
+    constexpr uint32_t RawIncreaseDivider = 80;
     constexpr uint32_t RawDecreaseDivider = 35;
 }
 

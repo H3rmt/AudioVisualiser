@@ -36,7 +36,7 @@ namespace SettingsUI {
             this->settings = settings;
         }
 
-        const uint8_t pageCount = 8;
+        const uint8_t pageCount = 9;
         // Draws the settings UI into the given sprite.
         // pageIndex is clamped to [0, pageCount-1].
         void draw(TFT_eSprite &spr);
@@ -67,6 +67,8 @@ namespace SettingsUI {
                          int contentW, int contentH);
 
         void drawPage8(TFT_eSprite &spr, int contentW, int contentH);
+
+        void drawPage9(TFT_eSprite &spr, int contentW, int contentH);
 
         Action actionForTouch(int x, int y, int spriteW, int spriteH);
     };

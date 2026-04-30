@@ -72,5 +72,6 @@ void Console::println(int value) {
 void Console::println(float value) {
 }
 size_t Console::printf(const char *format, ...) {
+    return 0;
 }
 #endif

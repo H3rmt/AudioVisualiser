@@ -21,7 +21,7 @@ void Animations::renderCentre(Rgb *pixels, StripData *config, const uint16_t lvl
 
     const uint16_t coloredPixels = config->centreAnimState.coloredPixels;
     if (!config->rainbow) {
-        const Rgb color = AnimationsUtil::ColorH(colorOffset, config->maxHWBrightness);
+        const Rgb color = AnimationsUtil::ColorH(colorOffset, maxBright(config));
         if (config->reversed) {
             std::fill_n(pixels + (halfLeds - coloredPixels), coloredPixels, color);
             std::fill_n(pixels + halfLeds, coloredPixels, color);
@@ -33,12 +33,12 @@ void Animations::renderCentre(Rgb *pixels, StripData *config, const uint16_t lvl
         if (config->ledCount % 2 == 1) {
             pixels[halfLeds] = AnimationsUtil::ColorH(
                 coloredPixels * config->perLedColorChange + colorOffset,
-                config->maxHWBrightness);
+                maxBright(config));
         }
         for (uint16_t i = 0; i < coloredPixels; ++i) {
             const auto color = AnimationsUtil::ColorH(
                 (coloredPixels - i) * config->perLedColorChange + colorOffset,
-                config->maxHWBrightness);
+                maxBright(config));
             if (config->ledCount % 2 == 1) {
                 pixels[halfLeds + i + 1] = color;
             } else {
@@ -50,7 +50,7 @@ void Animations::renderCentre(Rgb *pixels, StripData *config, const uint16_t lvl
         for (uint16_t i = 0; i < coloredPixels + 1; i++) {
             const auto color = AnimationsUtil::ColorH(
                 (coloredPixels - i) * config->perLedColorChange + colorOffset,
-                config->maxHWBrightness);
+                maxBright(config));
             pixels[i] = color;
             pixels[config->ledCount - i - 1] = color;
         }

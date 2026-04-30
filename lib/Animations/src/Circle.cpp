@@ -29,9 +29,9 @@ void Animations::renderCircle(Rgb *pixels, StripData *config, const uint16_t lvl
         for (uint16_t bar = 0; bar < bars; bar++) {
             Rgb color;
             if (config->rainbow)
-                color = AnimationsUtil::ColorH(i * config->perLedColorChange + colorOffset, config->maxHWBrightness);
+                color = AnimationsUtil::ColorH(i * config->perLedColorChange + colorOffset, maxBright(config));
             else
-                color = AnimationsUtil::ColorH(colorOffset, config->maxHWBrightness);
+                color = AnimationsUtil::ColorH(colorOffset, maxBright(config));
             uint16_t pos = static_cast<uint16_t>(config->circleAnimState.circlePosition + i + (bar * barDistance)) % config->ledCount;
             if (config->reversed)
                 pos = config->ledCount - 1 - pos;

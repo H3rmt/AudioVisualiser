@@ -198,19 +198,8 @@ void setup() {
     started = true;
 }
 
-bool displayUpdate(Shared *shared, const AnalyzeData *data) {
-    if (display.isSettingsMode()) {
-        display.dmaWait();
-        display.drawMain(data);
-        display.dmaWrite();
-        return true;
-    }
-
+void displayUpdate(Shared *shared, const AnalyzeData *data) {
     // wait for next FFT to swap buffers
-    if (!shared->newDataForDisplay) {
-        return false;
-    }
-    Timing::stop(Timing::Id::DisplayWait);
     shared->newDataForDisplay = false;
     shared->allowNewDataForDisplay = false;
 
@@ -229,16 +218,24 @@ bool displayUpdate(Shared *shared, const AnalyzeData *data) {
 
     display.dmaWrite();
     shared->allowNewDataForDisplay = true;
-    Timing::start(Timing::Id::DisplayWait);
-    return true;
 }
 
 // Timer for FPS
 unsigned long updateBarInfoMillis = millis();
 
 void loop() {
-    if (!displayUpdate(&globalShared, displayAnalyzeData)) {
-        return;
+    if (display.isSettingsMode()) {
+        Timing::stop(Timing::Id::DisplayWait, 0);
+        display.dmaWait();
+        display.drawSettings();
+        display.dmaWrite();
+    } else {
+        if (!globalShared.newDataForDisplay) {
+            return;
+        }
+        Timing::stop(Timing::Id::DisplayWait, 0);
+        displayUpdate(&globalShared, displayAnalyzeData);
+        Timing::start(Timing::Id::DisplayWait, 0);
     }
     globalShared.DisplayRefreshCount++;
 #ifdef UPLOAD_OTA

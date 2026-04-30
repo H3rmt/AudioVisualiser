@@ -27,7 +27,7 @@ void testLeds(const int index) {
 }
 
 void drawLEDsOff() {
-    Timing::start(Timing::Id::DrawLedsOff);
+    Timing::start(Timing::Id::DrawLedsOff, 1);
     one.offAnimation(0);
     two.offAnimation(0);
     // delay(1);
@@ -39,14 +39,14 @@ void drawLEDsOff() {
     one.offAnimation(3);
     two.offAnimation(3);
     delay(1);
-    Timing::stop(Timing::Id::DrawLedsOff);
+    Timing::stop(Timing::Id::DrawLedsOff, 1);
 }
 
 uint16_t level = 0;
 uint8_t lastBrightness = 0;
 
 void drawLEDs(const uint16_t input, const uint16_t avg, const Settings *const settings) {
-    Timing::start(Timing::Id::DrawLeds);
+    Timing::start(Timing::Id::DrawLeds, 1);
     const auto read = analogRead(26);
     if (const uint8_t brightness = map(read, 0, 1023, 5, 255); brightness != lastBrightness) {
         lastBrightness = brightness;
@@ -66,16 +66,6 @@ void drawLEDs(const uint16_t input, const uint16_t avg, const Settings *const se
     two.resetOff(2);
     one.resetOff(3);
     two.resetOff(3);
-
-    one.setMaxBrightness(2, settings->frontLeft.brightness);
-    one.setMaxBrightness(3, settings->frontRight.brightness);
-    two.setMaxBrightness(2, settings->rightMiddle.brightness);
-    two.setMaxBrightness(3, settings->rightFrontBack.brightness);
-
-    one.setReversed(2, settings->frontLeft.reversed);
-    one.setReversed(3, settings->frontRight.reversed);
-    two.setReversed(2, settings->rightMiddle.reversed);
-    two.setReversed(3, settings->rightFrontBack.reversed);
 
     const uint16_t level = input == 0 || avg == 0 ? 0 : static_cast<uint32_t>(input) * UINT16_MAX / avg;
     const uint16_t offset = millis() * 12 % UINT16_MAX;
@@ -112,7 +102,6 @@ void drawLEDs(const uint16_t input, const uint16_t avg, const Settings *const se
         case LEDMode::Off:
             two.off(0);
     }
-    delay(1);
 
     // -----------------------------------------------------------------------------------------------------------------
 
@@ -132,7 +121,6 @@ void drawLEDs(const uint16_t input, const uint16_t avg, const Settings *const se
         case LEDMode::Off:
             two.off(1);
     }
-    delay(1);
 
     // -----------------------------------------------------------------------------------------------------------------
 
@@ -168,7 +156,6 @@ void drawLEDs(const uint16_t input, const uint16_t avg, const Settings *const se
         case LEDMode::Off:
             two.off(2);
     }
-    delay(1);
 
     // -----------------------------------------------------------------------------------------------------------------
 
@@ -204,6 +191,6 @@ void drawLEDs(const uint16_t input, const uint16_t avg, const Settings *const se
         case LEDMode::Off:
             two.off(3);
     }
-    delay(1);
-    Timing::stop(Timing::Id::DrawLeds);
+
+    Timing::stop(Timing::Id::DrawLeds, 1);
 }

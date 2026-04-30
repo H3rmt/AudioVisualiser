@@ -156,6 +156,8 @@ void MultiplexedStrip::normal(const uint8_t index, const uint16_t lvl, const uin
     Animations::renderNormal(reinterpret_cast<Animations::Rgb *>(pixels.getPixels()), current, lvl, colorOffset,
                              percentMaxChangeDivider);
     pixels.show();
+    // wait for write to complete
+    while (!pixels.canShow());
 }
 
 void MultiplexedStrip::centre(const uint8_t index, const uint16_t lvl, const uint16_t colorOffset,
@@ -167,6 +169,8 @@ void MultiplexedStrip::centre(const uint8_t index, const uint16_t lvl, const uin
                              percentMaxChangeDivider);
 
     pixels.show();
+    // wait for write to complete
+    while (!pixels.canShow());
 }
 
 void MultiplexedStrip::circle(const uint8_t index, const uint16_t lvl, const uint16_t colorOffset, const uint16_t width,
@@ -177,6 +181,8 @@ void MultiplexedStrip::circle(const uint8_t index, const uint16_t lvl, const uin
     Animations::renderCircle(reinterpret_cast<Animations::Rgb *>(pixels.getPixels()), current, lvl, colorOffset, width,
                              bars, moveSpeed, reverseOnPeak);
     pixels.show();
+    // wait for write to complete
+    while (!pixels.canShow());
 }
 
 void MultiplexedStrip::resetOff(const uint8_t index) {
@@ -215,4 +221,6 @@ void MultiplexedStrip::offAnimation(const uint8_t index) {
     pixels.setPixelColor((start + 4) % current->ledCount, Adafruit_NeoPixel::Color(80, 0, 255));
     pixels.setPixelColor((start + 5) % current->ledCount, Adafruit_NeoPixel::Color(100, 0, 255));
     pixels.show();
+    // wait for write to complete
+    while (!pixels.canShow());
 }
