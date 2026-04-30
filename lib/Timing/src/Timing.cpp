@@ -3,6 +3,8 @@
 #include <array>
 #include <chrono>
 
+#include <Core.hpp>
+
 #if defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_RP2350) || defined(PICO_BUILD)
 #include <pico/time.h>
 #include <pico/critical_section.h>
@@ -56,6 +58,27 @@ void Timing::System::start(const Id id) {
     critical_section_enter_blocking(&lock);
 #endif
     auto &entry = entries[static_cast<uint8_t>(id)];
+
+#ifdef TIMING_WARN_ON_OVERLAP
+    for (uint8_t i = 0; i < static_cast<uint8_t>(Id::Count); ++i) {
+        if (i == static_cast<uint8_t>(id)) {
+            continue;
+        }
+
+        const auto &other = entries[i];
+        if (!other.running) {
+            continue;
+        }
+
+        Console::print("Timing warning: ");
+        Console::print(name(id));
+        Console::print(" started while ");
+        Console::print(name(static_cast<Id>(i)));
+        Console::println(" is still running");
+        break;
+    }
+#endif
+
     entry.startNs = nowNs();
     entry.running = true;
 #if defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_RP2350) || defined(PICO_BUILD)
