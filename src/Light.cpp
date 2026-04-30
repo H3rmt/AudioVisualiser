@@ -2,6 +2,7 @@
 
 #include "Core.hpp"
 #include "MultiplexedStrip.hpp"
+#include <Timing.hpp>
 
 constexpr int STRIP1OUT = 12;
 constexpr int STRIP2OUT = 13;
@@ -26,6 +27,7 @@ void testLeds(const int index) {
 }
 
 void drawLEDsOff() {
+    Timing::start(Timing::Id::DrawLedsOff);
     one.offAnimation(0);
     two.offAnimation(0);
     // delay(1);
@@ -37,12 +39,14 @@ void drawLEDsOff() {
     one.offAnimation(3);
     two.offAnimation(3);
     delay(1);
+    Timing::stop(Timing::Id::DrawLedsOff);
 }
 
 uint16_t level = 0;
 uint8_t lastBrightness = 0;
 
 void drawLEDs(const uint16_t input, const uint16_t avg, const Settings *const settings) {
+    Timing::start(Timing::Id::DrawLeds);
     const auto read = analogRead(26);
     if (const uint8_t brightness = map(read, 0, 1023, 5, 255); brightness != lastBrightness) {
         lastBrightness = brightness;
@@ -201,57 +205,5 @@ void drawLEDs(const uint16_t input, const uint16_t avg, const Settings *const se
             two.off(3);
     }
     delay(1);
+    Timing::stop(Timing::Id::DrawLeds);
 }
-
-
-#ifdef AAA
-
-void updateMaxBright(uint8_t maxBrightness) {
-    sub.setMaxBrightness(maxBrightness);
-    midl.setMaxBrightness(maxBrightness);
-    midr.setMaxBrightness(maxBrightness);
-    sideo.setMaxBrightness(maxBrightness);
-    sidem.setMaxBrightness(maxBrightness);
-}
-
-void drawLEDsOff() {
-    selectChannel(0);
-    sub.offAnimiation();
-    sideo.offAnimiation();
-    selectChannel(1);
-    midl.offAnimiation();
-    sidem.offAnimiation();
-    selectChannel(2);
-    midr.offAnimiation();
-    sideo.offAnimiation();
-    selectChannel(3);
-    sidem.offAnimiation();
-}
-
-void drawLEDs(uint32_t input, uint32_t avg) {
-    selectChannel(0);
-    sub.pulse(input, avg, false);
-    sideo.centre(input, avg);
-    selectChannel(1);
-    midl.circle(input, avg, 4, 2, 0.12, true);
-    sidem.centre(input, avg);
-    selectChannel(2);
-    midr.circle(input, avg, 4, 2, 0.12, true);
-    sideo.centre(input, avg);
-    selectChannel(3);
-    sidem.centre(input, avg);
-}
-
-void initLeds() {
-    pinMode(D2, OUTPUT);
-    pinMode(D3, OUTPUT);
-    sub.begin();
-    sub.setAdaptiveBrightness(true);
-    midl.begin();
-    midl.setReversed(true);
-    midr.begin();
-    sideo.begin();
-    sidem.begin();
-    sidem.setReversed(true);
-}
-#endif

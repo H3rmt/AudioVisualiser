@@ -11,6 +11,7 @@
 #include <Debug.hpp>
 #include <Display.hpp>
 #include <Mic.hpp>
+#include <Timing.hpp>
 
 #include "Light.hpp"
 
@@ -209,6 +210,7 @@ bool displayUpdate(Shared *shared, const AnalyzeData *data) {
     if (!shared->newDataForDisplay) {
         return false;
     }
+    Timing::stop(Timing::Id::DisplayWait);
     shared->newDataForDisplay = false;
     shared->allowNewDataForDisplay = false;
 
@@ -227,6 +229,7 @@ bool displayUpdate(Shared *shared, const AnalyzeData *data) {
 
     display.dmaWrite();
     shared->allowNewDataForDisplay = true;
+    Timing::start(Timing::Id::DisplayWait);
     return true;
 }
 

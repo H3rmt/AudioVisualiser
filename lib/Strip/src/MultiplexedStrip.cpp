@@ -123,7 +123,7 @@ void MultiplexedStrip::setRainbow(const uint8_t index, const bool rainbow) {
     current->rainbow = rainbow;
 }
 
-void MultiplexedStrip::off(uint8_t index) {
+void MultiplexedStrip::off(const uint8_t index) {
     Animations::StripData *current = selectStrip(index);
     if (current == nullptr || current->ledCount == 0)
         return;

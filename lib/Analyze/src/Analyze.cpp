@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <Core.hpp>
+#include <Timing.hpp>
 
 #include "Analyze.hpp"
 
@@ -8,6 +9,7 @@ unsigned long startIncreaseLoudTriggered = 0;
 
 
 void Analyze::calculate(AnalyzeData *data, const float *magnitudes) {
+    Timing::start(Timing::Id::AnalyzeCalculate);
     data->rawDataMax = 0;
     data->resultMax = 0;
     data->peakFrequencyIndex = 0;
@@ -44,6 +46,7 @@ void Analyze::calculate(AnalyzeData *data, const float *magnitudes) {
             data->resultMax = res;
         }
     }
+    Timing::stop(Timing::Id::AnalyzeCalculate);
 }
 
 
@@ -54,6 +57,7 @@ auto averages = new int32_t[size]{};
 uint8_t lastIndex = 50;
 
 void Analyze::checkChanges(AnalyzeData *data) {
+    Timing::start(Timing::Id::AnalyzeCheckChanges);
     const uint8_t sec = millis() / 1000 % 20;
     const uint8_t msecSlot = millis() % 1000 / 250;
     const uint8_t slot = sec * 4 + msecSlot;
@@ -124,6 +128,7 @@ void Analyze::checkChanges(AnalyzeData *data) {
             data->off = false;
         }
     }
+    Timing::stop(Timing::Id::AnalyzeCheckChanges);
 }
 
 
@@ -135,6 +140,7 @@ uint32_t getAverageMinValue(const uint8_t frequency) {
 }
 
 void Analyze::analyzeFrequencies(AnalyzeData *data) {
+    Timing::start(Timing::Id::AnalyzeFrequencies);
     // only move of value is above threshold
     if (data->resultMax > 40) {
         // Move floating index towards peak index gradually
@@ -164,4 +170,5 @@ void Analyze::analyzeFrequencies(AnalyzeData *data) {
             static_cast<int>(data->floatingAverage * 0.99f + data->peakFrequencyValue * 0.022f)
         )
     );
+    Timing::stop(Timing::Id::AnalyzeFrequencies);
 }

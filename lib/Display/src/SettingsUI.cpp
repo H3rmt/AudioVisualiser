@@ -5,6 +5,8 @@
 #include "Core.hpp"
 #include "Util.hpp"
 
+#include <Timing.hpp>
+
 namespace {
     constexpr int kBoxPadding = 6;
     constexpr int kBoxInnerPadding = 6;
@@ -250,6 +252,7 @@ void SettingsUI::SettingsUI::handleTouch(const int x, const int y, const int spr
 }
 
 void SettingsUI::SettingsUI::draw(TFT_eSprite &spr) {
+    Timing::start(Timing::Id::SettingsDraw);
     const int h = spr.height();
     const int w = spr.width();
 
@@ -345,6 +348,7 @@ void SettingsUI::SettingsUI::draw(TFT_eSprite &spr) {
         default: drawPage8(spr, contentW, h);
             break;
     }
+    Timing::stop(Timing::Id::SettingsDraw);
 }
 
 void SettingsUI::SettingsUI::drawPage8(TFT_eSprite &spr, const int contentW, const int contentH) {

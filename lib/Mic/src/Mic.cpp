@@ -3,6 +3,7 @@
 #include <I2S.h>
 
 #include <Core.hpp>
+#include <Timing.hpp>
 
 #include "Mic.hpp"
 
@@ -44,6 +45,7 @@ uint16_t counter = 0;
 
 
 void Mic::runMicStep() {
+    Timing::start(Timing::Id::MicStep);
     int32_t l, r;
     in.read32(&l, &r);
     const int16_t s = l >> 14;
@@ -52,11 +54,14 @@ void Mic::runMicStep() {
 
     if (counter == Consts::Samples - 1) {
         fft.write(reinterpret_cast<const uint8_t *>(activeBuf), Consts::Samples * sizeof(int16_t));
+        Timing::stop(Timing::Id::MicStep);
         const bool switchBuffer = ccallback(activeBuf, fft);
+        Timing::start(Timing::Id::MicStep);
         if (switchBuffer)
             secondBuffer = !secondBuffer;
         counter = 0;
     } else {
         counter++;
     }
+    Timing::stop(Timing::Id::MicStep);
 }
