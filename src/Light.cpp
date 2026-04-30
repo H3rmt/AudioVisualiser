@@ -102,6 +102,8 @@ void drawLEDs(const uint16_t input, const uint16_t avg, const Settings *const se
         case LEDMode::Off:
             two.off(0);
     }
+    one.waitShow();
+    two.waitShow();
 
     // -----------------------------------------------------------------------------------------------------------------
 
@@ -121,6 +123,7 @@ void drawLEDs(const uint16_t input, const uint16_t avg, const Settings *const se
         case LEDMode::Off:
             two.off(1);
     }
+    two.waitShow();
 
     // -----------------------------------------------------------------------------------------------------------------
 
@@ -156,6 +159,8 @@ void drawLEDs(const uint16_t input, const uint16_t avg, const Settings *const se
         case LEDMode::Off:
             two.off(2);
     }
+    one.waitShow();
+    two.waitShow();
 
     // -----------------------------------------------------------------------------------------------------------------
 
@@ -191,6 +196,9 @@ void drawLEDs(const uint16_t input, const uint16_t avg, const Settings *const se
         case LEDMode::Off:
             two.off(3);
     }
+    one.waitShow();
+    two.waitShow();
+
 
     Timing::stop(Timing::Id::DrawLeds, 1);
 }

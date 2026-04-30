@@ -11,6 +11,7 @@ namespace Timing {
         DrawLeds,
         DrawLedsOff,
         MicStep,
+        MicDataCopy,
         // core 0
         DisplayWait,
         DisplayMain,
@@ -29,16 +30,29 @@ namespace Timing {
         static System &instance();
 
         void start(Id id, uint8_t core = 0);
+
         void stop(Id id, uint8_t core = 0);
 
-        [[nodiscard]] uint64_t timeNs(Id id, uint8_t core = 0) const;
-        [[nodiscard]] float timeMs(Id id, uint8_t core = 0) const;
-        [[nodiscard]] const char *name(Id id) const;
+        void setStart(uint8_t core = 0);
+
+        uint64_t getStartNs(uint8_t core) const;
+
+        float getStartMs(uint8_t core) const;
 
         [[nodiscard]] uint64_t nowNs() const;
 
+        float nowMs() const;
+
+        [[nodiscard]] uint64_t timeNs(Id id, uint8_t core = 0) const;
+
+        [[nodiscard]] float timeMs(Id id, uint8_t core = 0) const;
+
+        [[nodiscard]] const char *name(Id id) const;
+
     private:
         System();
+
+        uint64_t starts[2];
 
         struct Entry {
             uint64_t totalNs = 0;
@@ -55,6 +69,26 @@ namespace Timing {
 
     inline System &get() {
         return System::instance();
+    }
+
+    inline void setStart(const uint8_t core = 0) {
+        System::instance().setStart(core);
+    }
+
+    inline uint64_t getStartNs(const uint8_t core = 0) {
+        return System::instance().getStartNs(core);
+    }
+
+    inline float getStartMs(const uint8_t core = 0) {
+        return System::instance().getStartMs(core);
+    }
+
+    inline uint64_t getNowNs() {
+        return System::instance().nowNs();
+    }
+
+    inline float getNowMs() {
+        return System::instance().nowMs();
     }
 
     inline void start(const Id id, const uint8_t core = 0) {

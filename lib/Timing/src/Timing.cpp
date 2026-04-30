@@ -19,6 +19,7 @@ namespace {
         "DrawLeds",
         "DrawLedsOff",
         "MicStep",
+        "MicDataCopy",
         // core 0
         "DisplayWait",
         "DisplayMain",
@@ -54,6 +55,10 @@ uint64_t Timing::System::nowNs() const {
     using namespace std::chrono;
     return duration_cast<nanoseconds>(steady_clock::now().time_since_epoch()).count();
 #endif
+}
+
+float Timing::System::nowMs() const {
+    return nowNs() / 1000000ULL;
 }
 
 void Timing::System::start(const Id id, const uint8_t core) {
@@ -112,6 +117,18 @@ void Timing::System::stop(const Id id, const uint8_t core) {
 #if defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_RP2350) || defined(PICO_BUILD)
     critical_section_exit(&lock);
 #endif
+}
+
+void Timing::System::setStart(const uint8_t core) {
+    starts[core < kCoreCount ? core : 0] = nowNs();
+}
+
+uint64_t Timing::System::getStartNs(const uint8_t core) const {
+    return starts[core < kCoreCount ? core : 0];
+}
+
+float Timing::System::getStartMs(const uint8_t core) const {
+    return starts[core < kCoreCount ? core : 0] / 1000000.0f;
 }
 
 uint64_t Timing::System::timeNs(const Id id, const uint8_t core) const {

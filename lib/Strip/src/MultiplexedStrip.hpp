@@ -29,6 +29,8 @@ public:
     void circle(uint8_t index, uint16_t lvl, uint16_t colorOffset, uint16_t width = 5, uint16_t bars = 2,
                 float moveSpeed = 0.1f, bool reverseOnPeak = false);
 
+    void waitShow();
+
     void off(uint8_t index);
 
     void setMaxBrightness(uint8_t index, uint8_t brightness);

@@ -213,8 +213,15 @@ void Display::Display::drawSettings() {
     settingsUI.draw(spr);
 }
 
+int c = 0;
+
 void Display::Display::drawMain(const AnalyzeData *data) {
-    handleTouch();
+    c++;
+    // reduce get touch calls
+    if (c > 5) {
+        c = 0;
+        handleTouch();
+    }
     Timing::start(Timing::Id::DisplayMain, 0);
 
     spr.fillSprite(rgbTo565(10, 10, 15));

@@ -81,7 +81,9 @@ int validFFTs = 0;
 bool fftResult(int16_t *raw, AudioFFTBase &fft) {
     if (validFFTs > 200) {
         globalShared.FFTCount++;
+        Timing::start(Timing::Id::MicDataCopy, 1);
         const auto mags = fft.magnitudes();
+        Timing::stop(Timing::Id::MicDataCopy, 1);
         liveAnalyzeData->rawDataPointer = raw;
         Analyze::calculate(liveAnalyzeData, mags);
         Analyze::checkChanges(liveAnalyzeData);
@@ -195,6 +197,7 @@ void setup() {
     display.addInfoString(str.c_str());
     delay(250);
 
+    Timing::setStart(0);
     started = true;
 }
 
@@ -202,9 +205,6 @@ void displayUpdate(Shared *shared, const AnalyzeData *data) {
     // wait for next FFT to swap buffers
     shared->newDataForDisplay = false;
     shared->allowNewDataForDisplay = false;
-
-    // check of settings enter
-    display.handleTouch();
 
     display.dmaWait();
     display.drawMain(data);
@@ -256,6 +256,7 @@ void setup1() {
         delay(500);
     }
     Console::println("Starting loop1");
+    Timing::setStart(1);
 }
 
 void loop1() {

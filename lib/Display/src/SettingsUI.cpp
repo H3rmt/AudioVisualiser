@@ -363,20 +363,31 @@ void SettingsUI::SettingsUI::drawPage8(TFT_eSprite &spr, const int contentW, con
     spr.setTextFont(2);
     spr.setTextColor(text, bg);
     spr.drawString("Timing", 10, 10);
-    spr.drawString("C0", 160, 10);
+    spr.drawString("C0", 145, 10);
 
     int y = 28;
-    for (uint8_t i = 0; i < Timing::count(); ++i) {
-        const auto id = static_cast<Timing::Id>(i);
-        if (Timing::timeMs(id, 0) == 0) {
-            continue;
-        }
+    double accPerc = 0;
+    for (uint8_t i = 0; i < Timing::count() + 1; ++i) {
         char line2[40];
-        snprintf(line2, sizeof(line2), "%013.2f", Timing::timeMs(id, 0));
+        const char *name;
+        if (i != Timing::count()) {
+            const auto id = static_cast<Timing::Id>(i);
+            if (Timing::timeMs(id, 0) == 0) {
+                continue;
+            }
+            const auto perc = Timing::timeMs(id, 0) * 100.0 / (Timing::getNowMs() - Timing::getStartMs(0));
+            snprintf(line2, sizeof(line2), "%011.2f %2d%%", Timing::timeMs(id, 0), static_cast<uint8_t>(perc));
+            accPerc += perc;
+            name = Timing::name(id);
+        } else {
+            snprintf(line2, sizeof(line2), "%011.2f %2d%%", Timing::getNowMs() - Timing::getStartMs(0),
+                     static_cast<uint8_t>(accPerc));
+            name = "All";
+        }
         spr.setTextColor(accent, bg);
-        spr.drawString(Timing::name(id), 10, y);
+        spr.drawString(name, 10, y);
         spr.setTextColor(text, bg);
-        spr.drawString(line2, 160, y);
+        spr.drawString(line2, 145, y);
         y += 16;
         if (y > contentH - 5) {
             break;
@@ -393,20 +404,32 @@ void SettingsUI::SettingsUI::drawPage9(TFT_eSprite &spr, const int contentW, con
     spr.setTextFont(2);
     spr.setTextColor(text, bg);
     spr.drawString("Timing", 10, 10);
-    spr.drawString("C0", 160, 10);
+    spr.drawString("C0", 145, 10);
 
     int y = 28;
-    for (uint8_t i = 0; i < Timing::count(); ++i) {
-        const auto id = static_cast<Timing::Id>(i);
-        if (Timing::timeMs(id, 1) == 0) {
-            continue;
-        }
+    double accPerc = 0;
+    for (uint8_t i = 0; i < Timing::count() + 1; ++i) {
         char line2[40];
-        snprintf(line2, sizeof(line2), "%013.2f", Timing::timeMs(id, 1));
+        const char *name;
+        if (i != Timing::count()) {
+            const auto id = static_cast<Timing::Id>(i);
+            if (Timing::timeMs(id, 1) == 0) {
+                continue;
+            }
+            const auto perc = Timing::timeMs(id, 1) * 100.0 / (
+                                  Timing::getNowMs() - Timing::getStartMs(1));
+            snprintf(line2, sizeof(line2), "%011.2f %2d%%", Timing::timeMs(id, 1), static_cast<uint8_t>(perc));
+            accPerc += perc;
+            name = Timing::name(id);
+        } else {
+            snprintf(line2, sizeof(line2), "%011.2f %2d%%", Timing::getNowMs() - Timing::getStartMs(1),
+                     static_cast<uint8_t>(accPerc));
+            name = "All";
+        }
         spr.setTextColor(accent, bg);
-        spr.drawString(Timing::name(id), 10, y);
+        spr.drawString(name, 10, y);
         spr.setTextColor(text, bg);
-        spr.drawString(line2, 160, y);
+        spr.drawString(line2, 145, y);
         y += 16;
         if (y > contentH - 5) {
             break;
@@ -416,8 +439,8 @@ void SettingsUI::SettingsUI::drawPage9(TFT_eSprite &spr, const int contentW, con
 #if defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_RP2350) || defined(PICO_BUILD)
     const int freeHeap = rp2040.getFreeHeap();
     spr.setTextColor(accent, bg);
-    spr.drawString("Free heap", 10, contentH - 34);
+    spr.drawString("Free heap", 10, contentH - 25);
     spr.setTextColor(text, bg);
-    spr.drawString(String(freeHeap) + " B", 170, contentH - 34);
+    spr.drawString(String(freeHeap) + " B", 145, contentH - 25);
 #endif
 }
