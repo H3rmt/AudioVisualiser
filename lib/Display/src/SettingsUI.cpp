@@ -6,8 +6,15 @@
 #include "Util.hpp"
 
 namespace {
-    constexpr int kButtonGap = 8;
-    constexpr int kBoxPadding = 8;
+    constexpr int kBoxPadding = 6;
+    constexpr int kBoxInnerPadding = 6;
+
+    struct LedPageLayout {
+        SettingsUI::Rect modePanel{};
+        SettingsUI::Rect optionPanel{};
+        SettingsUI::Rect modeButtons[4]{};
+        SettingsUI::Rect optionButtons[3]{};
+    };
 
     static inline bool contains(const SettingsUI::Rect &r, const int px, const int py) {
         return px >= r.x && py >= r.y && px < (r.x + r.w) && py < (r.y + r.h);
@@ -25,16 +32,6 @@ namespace {
         return v;
     }
 
-    static inline const char *modeName(const LEDMode mode) {
-        switch (mode) {
-            case LEDMode::Normal: return "Normal";
-            case LEDMode::Centre: return "Centre";
-            case LEDMode::Circle: return "Circle";
-            case LEDMode::Off: return "Off";
-        }
-        return "?";
-    }
-
     static inline LEDSettings *settingForPage(Settings *settings, const uint8_t pageIndex) {
         if (settings == nullptr) return nullptr;
         if (pageIndex == 0) return &settings->frontCentre;
@@ -45,6 +42,62 @@ namespace {
         if (pageIndex == 5) return &settings->rightMiddle;
         if (pageIndex == 6) return &settings->rightFrontBack;
         return nullptr;
+    }
+
+    static inline LedPageLayout ledPageLayout(const int contentW, const int contentH) {
+        LedPageLayout layout{};
+
+        const int pageWidth = max(0, contentW);
+        const int pageHeight = max(0, contentH);
+        const int innerWidth = max(0, pageWidth - (kBoxPadding * 2));
+
+        const int modePanelY = 45;
+        const int optionPanelY = (pageHeight / 2) + 20;
+        const int modePanelHeight = max(0, optionPanelY - modePanelY - (kBoxPadding * 2));
+        const int optionPanelHeight = max(0, pageHeight - optionPanelY - (kBoxPadding * 2));
+
+        const int modeRowY = modePanelY + kBoxInnerPadding;
+        const int modeRowHeight = max(0, modePanelHeight - (kBoxInnerPadding * 2));
+        const int modeUsableWidth = max(0, innerWidth - (kBoxInnerPadding * 2));
+        const int modeButtonWidth = max(0, min(modeUsableWidth / 4, max(48, modeRowHeight + 14)));
+        const int modeButtonGap = (modeButtonWidth > 0 && modeUsableWidth > modeButtonWidth * 4)
+                                      ? (modeUsableWidth - (modeButtonWidth * 4)) / 3
+                                      : 0;
+
+        const int optionRowY = optionPanelY + kBoxInnerPadding;
+        const int optionRowHeight = max(0, optionPanelHeight - (kBoxInnerPadding * 2));
+        const int optionUsableWidth = max(0, innerWidth - (kBoxInnerPadding * 2));
+        const int optionButtonWidth = max(0, min(optionUsableWidth / 3, max(70, optionRowHeight + 20)));
+        const int optionButtonGap = (optionButtonWidth > 0 && optionUsableWidth > optionButtonWidth * 3)
+                                        ? (optionUsableWidth - (optionButtonWidth * 3)) / 2
+                                        : 0;
+
+        layout.modePanel = SettingsUI::Rect{
+            kBoxPadding, modePanelY, max(0, pageWidth - (kBoxPadding * 2)), modePanelHeight
+        };
+        layout.optionPanel = SettingsUI::Rect{
+            kBoxPadding, optionPanelY, max(0, pageWidth - (kBoxPadding * 2)), optionPanelHeight
+        };
+
+        for (int i = 0; i < 4; ++i) {
+            layout.modeButtons[i] = SettingsUI::Rect{
+                kBoxPadding + kBoxInnerPadding + (i * (modeButtonWidth + modeButtonGap)),
+                modeRowY,
+                modeButtonWidth,
+                modeRowHeight,
+            };
+        }
+
+        for (int i = 0; i < 3; ++i) {
+            layout.optionButtons[i] = SettingsUI::Rect{
+                kBoxPadding + kBoxInnerPadding + (i * (optionButtonWidth + optionButtonGap)),
+                optionRowY,
+                optionButtonWidth,
+                optionRowHeight,
+            };
+        }
+
+        return layout;
     }
 }
 
@@ -60,14 +113,13 @@ void SettingsUI::SettingsUI::layout(const int w, const int h, Rect &upBtn, Rect 
 }
 
 void SettingsUI::SettingsUI::drawLEDPage(TFT_eSprite &spr, const String &name, LEDSettings *setting,
-                                          const int contentW, const int contentH) {
+                                         const int contentW, const int contentH) {
     const uint16_t bg = rgbTo565(14, 14, 18);
     const uint16_t border = rgbTo565(80, 80, 90);
     const uint16_t panel = rgbTo565(26, 26, 34);
     const uint16_t primary = rgbTo565(55, 125, 235);
     const uint16_t primaryDark = rgbTo565(22, 58, 120);
     const uint16_t text = rgbTo565(200, 200, 210);
-    const uint16_t muted = rgbTo565(150, 150, 160);
 
     const int x0 = 0;
     const int y0 = 0;
@@ -76,22 +128,20 @@ void SettingsUI::SettingsUI::drawLEDPage(TFT_eSprite &spr, const String &name, L
 
     spr.fillRect(x0, y0, w, h, bg);
 
-    spr.setTextFont(2);
+    spr.setTextFont(4);
     spr.setTextColor(text, bg);
-    spr.setCursor(10, 14);
+    spr.setCursor(8, 12);
     spr.print("LED: ");
     spr.print(name);
 
+    spr.setTextFont(2);
+
     if (setting == nullptr || w <= 0 || h <= 0) return;
 
-    const int boxInnerX = kBoxPadding;
-    const int boxInnerW = max(0, w - (kBoxPadding * 2));
-    const int modePanelY = 34;
-    const int modePanelH = max(0, (h / 2) - modePanelY - 6);
-    const int optionPanelY = (h / 2) + 6;
-    const int optionPanelH = max(0, h - optionPanelY - 12);
+    const LedPageLayout layout = ledPageLayout(w, h);
 
-    auto drawButton = [&](const Rect &r, const String &label, const bool selected, const bool multiline = false) {
+    auto drawButton = [&](const Rect &r, const String &line1, const String &line2 = String(),
+                          const bool selected = false) {
         const uint16_t fill = selected ? primary : panel;
         const uint16_t fillEdge = selected ? primaryDark : panel;
         spr.fillRoundRect(r.x, r.y, r.w, r.h, 8, fill);
@@ -101,45 +151,33 @@ void SettingsUI::SettingsUI::drawLEDPage(TFT_eSprite &spr, const String &name, L
         }
         spr.setTextColor(text, fill);
         spr.setTextDatum(MC_DATUM);
-        if (multiline) {
-            spr.drawString(label, r.x + r.w / 2, r.y + r.h / 2 - 6);
+        const int cx = r.x + r.w / 2;
+        const int cy = r.y + r.h / 2;
+        if (line2.length() > 0) {
+            spr.drawString(line1, cx, cy - 10);
+            spr.drawString(line2, cx, cy + 8);
         } else {
-            spr.drawString(label, r.x + r.w / 2, r.y + r.h / 2);
+            spr.drawString(line1, cx, cy);
         }
         spr.setTextDatum(TL_DATUM);
     };
 
     // Top half: LED mode selection.
-    Rect modeButtons[4]{};
-    const int modeRowY = modePanelY + 28;
-    const int modeRowH = max(0, modePanelH - 38);
-    const int modeButtonW = max(0, (boxInnerW - (kButtonGap * 3)) / 4);
-    for (int i = 0; i < 4; ++i) {
-        modeButtons[i] = Rect{boxInnerX + (i * (modeButtonW + kButtonGap)), modeRowY, modeButtonW, modeRowH};
-    }
-    spr.fillRoundRect(kBoxPadding, modePanelY, max(0, w - (kBoxPadding * 2)), modePanelH, 10, panel);
-    spr.drawRoundRect(kBoxPadding, modePanelY, max(0, w - (kBoxPadding * 2)), modePanelH, 10, border);
-    drawButton(modeButtons[0], "Normal", setting->mode == LEDMode::Normal);
-    drawButton(modeButtons[1], "Centre", setting->mode == LEDMode::Centre);
-    drawButton(modeButtons[2], "Circle", setting->mode == LEDMode::Circle);
-    drawButton(modeButtons[3], "Off", setting->mode == LEDMode::Off);
+    spr.fillRoundRect(layout.modePanel.x, layout.modePanel.y, layout.modePanel.w, layout.modePanel.h, 10, panel);
+    spr.drawRoundRect(layout.modePanel.x, layout.modePanel.y, layout.modePanel.w, layout.modePanel.h, 10, border);
+    drawButton(layout.modeButtons[0], "Normal", String(), setting->mode == LEDMode::Normal);
+    drawButton(layout.modeButtons[1], "Centre", String(), setting->mode == LEDMode::Centre);
+    drawButton(layout.modeButtons[2], "Circle", String(), setting->mode == LEDMode::Circle);
+    drawButton(layout.modeButtons[3], "Off", String(), setting->mode == LEDMode::Off);
 
     // Bottom half: option buttons.
-    Rect optButtons[3]{};
-    const int optRowY = optionPanelY + 26;
-    const int optRowH = max(0, optionPanelH - 36);
-    const int optButtonW = max(0, (boxInnerW - (kButtonGap * 2)) / 3);
-    for (int i = 0; i < 3; ++i) {
-        optButtons[i] = Rect{boxInnerX + (i * (optButtonW + kButtonGap)), optRowY, optButtonW, optRowH};
-    }
-    spr.fillRoundRect(kBoxPadding, optionPanelY, max(0, w - (kBoxPadding * 2)), optionPanelH, 10, panel);
-    spr.drawRoundRect(kBoxPadding, optionPanelY, max(0, w - (kBoxPadding * 2)), optionPanelH, 10, border);
-    drawButton(optButtons[0], setting->reversed ? "Reverse: On" : "Reverse: Off", setting->reversed);
-    drawButton(optButtons[1], setting->rainbow ? "Rainbow: On" : "Rainbow: Off", setting->rainbow);
-    drawButton(optButtons[2], String("Brightness: ") + String(setting->brightness), false, true);
-
-    spr.setTextColor(muted, bg);
-    spr.drawString(String("Mode: ") + modeName(setting->mode), 10, h - 18);
+    spr.fillRoundRect(layout.optionPanel.x, layout.optionPanel.y, layout.optionPanel.w, layout.optionPanel.h, 10,
+                      panel);
+    spr.drawRoundRect(layout.optionPanel.x, layout.optionPanel.y, layout.optionPanel.w, layout.optionPanel.h, 10,
+                      border);
+    drawButton(layout.optionButtons[0], "Reverse", setting->reversed ? "On" : "Off", setting->reversed);
+    drawButton(layout.optionButtons[1], "Rainbow", setting->rainbow ? "On" : "Off", setting->rainbow);
+    drawButton(layout.optionButtons[2], "Brightness", String(setting->brightness), false);
 }
 
 SettingsUI::Action SettingsUI::SettingsUI::actionForTouch(const int x, const int y, const int spriteW,
@@ -147,39 +185,16 @@ SettingsUI::Action SettingsUI::SettingsUI::actionForTouch(const int x, const int
     Rect upBtn{}, downBtn{}, track{};
     this->layout(spriteW, spriteH, upBtn, downBtn, track);
 
-    const int contentWidth = min(sidebarX, spriteW);
-    const int contentHeight = spriteH;
-    const int pageWidth = max(0, contentWidth);
-    const int pageHeight = max(0, contentHeight);
-    const int boxInnerWidth = max(0, pageWidth - (kBoxPadding * 2));
-    const int modePanelY = 34;
-    const int modePanelHeight = max(0, (pageHeight / 2) - modePanelY - 6);
-    const int optionPanelY = (pageHeight / 2) + 6;
-    const int optionPanelHeight = max(0, pageHeight - optionPanelY - 12);
-    const int modeRowY = modePanelY + 28;
-    const int modeRowHeight = max(0, modePanelHeight - 38);
-    const int modeButtonWidth = max(0, (boxInnerWidth - (kButtonGap * 3)) / 4);
-    const int optionRowY = optionPanelY + 26;
-    const int optionRowHeight = max(0, optionPanelHeight - 36);
-    const int optionButtonWidth = max(0, (boxInnerWidth - (kButtonGap * 2)) / 3);
+    const LedPageLayout layout = ledPageLayout(min(sidebarX, spriteW), spriteH);
 
-    const Rect modeNormal{kBoxPadding, modeRowY, modeButtonWidth, modeRowHeight};
-    const Rect modeCentre{kBoxPadding + modeButtonWidth + kButtonGap, modeRowY, modeButtonWidth, modeRowHeight};
-    const Rect modeCircle{kBoxPadding + (modeButtonWidth + kButtonGap) * 2, modeRowY, modeButtonWidth, modeRowHeight};
-    const Rect modeOff{kBoxPadding + (modeButtonWidth + kButtonGap) * 3, modeRowY, modeButtonWidth, modeRowHeight};
-    const Rect reverseButton{kBoxPadding, optionRowY, optionButtonWidth, optionRowHeight};
-    const Rect rainbowButton{kBoxPadding + optionButtonWidth + kButtonGap, optionRowY, optionButtonWidth, optionRowHeight};
-    const Rect brightnessButton{kBoxPadding + (optionButtonWidth + kButtonGap) * 2, optionRowY, optionButtonWidth, optionRowHeight};
-
-    const bool isLedPage = pageIndex < 7;
-    if (isLedPage) {
-        if (contains(modeNormal, x, y)) return Action::LedModeNormal;
-        if (contains(modeCentre, x, y)) return Action::LedModeCentre;
-        if (contains(modeCircle, x, y)) return Action::LedModeCircle;
-        if (contains(modeOff, x, y)) return Action::LedModeOff;
-        if (contains(reverseButton, x, y)) return Action::LedReverseToggle;
-        if (contains(rainbowButton, x, y)) return Action::LedRainbowToggle;
-        if (contains(brightnessButton, x, y)) return Action::LedBrightnessStep;
+    if (pageIndex < 7) {
+        if (contains(layout.modeButtons[0], x, y)) return Action::LedModeNormal;
+        if (contains(layout.modeButtons[1], x, y)) return Action::LedModeCentre;
+        if (contains(layout.modeButtons[2], x, y)) return Action::LedModeCircle;
+        if (contains(layout.modeButtons[3], x, y)) return Action::LedModeOff;
+        if (contains(layout.optionButtons[0], x, y)) return Action::LedReverseToggle;
+        if (contains(layout.optionButtons[1], x, y)) return Action::LedRainbowToggle;
+        if (contains(layout.optionButtons[2], x, y)) return Action::LedBrightnessStep;
     }
 
     if (contains(upBtn, x, y))
