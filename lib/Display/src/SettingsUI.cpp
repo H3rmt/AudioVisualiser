@@ -7,6 +7,10 @@
 
 #include <Timing.hpp>
 
+#if defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_RP2350) || defined(PICO_BUILD)
+#include <RP2040Support.h>
+#endif
+
 namespace {
     constexpr int kBoxPadding = 6;
     constexpr int kBoxInnerPadding = 6;
@@ -352,8 +356,33 @@ void SettingsUI::SettingsUI::draw(TFT_eSprite &spr) {
 }
 
 void SettingsUI::SettingsUI::drawPage8(TFT_eSprite &spr, const int contentW, const int contentH) {
-    spr.fillRect(0, 0, contentW, contentH, rgbTo565(14, 14, 18));
+    const uint16_t bg = rgbTo565(14, 14, 18);
+    const uint16_t text = rgbTo565(200, 200, 210);
+    const uint16_t accent = rgbTo565(55, 125, 235);
+
+    spr.fillRect(0, 0, contentW, contentH, bg);
     spr.setTextFont(2);
-    spr.setTextColor(rgbTo565(200, 200, 210), rgbTo565(14, 14, 18));
-    spr.drawString("Page 8", 10, 14);
+    spr.setTextColor(text, bg);
+    spr.drawString("Timing / Heap", 10, 14);
+
+    int y = 34;
+    for (uint8_t i = 0; i < Timing::count(); ++i) {
+        const auto id = static_cast<Timing::Id>(i);
+        spr.setTextColor(accent, bg);
+        spr.drawString(Timing::name(id), 10, y);
+        spr.setTextColor(text, bg);
+        spr.drawString(String(Timing::timeMs(id), 3) + " ms", 170, y);
+        y += 16;
+        if (y > contentH - 18) {
+            break;
+        }
+    }
+
+#if defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_RP2350) || defined(PICO_BUILD)
+    const int freeHeap = rp2040.getFreeHeap();
+    spr.setTextColor(accent, bg);
+    spr.drawString("Free heap", 10, contentH - 34);
+    spr.setTextColor(text, bg);
+    spr.drawString(String(freeHeap) + " B", 170, contentH - 34);
+#endif
 }

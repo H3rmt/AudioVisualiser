@@ -75,4 +75,8 @@ namespace Timing {
     inline const char *name(const Id id) {
         return System::instance().name(id);
     }
+
+    inline uint8_t count() {
+        return static_cast<uint8_t>(Id::Count);
+    }
 }

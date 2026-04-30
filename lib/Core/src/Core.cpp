@@ -2,35 +2,35 @@
 #include "Core.hpp"
 
 #ifdef CDEBUG
-void inline Console::print(const String &s) {
+void Console::print(const String &s) {
     Serial.print(s);
 }
 
-void inline Console::print(const char str[]) {
+void Console::print(const char str[]) {
     Serial.print(str);
 }
 
-void inline Console::print(const int value) {
+void Console::print(const int value) {
     Serial.print(value);
 }
 
-void inline Console::print(const float value) {
+void Console::print(const float value) {
     Serial.print(value);
 }
 
-void inline Console::println(const String &s) {
+void Console::println(const String &s) {
     Serial.println(s);
 }
 
-void inline Console::println(const char str[]) {
+void Console::println(const char str[]) {
     Serial.println(str);
 }
 
-void inline Console::println(const int value) {
+void Console::println(const int value) {
     Serial.println(value);
 }
 
-void inline Console::println(const float value) {
+void Console::println(const float value) {
     Serial.println(value);
 }
 
@@ -55,18 +55,22 @@ size_t Console::printf(const char *format, ...) {
     return len;
 }
 #else
-void inline Console::print(const String &s) {
+void Console::print(const String &s) {
 }
-void inline Console::print(const char str[]) {
+void Console::print(const char str[]) {
 }
-void inline Console::print(int value) {
+void Console::print(int value) {
 }
-void inline Console::println(const String &s) {
+void Console::print(float value) {
 }
-void inline Console::println(const char str[]) {
+void Console::println(const String &s) {
 }
-void inline Console::println(int value) {
+void Console::println(const char str[]) {
 }
-size_t inline Console::printf(const char *format, ...) {
+void Console::println(int value) {
+}
+void Console::println(float value) {
+}
+size_t Console::printf(const char *format, ...) {
 }
 #endif
