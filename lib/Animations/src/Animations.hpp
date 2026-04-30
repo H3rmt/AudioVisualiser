@@ -15,7 +15,6 @@ namespace Animations {
     };
 
     struct CentreAnimState {
-        float movement = 0; // movement speed
         float coloredPixels = 0; // current position in the circle
     };
 
@@ -39,11 +38,13 @@ namespace Animations {
         // change during animation
         CircleAnimState circleAnimState;
         CentreAnimState centreAnimState;
+        CentreAnimState normalAnimState;
         OffAnimState offAnimState;
     };
 
 
-    void renderNormal(Rgb *pixels, const StripData *config, uint16_t lvl, uint16_t colorOffset);
+    void renderNormal(Rgb *pixels, StripData *config, uint16_t lvl, uint16_t colorOffset,
+                      float percentMaxChangeDivider);
 
     void renderCentre(Rgb *pixels, StripData *config, uint16_t lvl, uint16_t colorOffset,
                       float percentMaxChangeDivider);

@@ -131,6 +131,15 @@ void MultiplexedStrip::setPerLedColorChange(const uint8_t index, const uint16_t 
     current->perLedColorChange = change;
 }
 
+void MultiplexedStrip::normal(const uint8_t index, const uint16_t lvl, const uint16_t colorOffset, const float percentMaxChangeDivider) {
+    Animations::StripData *current = selectStrip(index);
+    if (current == nullptr || current->ledCount == 0)
+        return;
+
+    Animations::renderNormal(reinterpret_cast<Animations::Rgb *>(pixels.getPixels()), current, lvl, colorOffset, percentMaxChangeDivider);
+    pixels.show();
+}
+
 void MultiplexedStrip::centre(const uint8_t index, const uint16_t lvl, const uint16_t colorOffset, const float percentMaxChangeDivider) {
     Animations::StripData *current = selectStrip(index);
     if (current == nullptr || current->ledCount == 0)
@@ -147,33 +156,6 @@ void MultiplexedStrip::circle(const uint8_t index, const uint16_t lvl, const uin
         return;
     Animations::renderCircle(reinterpret_cast<Animations::Rgb *>(pixels.getPixels()), current, lvl, colorOffset, width,
                              bars, moveSpeed, reverseOnPeak);
-    pixels.show();
-}
-
-
-void MultiplexedStrip::normal(const uint8_t index, const uint16_t lvl, const uint16_t colorOffset) {
-    const Animations::StripData *current = selectStrip(index);
-    if (current == nullptr || current->ledCount == 0)
-        return;
-
-    // Console::print("pixels: ");
-    // auto p = pixels.getPixels();
-    // for (int i = 0; i < pixels.numPixels() * 3; i++) {
-    //     Console::print(p[i]);
-    //     if (i % 3 == 2)
-    //         Console::print("|");
-    //     Console::print(" ");
-    //
-    // }
-    // Console::println("\nafter: ");
-    Animations::renderNormal(reinterpret_cast<Animations::Rgb *>(pixels.getPixels()), current, lvl, colorOffset);
-    // for (int i = 0; i < pixels.numPixels() * 3; i++) {
-    //     Console::print(p[i]);
-    //     Console::print(" ");
-    // }
-    // Console::println("\n");
-    // delay(1000);
-
     pixels.show();
 }
 

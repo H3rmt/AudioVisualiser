@@ -22,7 +22,7 @@ public:
 
     void offAnimation(uint8_t index);
 
-    void normal(uint8_t index, uint16_t lvl, uint16_t colorOffset);
+    void normal(uint8_t index, uint16_t lvl, uint16_t colorOffset, float percentMaxChangeDivider = 20);
 
     void centre(uint8_t index, uint16_t lvl, uint16_t colorOffset, float percentMaxChangeDivider = 20);
 

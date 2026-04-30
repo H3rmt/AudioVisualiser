@@ -92,3 +92,63 @@ struct Shared {
     /// Number of FFTs (reset every second)
     uint16_t FFTCount = 0;
 };
+
+
+enum class LEDMode {
+    Normal,
+    Centre,
+    Circle,
+    Off,
+};
+
+struct LEDSettings {
+    LEDMode mode;
+    bool reversed;
+    bool rainbow;
+    uint8_t brightness;
+};
+
+struct Settings {
+    LEDSettings frontCentre{
+        .mode = LEDMode::Centre,
+        .reversed = true,
+        .rainbow = true,
+        .brightness = 100,
+    };
+    LEDSettings frontLeft{
+        .mode = LEDMode::Circle,
+        .reversed = true,
+        .rainbow = true,
+        .brightness = 100,
+    };
+    LEDSettings frontRight{
+        .mode = LEDMode::Circle,
+        .reversed = false,
+        .rainbow = true,
+        .brightness = 100,
+    };
+    LEDSettings leftMiddle{
+        .mode = LEDMode::Centre,
+        .reversed = false,
+        .rainbow = true,
+        .brightness = 200,
+    };
+    LEDSettings leftFrontBack{
+        .mode = LEDMode::Centre,
+        .reversed = false,
+        .rainbow = true,
+        .brightness = 200,
+    };
+    LEDSettings rightMiddle{
+        .mode = LEDMode::Centre,
+        .reversed = false,
+        .rainbow = true,
+        .brightness = 200,
+    };
+    LEDSettings rightFrontBack{
+        .mode = LEDMode::Centre,
+        .reversed = false,
+        .rainbow = true,
+        .brightness = 200,
+    };
+};

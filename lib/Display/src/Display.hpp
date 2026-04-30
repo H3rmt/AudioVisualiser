@@ -1,9 +1,9 @@
 #pragma once
 
 #include <TFT_eSPI.h>
-#include <stdint.h>
 
 #include "Core.hpp"
+#include "SettingsUI.hpp"
 
 #define FULLWIDTH 320
 // #define SIDEBARWIDTH 50
@@ -40,14 +40,14 @@ namespace Display {
         /// initialize display and sprite
         ///
         /// @param startAnimation whether to show the animation or not
-        void init(bool startAnimation);
+        void init(bool startAnimation, Settings *settings);
 
         /// draw bars around sprite (call once)
         void drawBars();
 
         /// draw data into sprite and write to display
         /// @param data analyzed data to draw
-        void draw(const AnalyzeData *data);
+        void drawMain(const AnalyzeData *data);
 
         // TODO
         void drawDebugBars(const AnalyzeData *data);
@@ -76,31 +76,25 @@ namespace Display {
         /// start DMA write
         void dmaWrite();
 
-        /// draw settings UI
-        void drawSettingsUI();
-
         /// Poll touchscreen (no IRQ) and handle top-bar actions.
-        void checkSettingsToggle();
+        void handleTouch();
 
         /// Whether the settings UI is currently shown instead of the audio visualiser.
-        bool isSettingsMode() const { return settingsMode; }
+        [[nodiscard]] bool isSettingsMode() const { return settingsMode; }
 
     private:
+        SettingsUI::SettingsUI settingsUI;
+
         TFT_eSPI tft = TFT_eSPI();
         TFT_eSprite spr = TFT_eSprite(&tft);
         uint16_t *sptr = nullptr;
         uint16_t messageCount = 0;
 
-#if defined(TOUCH_CS)
         bool touchWasDown = false;
         uint16_t lastTouchX = 0;
         uint16_t lastTouchY = 0;
-        uint32_t lastTouchMillis = 0;
-#endif
 
         bool settingsMode = false;
-        uint8_t settingsPage = 0;
-        static constexpr uint8_t settingsPageCount = 5;
 
         // Settings icon hitbox (centered at iconX/iconY, see drawTopBar()).
         static constexpr int settingsIconX = fullWidth - 23;

@@ -25,6 +25,8 @@ AnalyzeData *displayAnalyzeData;
 
 Display::Display display;
 
+Settings settings;
+
 #ifdef UPLOAD_OTA
 uint32_t last_ota_time = 0;
 
@@ -123,9 +125,9 @@ void setup() {
     Console::println("\n\n");
 
 #ifdef TEST_LEDS
-    display.init(true);
+    display.init(true, &settings);
 #else
-    display.init(false);
+    display.init(false, &settings);
 #endif
 
     Debug::progress(1);
@@ -197,8 +199,7 @@ void setup() {
 bool displayUpdate(Shared *shared, const AnalyzeData *data) {
     if (display.isSettingsMode()) {
         display.dmaWait();
-        display.drawSettingsUI();
-        display.checkSettingsToggle();
+        display.drawMain(data);
         display.dmaWrite();
         return true;
     }
@@ -211,10 +212,10 @@ bool displayUpdate(Shared *shared, const AnalyzeData *data) {
     shared->allowNewDataForDisplay = false;
 
     // check of settings enter
-    display.checkSettingsToggle();
+    display.handleTouch();
 
     display.dmaWait();
-    display.draw(data);
+    display.drawMain(data);
     display.drawRawAudio(data->rawDataPointer, data->off);
 
     // drawSpriteIndizes(data->peakFrequencyIndexFloat, data->peakFrequencyIndex, data->peakFrequencyIndexLazy);

@@ -5,7 +5,7 @@
 
 #include <Util.hpp>
 
-void Display::Display::init(const bool startAnimation) {
+void Display::Display::init(const bool startAnimation, Settings *settings) {
     Console::print("starting TFT on TFT_SCLK: ");
     Console::println(TFT_SCLK);
     Console::print("TFT_MISO: ");
@@ -45,13 +45,11 @@ void Display::Display::init(const bool startAnimation) {
         delay(300);
         spr.fillSprite(rgbTo565(40, 40, 54));
     }
+    settingsUI.init(settings);
     addInfoString("display started");
 }
 
-void Display::Display::checkSettingsToggle() {
-#if !defined(TOUCH_CS)
-    return;
-#else
+void Display::Display::handleTouch() {
     // TFT_eSPI provides calibrated screen coordinates via getTouch().
     // We treat a transition up->down as a "new touch".
     uint16_t x = 0;
@@ -63,7 +61,6 @@ void Display::Display::checkSettingsToggle() {
         y = (fullHeight - 1) - y;
         lastTouchX = x;
         lastTouchY = y;
-        lastTouchMillis = millis();
 
         const bool hitSettings =
                 (static_cast<int>(lastTouchX) >= (settingsIconX - settingsIconHitHalf)) &&
@@ -78,7 +75,7 @@ void Display::Display::checkSettingsToggle() {
 
         if (hitSettings && cooldownPassed) {
             settingsMode = !settingsMode;
-            settingsPage = 0;
+            settingsUI.resetPage();
             lastSettingsToggleMillis = millis();
             Console::println(String("settings icon pressed -> settingsMode=") + (settingsMode ? "1" : "0"));
         }
@@ -87,23 +84,10 @@ void Display::Display::checkSettingsToggle() {
         if (settingsMode && static_cast<int>(lastTouchY) >= TOPBARHEIGHT) {
             const int sx = static_cast<int>(lastTouchX);
             const int sy = static_cast<int>(lastTouchY) - TOPBARHEIGHT;
-
-            const auto action = SettingsUI::actionForTouch(sx, sy, spriteWidth, spriteHeight);
-            if (action == SettingsUI::Action::PageUp) {
-                if (settingsPage > 0) {
-                    settingsPage--;
-                    Console::println(String("settings page -> ") + (settingsPage + 1));
-                }
-            } else if (action == SettingsUI::Action::PageDown) {
-                if (settingsPage + 1 < settingsPageCount) {
-                    settingsPage++;
-                    Console::println(String("settings page -> ") + (settingsPage + 1));
-                }
-            }
+            settingsUI.handleTouch(sx, sy, spriteWidth, spriteHeight);
         }
     }
     touchWasDown = down;
-#endif
 }
 
 
@@ -146,11 +130,6 @@ void Display::Display::drawTopBar() {
     drawSettingsIcon(tft, settingsIconX, settingsIconY, TFT_WHITE);
 
     tft.drawLine(0, TOPBARHEIGHT - 1, FULLWIDTH, TOPBARHEIGHT - 1, rgbTo565(130, 130, 130));
-}
-
-void Display::Display::drawSettingsUI() {
-    // Empty settings page for now; UI chrome only.
-    SettingsUI::draw(spr, settingsPage, settingsPageCount);
 }
 
 // fps, 1000.0 / shared->millisForOneFFT, displayAnalyzeData->loudnessDivider
@@ -219,10 +198,10 @@ void Display::Display::drawRawAudio(const int16_t rawBuffer[Consts::Samples], co
     }
 }
 
-void Display::Display::draw(const AnalyzeData *data) {
-    checkSettingsToggle();
+void Display::Display::drawMain(const AnalyzeData *data) {
+    handleTouch();
     if (settingsMode) {
-        drawSettingsUI();
+        settingsUI.draw(spr);
         return;
     }
 

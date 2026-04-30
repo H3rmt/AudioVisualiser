@@ -2,30 +2,14 @@
 
 #include <Arduino.h>
 
-#ifndef min
-#define min(a, b) ((a) < (b) ? (a) : (b))
-#endif
-#ifndef max
-#define max(a, b) ((a) > (b) ? (a) : (b))
-#endif
-
+#include "Core.hpp"
 #include "Util.hpp"
 
 namespace {
-    constexpr int sidebarX = 270;
-    constexpr int sidebarW = 50;
-    constexpr int buttonH = 48;
-    constexpr int pad = 5;
-    constexpr int trackW = 10;
+    constexpr int kButtonGap = 8;
+    constexpr int kBoxPadding = 8;
 
-    struct Rect {
-        int x;
-        int y;
-        int w;
-        int h;
-    };
-
-    static inline bool contains(const Rect &r, const int px, const int py) {
+    static inline bool contains(const SettingsUI::Rect &r, const int px, const int py) {
         return px >= r.x && py >= r.y && px < (r.x + r.w) && py < (r.y + r.h);
     }
 
@@ -40,9 +24,31 @@ namespace {
         if (v > 1.0f) return 1.0f;
         return v;
     }
+
+    static inline const char *modeName(const LEDMode mode) {
+        switch (mode) {
+            case LEDMode::Normal: return "Normal";
+            case LEDMode::Centre: return "Centre";
+            case LEDMode::Circle: return "Circle";
+            case LEDMode::Off: return "Off";
+        }
+        return "?";
+    }
+
+    static inline LEDSettings *settingForPage(Settings *settings, const uint8_t pageIndex) {
+        if (settings == nullptr) return nullptr;
+        if (pageIndex == 0) return &settings->frontCentre;
+        if (pageIndex == 1) return &settings->frontLeft;
+        if (pageIndex == 2) return &settings->frontRight;
+        if (pageIndex == 3) return &settings->leftMiddle;
+        if (pageIndex == 4) return &settings->leftFrontBack;
+        if (pageIndex == 5) return &settings->rightMiddle;
+        if (pageIndex == 6) return &settings->rightFrontBack;
+        return nullptr;
+    }
 }
 
-static void layout(const int w, const int h, Rect &upBtn, Rect &downBtn, Rect &track) {
+void SettingsUI::SettingsUI::layout(const int w, const int h, Rect &upBtn, Rect &downBtn, Rect &track) const {
     const int sbX = sidebarX;
     const int sbW = max(0, min(sidebarW, w - sidebarX));
     const int innerX = sbX + 1;
@@ -53,50 +59,128 @@ static void layout(const int w, const int h, Rect &upBtn, Rect &downBtn, Rect &t
     track = Rect{sbX + (sbW - trackW) / 2, buttonH + pad, trackW, max(0, h - (2 * buttonH) - (2 * pad))};
 }
 
-void SettingsUI::drawPage1(TFT_eSprite &spr, const int contentW, const int contentH) {
-    (void)contentW;
-    (void)contentH;
+void SettingsUI::SettingsUI::drawLEDPage(TFT_eSprite &spr, const String &name, LEDSettings *setting,
+                                          const int contentW, const int contentH) {
+    const uint16_t bg = rgbTo565(14, 14, 18);
+    const uint16_t border = rgbTo565(80, 80, 90);
+    const uint16_t panel = rgbTo565(26, 26, 34);
+    const uint16_t primary = rgbTo565(55, 125, 235);
+    const uint16_t primaryDark = rgbTo565(22, 58, 120);
+    const uint16_t text = rgbTo565(200, 200, 210);
+    const uint16_t muted = rgbTo565(150, 150, 160);
+
+    const int x0 = 0;
+    const int y0 = 0;
+    const int w = max(0, contentW);
+    const int h = max(0, contentH);
+
+    spr.fillRect(x0, y0, w, h, bg);
+
     spr.setTextFont(2);
-    spr.setTextColor(rgbTo565(200, 200, 210), rgbTo565(14, 14, 18));
+    spr.setTextColor(text, bg);
     spr.setCursor(10, 14);
-    spr.print("Page 1");
-}
-void SettingsUI::drawPage2(TFT_eSprite &spr, const int contentW, const int contentH) {
-    (void)contentW;
-    (void)contentH;
-    spr.setTextFont(2);
-    spr.setTextColor(rgbTo565(200, 200, 210), rgbTo565(14, 14, 18));
-    spr.setCursor(10, 14);
-    spr.print("Page 2");
-}
-void SettingsUI::drawPage3(TFT_eSprite &spr, const int contentW, const int contentH) {
-    (void)contentW;
-    (void)contentH;
-    spr.setTextFont(2);
-    spr.setTextColor(rgbTo565(200, 200, 210), rgbTo565(14, 14, 18));
-    spr.setCursor(10, 14);
-    spr.print("Page 3");
-}
-void SettingsUI::drawPage4(TFT_eSprite &spr, const int contentW, const int contentH) {
-    (void)contentW;
-    (void)contentH;
-    spr.setTextFont(2);
-    spr.setTextColor(rgbTo565(200, 200, 210), rgbTo565(14, 14, 18));
-    spr.setCursor(10, 14);
-    spr.print("Page 4");
-}
-void SettingsUI::drawPage5(TFT_eSprite &spr, const int contentW, const int contentH) {
-    (void)contentW;
-    (void)contentH;
-    spr.setTextFont(2);
-    spr.setTextColor(rgbTo565(200, 200, 210), rgbTo565(14, 14, 18));
-    spr.setCursor(10, 14);
-    spr.print("Page 5");
+    spr.print("LED: ");
+    spr.print(name);
+
+    if (setting == nullptr || w <= 0 || h <= 0) return;
+
+    const int boxInnerX = kBoxPadding;
+    const int boxInnerW = max(0, w - (kBoxPadding * 2));
+    const int modePanelY = 34;
+    const int modePanelH = max(0, (h / 2) - modePanelY - 6);
+    const int optionPanelY = (h / 2) + 6;
+    const int optionPanelH = max(0, h - optionPanelY - 12);
+
+    auto drawButton = [&](const Rect &r, const String &label, const bool selected, const bool multiline = false) {
+        const uint16_t fill = selected ? primary : panel;
+        const uint16_t fillEdge = selected ? primaryDark : panel;
+        spr.fillRoundRect(r.x, r.y, r.w, r.h, 8, fill);
+        spr.drawRoundRect(r.x, r.y, r.w, r.h, 8, selected ? primary : border);
+        if (!selected) {
+            spr.drawRoundRect(r.x + 1, r.y + 1, max(0, r.w - 2), max(0, r.h - 2), 7, fillEdge);
+        }
+        spr.setTextColor(text, fill);
+        spr.setTextDatum(MC_DATUM);
+        if (multiline) {
+            spr.drawString(label, r.x + r.w / 2, r.y + r.h / 2 - 6);
+        } else {
+            spr.drawString(label, r.x + r.w / 2, r.y + r.h / 2);
+        }
+        spr.setTextDatum(TL_DATUM);
+    };
+
+    // Top half: LED mode selection.
+    Rect modeButtons[4]{};
+    const int modeRowY = modePanelY + 28;
+    const int modeRowH = max(0, modePanelH - 38);
+    const int modeButtonW = max(0, (boxInnerW - (kButtonGap * 3)) / 4);
+    for (int i = 0; i < 4; ++i) {
+        modeButtons[i] = Rect{boxInnerX + (i * (modeButtonW + kButtonGap)), modeRowY, modeButtonW, modeRowH};
+    }
+    spr.fillRoundRect(kBoxPadding, modePanelY, max(0, w - (kBoxPadding * 2)), modePanelH, 10, panel);
+    spr.drawRoundRect(kBoxPadding, modePanelY, max(0, w - (kBoxPadding * 2)), modePanelH, 10, border);
+    drawButton(modeButtons[0], "Normal", setting->mode == LEDMode::Normal);
+    drawButton(modeButtons[1], "Centre", setting->mode == LEDMode::Centre);
+    drawButton(modeButtons[2], "Circle", setting->mode == LEDMode::Circle);
+    drawButton(modeButtons[3], "Off", setting->mode == LEDMode::Off);
+
+    // Bottom half: option buttons.
+    Rect optButtons[3]{};
+    const int optRowY = optionPanelY + 26;
+    const int optRowH = max(0, optionPanelH - 36);
+    const int optButtonW = max(0, (boxInnerW - (kButtonGap * 2)) / 3);
+    for (int i = 0; i < 3; ++i) {
+        optButtons[i] = Rect{boxInnerX + (i * (optButtonW + kButtonGap)), optRowY, optButtonW, optRowH};
+    }
+    spr.fillRoundRect(kBoxPadding, optionPanelY, max(0, w - (kBoxPadding * 2)), optionPanelH, 10, panel);
+    spr.drawRoundRect(kBoxPadding, optionPanelY, max(0, w - (kBoxPadding * 2)), optionPanelH, 10, border);
+    drawButton(optButtons[0], setting->reversed ? "Reverse: On" : "Reverse: Off", setting->reversed);
+    drawButton(optButtons[1], setting->rainbow ? "Rainbow: On" : "Rainbow: Off", setting->rainbow);
+    drawButton(optButtons[2], String("Brightness: ") + String(setting->brightness), false, true);
+
+    spr.setTextColor(muted, bg);
+    spr.drawString(String("Mode: ") + modeName(setting->mode), 10, h - 18);
 }
 
-SettingsUI::Action SettingsUI::actionForTouch(const int x, const int y, const int spriteW, const int spriteH) {
+SettingsUI::Action SettingsUI::SettingsUI::actionForTouch(const int x, const int y, const int spriteW,
+                                                          const int spriteH) {
     Rect upBtn{}, downBtn{}, track{};
-    layout(spriteW, spriteH, upBtn, downBtn, track);
+    this->layout(spriteW, spriteH, upBtn, downBtn, track);
+
+    const int contentWidth = min(sidebarX, spriteW);
+    const int contentHeight = spriteH;
+    const int pageWidth = max(0, contentWidth);
+    const int pageHeight = max(0, contentHeight);
+    const int boxInnerWidth = max(0, pageWidth - (kBoxPadding * 2));
+    const int modePanelY = 34;
+    const int modePanelHeight = max(0, (pageHeight / 2) - modePanelY - 6);
+    const int optionPanelY = (pageHeight / 2) + 6;
+    const int optionPanelHeight = max(0, pageHeight - optionPanelY - 12);
+    const int modeRowY = modePanelY + 28;
+    const int modeRowHeight = max(0, modePanelHeight - 38);
+    const int modeButtonWidth = max(0, (boxInnerWidth - (kButtonGap * 3)) / 4);
+    const int optionRowY = optionPanelY + 26;
+    const int optionRowHeight = max(0, optionPanelHeight - 36);
+    const int optionButtonWidth = max(0, (boxInnerWidth - (kButtonGap * 2)) / 3);
+
+    const Rect modeNormal{kBoxPadding, modeRowY, modeButtonWidth, modeRowHeight};
+    const Rect modeCentre{kBoxPadding + modeButtonWidth + kButtonGap, modeRowY, modeButtonWidth, modeRowHeight};
+    const Rect modeCircle{kBoxPadding + (modeButtonWidth + kButtonGap) * 2, modeRowY, modeButtonWidth, modeRowHeight};
+    const Rect modeOff{kBoxPadding + (modeButtonWidth + kButtonGap) * 3, modeRowY, modeButtonWidth, modeRowHeight};
+    const Rect reverseButton{kBoxPadding, optionRowY, optionButtonWidth, optionRowHeight};
+    const Rect rainbowButton{kBoxPadding + optionButtonWidth + kButtonGap, optionRowY, optionButtonWidth, optionRowHeight};
+    const Rect brightnessButton{kBoxPadding + (optionButtonWidth + kButtonGap) * 2, optionRowY, optionButtonWidth, optionRowHeight};
+
+    const bool isLedPage = pageIndex < 7;
+    if (isLedPage) {
+        if (contains(modeNormal, x, y)) return Action::LedModeNormal;
+        if (contains(modeCentre, x, y)) return Action::LedModeCentre;
+        if (contains(modeCircle, x, y)) return Action::LedModeCircle;
+        if (contains(modeOff, x, y)) return Action::LedModeOff;
+        if (contains(reverseButton, x, y)) return Action::LedReverseToggle;
+        if (contains(rainbowButton, x, y)) return Action::LedRainbowToggle;
+        if (contains(brightnessButton, x, y)) return Action::LedBrightnessStep;
+    }
 
     if (contains(upBtn, x, y))
         return Action::PageUp;
@@ -106,7 +190,51 @@ SettingsUI::Action SettingsUI::actionForTouch(const int x, const int y, const in
     return Action::None;
 }
 
-void SettingsUI::draw(TFT_eSprite &spr, int pageIndex, const int pageCount) {
+void SettingsUI::SettingsUI::handleTouch(const int x, const int y, const int spriteW, const int spriteH) {
+    auto action = actionForTouch(x, y, spriteW, spriteH);
+    if (action == Action::PageUp) {
+        if (pageIndex > 0) {
+            pageIndex--;
+            Console::println(String("settings page -> ") + (pageIndex + 1));
+        }
+    } else if (action == Action::PageDown) {
+        if (pageIndex + 1 < pageCount) {
+            pageIndex++;
+            Console::println(String("settings page -> ") + (pageIndex + 1));
+        }
+    } else {
+        LEDSettings *setting = settingForPage(settings, pageIndex);
+        if (setting == nullptr) return;
+
+        switch (action) {
+            case Action::LedModeNormal:
+                setting->mode = LEDMode::Normal;
+                break;
+            case Action::LedModeCentre:
+                setting->mode = LEDMode::Centre;
+                break;
+            case Action::LedModeCircle:
+                setting->mode = LEDMode::Circle;
+                break;
+            case Action::LedModeOff:
+                setting->mode = LEDMode::Off;
+                break;
+            case Action::LedReverseToggle:
+                setting->reversed = !setting->reversed;
+                break;
+            case Action::LedRainbowToggle:
+                setting->rainbow = !setting->rainbow;
+                break;
+            case Action::LedBrightnessStep:
+                setting->brightness = static_cast<uint8_t>(setting->brightness + 10);
+                break;
+            default:
+                break;
+        }
+    }
+}
+
+void SettingsUI::SettingsUI::draw(TFT_eSprite &spr) {
     const int h = spr.height();
     const int w = spr.width();
 
@@ -141,8 +269,7 @@ void SettingsUI::draw(TFT_eSprite &spr, int pageIndex, const int pageCount) {
 
     // Top button.
     spr.fillRect(innerX + 3, 3, max(0, innerW - 6), buttonH - 6, sidebarBg);
-    spr.drawRect(innerX + 3, 3, max(0, innerW - 6), buttonH - 6, border);
-    {
+    spr.drawRect(innerX + 3, 3, max(0, innerW - 6), buttonH - 6, border); {
         const int cx = sbX + sbW / 2;
         const int cy = buttonH / 2;
         spr.fillTriangle(cx, cy - 7, cx - 8, cy + 6, cx + 8, cy + 6, thumb);
@@ -150,8 +277,7 @@ void SettingsUI::draw(TFT_eSprite &spr, int pageIndex, const int pageCount) {
 
     // Bottom button.
     spr.fillRect(innerX + 3, h - buttonH + 3, max(0, innerW - 6), buttonH - 6, sidebarBg);
-    spr.drawRect(innerX + 3, h - buttonH + 3, max(0, innerW - 6), buttonH - 6, border);
-    {
+    spr.drawRect(innerX + 3, h - buttonH + 3, max(0, innerW - 6), buttonH - 6, border); {
         const int cx = sbX + sbW / 2;
         const int cy = h - buttonH / 2;
         spr.fillTriangle(cx, cy + 7, cx - 8, cy - 6, cx + 8, cy - 6, thumb);
@@ -180,10 +306,35 @@ void SettingsUI::draw(TFT_eSprite &spr, int pageIndex, const int pageCount) {
     // Draw the current page content on the left side (leave empty for now).
     const int contentW = min(sidebarX, w);
     switch (pageIndex) {
-        case 0: drawPage1(spr, contentW, h); break;
-        case 1: drawPage2(spr, contentW, h); break;
-        case 2: drawPage3(spr, contentW, h); break;
-        case 3: drawPage4(spr, contentW, h); break;
-        default: drawPage5(spr, contentW, h); break;
+        case 0:
+            drawLEDPage(spr, "Front Centre", &settings->frontCentre, contentW, h);
+            break;
+        case 1:
+            drawLEDPage(spr, "Front Left", &settings->frontLeft, contentW, h);
+            break;
+        case 2:
+            drawLEDPage(spr, "Front Right", &settings->frontRight, contentW, h);
+            break;
+        case 3:
+            drawLEDPage(spr, "Left Centre", &settings->leftMiddle, contentW, h);
+            break;
+        case 4:
+            drawLEDPage(spr, "Left Front Back", &settings->leftFrontBack, contentW, h);
+            break;
+        case 5:
+            drawLEDPage(spr, "Right Centre", &settings->rightMiddle, contentW, h);
+            break;
+        case 6:
+            drawLEDPage(spr, "Right Front Back", &settings->rightFrontBack, contentW, h);
+            break;
+        default: drawPage8(spr, contentW, h);
+            break;
     }
+}
+
+void SettingsUI::SettingsUI::drawPage8(TFT_eSprite &spr, const int contentW, const int contentH) {
+    spr.fillRect(0, 0, contentW, contentH, rgbTo565(14, 14, 18));
+    spr.setTextFont(2);
+    spr.setTextColor(rgbTo565(200, 200, 210), rgbTo565(14, 14, 18));
+    spr.drawString("Page 8", 10, 14);
 }

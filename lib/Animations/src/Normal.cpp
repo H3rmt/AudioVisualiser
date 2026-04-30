@@ -1,9 +1,24 @@
 #include "Animations.hpp"
 #include "AnimationsUtil.hpp"
 
-void Animations::renderNormal(Rgb *pixels, const StripData *config, const uint16_t lvl, const uint16_t colorOffset) {
+void Animations::renderNormal(Rgb *pixels, StripData *config, const uint16_t lvl, const uint16_t colorOffset,
+                              const float percentMaxChangeDivider) {
     AnimationsUtil::clearRgbPixels(pixels, config->ledCount);
-    const uint16_t coloredPixels = AnimationsUtil::map(lvl, UINT16_MAX, config->ledCount);
+    const uint16_t targetColoredPixels = AnimationsUtil::map(lvl, UINT16_MAX, config->ledCount);
+    const float step = config->ledCount / percentMaxChangeDivider;
+    if (config->centreAnimState.coloredPixels < targetColoredPixels) {
+        config->centreAnimState.coloredPixels += step;
+        if (config->centreAnimState.coloredPixels > targetColoredPixels) {
+            config->centreAnimState.coloredPixels = targetColoredPixels;
+        }
+    } else if (config->centreAnimState.coloredPixels > targetColoredPixels) {
+        config->centreAnimState.coloredPixels -= step;
+        if (config->centreAnimState.coloredPixels < targetColoredPixels) {
+            config->centreAnimState.coloredPixels = targetColoredPixels;
+        }
+    }
+
+    const uint16_t coloredPixels = config->centreAnimState.coloredPixels;
     if (!config->rainbow) {
         const Rgb color = AnimationsUtil::ColorH(colorOffset,
                                                  config->maxHWBrightness);
