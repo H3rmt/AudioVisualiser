@@ -16,9 +16,10 @@ void Display::Display::init(const bool startAnimation, Settings *settings) {
 
     Console::println("TFT init");
     tft.init();
+    if (dma)
+        tft.initDMA();
     Console::println("TFT init");
     tft.setRotation(3);
-    tft.initDMA();
 
     Console::println("TFT started");
     tft.fillScreen(TFT_CASET);
@@ -26,32 +27,39 @@ void Display::Display::init(const bool startAnimation, Settings *settings) {
     tft.fillScreen(rgbTo565(20, 20, 25));
 
     Console::println("creating sprite");
-    spr.setColorDepth(16);
-    sptr = static_cast<uint16_t *>(spr.createSprite(spriteWidth, spriteHeight));
-    spr.fillSprite(rgbTo565(40, 40, 55));
+    spr[0].setColorDepth(16);
+    spr[1].setColorDepth(16);
+    sprPtr[0] = static_cast<uint16_t *>(spr[0].createSprite(spriteWidth, spriteHeight));
+    sprPtr[1] = static_cast<uint16_t *>(spr[1].createSprite(spriteWidth, spriteHeight));
+    spr[0].fillSprite(rgbTo565(40, 40, 55));
+    spr[1].fillSprite(rgbTo565(40, 40, 55));
     if (startAnimation) {
         int color = 0;
         for (int i = 0; i < spriteWidth - 30; i += 20) {
-            spr.fillRect(15 + i, spriteHeight / 2 - 30, 15, 60, rainbowColor(color, false));
-            dmaWrite();
+            spr[0].fillRect(15 + i, spriteHeight / 2 - 30, 15, 60, rainbowColor(color, false));
+            dmaWrite(false);
             delay(30);
             color += 6;
         }
         for (int i = 0; i < spriteWidth - 30; i += 20) {
-            spr.fillRect(15 + i, spriteHeight / 2 - 30, 15, 60, rainbowColor(color, false));
-            dmaWrite();
+            spr[0].fillRect(15 + i, spriteHeight / 2 - 30, 15, 60, rainbowColor(color, false));
+            dmaWrite(false);
             delay(30);
             color += 6;
         }
         delay(300);
-        spr.fillSprite(rgbTo565(40, 40, 54));
+        spr[0].fillSprite(rgbTo565(40, 40, 54));
     }
     settingsUI.init(settings);
     addInfoString("display started");
 }
 
+#ifndef TOUCH_CS
 void Display::Display::handleTouch() {
-    Timing::start(Timing::Id::DisplayHandleTouch, 0);
+}
+#else
+void Display::Display::handleTouch() {
+    Timing::start(Timing::Id::DisplayHandleTouch);
     // TFT_eSPI provides calibrated screen coordinates via getTouch().
     // We treat a transition up->down as a "new touch".
     uint16_t x = 0;
@@ -90,8 +98,9 @@ void Display::Display::handleTouch() {
         }
     }
     touchWasDown = down;
-    Timing::stop(Timing::Id::DisplayHandleTouch, 0);
+    Timing::stop(Timing::Id::DisplayHandleTouch);
 }
+#endif
 
 
 void Display::Display::drawBars() {
@@ -99,22 +108,31 @@ void Display::Display::drawBars() {
     drawTopBar();
 }
 
-void Display::Display::dmaWait() {
-    Timing::start(Timing::Id::DisplayDmaWait, 0);
+bool Display::Display::dmaBusy() {
     if (dma)
-        tft.dmaWait();
-    Timing::stop(Timing::Id::DisplayDmaWait, 0);
+        return tft.dmaBusy();
+    return false;
 }
 
-void Display::Display::dmaWrite() {
-    Timing::start(Timing::Id::DisplayDmaWrite, 0);
-    tft.startWrite();
+
+void Display::Display::dmaWait() {
+    Timing::start(Timing::Id::DisplayDmaWait);
     if (dma)
-        tft.pushImageDMA(spriteX, spriteY, spriteWidth, spriteHeight, sptr);
-    else
-        tft.pushImage(spriteX, spriteY, spriteWidth, spriteHeight, sptr);
-    tft.endWrite();
-    Timing::stop(Timing::Id::DisplayDmaWrite, 0);
+        tft.dmaWait();
+    Timing::stop(Timing::Id::DisplayDmaWait);
+}
+
+void Display::Display::dmaWrite(const bool flip) {
+    Timing::start(Timing::Id::DisplayDmaWrite);
+    if (dma) {
+        tft.startWrite();
+        tft.pushImageDMA(spriteX, spriteY, spriteWidth, spriteHeight, sprPtr[sprSel]);
+        tft.endWrite();
+    } else
+        tft.pushImage(spriteX, spriteY, spriteWidth, spriteHeight, sprPtr[sprSel]);
+    if (flip)
+        sprSel = !sprSel;
+    Timing::stop(Timing::Id::DisplayDmaWrite);
 }
 
 
@@ -139,11 +157,16 @@ void Display::Display::drawTopBar() {
     tft.drawLine(0, TOPBARHEIGHT - 1, FULLWIDTH, TOPBARHEIGHT - 1, rgbTo565(130, 130, 130));
 }
 
-// fps, 1000.0 / shared->millisForOneFFT, displayAnalyzeData->loudnessDivider
-void Display::Display::updateFPS(const uint16_t loudnessDivider, const uint16_t framesPerSecond,
-                                 const uint16_t ledsUpdatesPerSecond, const uint32_t uptime_seconds) {
+void Display::Display::updateFPS(
+    const uint16_t loudnessDivider,
+    const uint16_t framesPerSecond,
+    const uint16_t ledsPerSecond,
+    const uint16_t fftsPerSecond,
+    const uint16_t micDataCount
+) {
     tft.setTextColor(rgbTo565(14, 145, 243), rgbTo565(20, 20, 25));
     tft.setCursor(207, 5);
+    const auto uptime_seconds = millis() / 1000;
     const uint32_t hours = uptime_seconds / 3600;
     const uint32_t minutes = (uptime_seconds % 3600) / 60;
     const uint32_t seconds = uptime_seconds % 60;
@@ -166,10 +189,14 @@ void Display::Display::updateFPS(const uint16_t loudnessDivider, const uint16_t 
 
     tft.setCursor(207, 25);
     tft.print(framesPerSecond);
+    tft.print("/");
+    tft.print(ledsPerSecond);
     tft.print(" FPS ");
 
     tft.setCursor(207, 35);
-    tft.print(ledsUpdatesPerSecond);
+    tft.print(fftsPerSecond);
+    tft.print("/");
+    tft.print(micDataCount);
     tft.print(" UPS ");
 }
 
@@ -181,133 +208,96 @@ void Display::Display::addInfoString(const char *infoString, const bool replace)
     Console::print("adding: ");
     Console::println(infoString);
 
-    spr.setTextFont(4);
-    spr.setTextColor(TFT_WHITE, rgbTo565(40, 40, 54));
-    spr.setCursor(15, messageCount * 25 - 17);
-    spr.print(infoString);
-    dmaWrite();
+    spr[0].setTextFont(4);
+    spr[0].setTextColor(TFT_WHITE, rgbTo565(40, 40, 54));
+    spr[0].setCursor(15, messageCount * 25 - 17);
+    spr[0].print(infoString);
+    dmaWrite(false);
 }
 
-void Display::Display::drawRawAudio(const int16_t rawBuffer[Consts::Samples], const bool off) {
-    Timing::start(Timing::Id::DisplayRawAudio, 0);
-    int32_t startSample = 100;
+void Display::Display::drawRawAudio(
+    const Frame &frame,
+    const float loudnessDivider,
+    const bool off
+) {
+    Timing::start(Timing::Id::DisplayRawAudio);
+    int32_t startSample = 0;
     const uint32_t color = off ? ILI9341_RED : ILI9341_GREEN;
 
-    for (uint16_t x = 20; x < 250; x += 1) {
-        spr.drawLine(
+    const float mul = 131072.0f / static_cast<float>(loudnessDivider);
+    for (uint16_t x = 0; x < spriteWidth; x += 1) {
+        spr[sprSel].drawLine(
             x,
-            max(0, min(spriteHeight, (spriteHeight / 2) - (rawBuffer[startSample]))),
+            max(0, min(spriteHeight, (spriteHeight / 2) - static_cast<int16_t>(frame.samples[startSample] * mul))),
             x + 1,
-            max(0, min(spriteHeight, (spriteHeight / 2) - (rawBuffer[startSample + 2]))),
+            max(0, min(spriteHeight, (spriteHeight / 2) - static_cast<int16_t>(frame.samples[startSample + 4] * mul))),
             color);
-        startSample += 2;
-        if (startSample >= Consts::Samples - 2)
+        startSample += 4;
+        if (startSample >= (Consts::Samples * 3) - 8)
             break;
     }
-    Timing::stop(Timing::Id::DisplayRawAudio, 0);
+    Timing::stop(Timing::Id::DisplayRawAudio);
 }
 
 
 void Display::Display::drawSettings() {
     handleTouch();
-    settingsUI.draw(spr);
+    settingsUI.draw(spr[sprSel]);
 }
 
-int c = 0;
 
-void Display::Display::drawMain(const AnalyzeData *data) {
+void Display::Display::drawMain(const AnalyzedData *data, const AnalyzeDataDynamic *dynamic) {
+    static int c = 0;
     c++;
     // reduce get touch calls
-    if (c > 5) {
+    if (c > 10) {
         c = 0;
         handleTouch();
     }
-    Timing::start(Timing::Id::DisplayMain, 0);
+    Timing::start(Timing::Id::DisplayMain);
 
-    spr.fillSprite(rgbTo565(10, 10, 15));
-    const auto results = data->results;
-    const auto peaks = data->peaks;
-
+    spr[sprSel].fillSprite(rgbTo565(10, 10, 15));
+    // if (sprSel) {
+    //     spr[sprSel].fillRect(200, 10, 5, 5, ILI9341_WHITE);
+    // } else {
+    //     spr[sprSel].fillRect(220, 10, 5, 5, ILI9341_WHITE);
+    // }
     for (uint16_t i = 0; i < Consts::FrequenciesUsable; i++) {
         if (i * WIDTH_BAR >= 270)
             break;
-        uint32_t hr = results[i];
-        if (hr > spriteHeight)
-            hr = spriteHeight;
-        if (hr < 2)
-            hr = 0;
-        spr.fillRect(1 + WIDTH_BAR * i, spriteHeight - hr, WIDTH_BAR, hr, ILI9341_WHITE);
 
-        uint32_t hp = peaks[i];
+        auto hp = static_cast<uint16_t>(dynamic->peaks[i]);
         if (hp > spriteHeight)
             hp = spriteHeight;
         if (hp < 2)
             hp = 0;
-        spr.fillRect(1 + WIDTH_BAR * i, spriteHeight - hp, WIDTH_BAR, hp - hr,
-                     rainbowColor(95 + max(hp * 0.72, 20), true));
-        // spr.fillRect(WIDTH_BAR * i, spriteHeight - hp, WIDTH_BAR, hp - hr, rainbowColor200(hp));
-        // spr.fillRect(WIDTH_BAR * i, spriteHeight - hp, WIDTH_BAR, hp - hr, rainbowColor(hp));
+        spr[sprSel].fillRect(1 + WIDTH_BAR * i, spriteHeight - hp, WIDTH_BAR, hp,
+                             rainbowColor(95 + max(hp * 0.72, 20), true));
+
+        auto hr = static_cast<uint16_t>(data->results[i]);
+        if (hr > spriteHeight)
+            hr = spriteHeight;
+        if (hr < 2)
+            hr = 0;
+        spr[sprSel].fillRect(1 + WIDTH_BAR * i, spriteHeight - hr, WIDTH_BAR, hr, ILI9341_WHITE);
     }
-    Timing::stop(Timing::Id::DisplayMain, 0);
+    Timing::stop(Timing::Id::DisplayMain);
 }
 
 // max x = 320
-void Display::Display::drawDebugBars(const AnalyzeData *data) {
-    Timing::start(Timing::Id::DisplayDebugBars, 0);
-    spr.drawLine(270, 0, 270, spriteHeight, rgbTo565(130, 130, 130));
+void Display::Display::drawDebugBars(const AnalyzedData *data, const AnalyzeDataDynamic *dynamic) {
+    Timing::start(Timing::Id::DisplayDebugBars);
+    spr[sprSel].drawLine(270, 0, 270, spriteHeight, rgbTo565(130, 130, 130));
 
-    spr.fillRect(273, 0, 8, min(spriteHeight, data->floatingAverageMin), ILI9341_ORANGE);
-    spr.fillRect(283, 0, 8, min(spriteHeight, data->floatingAverage), ILI9341_RED);
+    spr[sprSel].fillRect(273, 0, 8, min(spriteHeight, data->peakPeakFrequencyValue), ILI9341_ORANGE);
+    spr[sprSel].fillRect(283, 0, 8, min(spriteHeight, dynamic->floatingAverage), ILI9341_RED);
 
-    const auto height = spriteHeight * (static_cast<float>(data->peakFrequencyValue) / static_cast<float>(data->
-                                            floatingAverage));
-    spr.fillRect(291, spriteHeight - min(spriteHeight, height), 8, height, ILI9341_GREEN);
+    const auto height = spriteHeight * (data->peakPeakValue / dynamic->floatingAverage);
+    spr[sprSel].fillRect(291, spriteHeight - min(spriteHeight, height), 8, height, ILI9341_GREEN);
 
-    spr.fillRect(301, 0, 8, min(spriteHeight, data->peakFrequencyValue), ILI9341_PINK);
-    spr.fillRect(311, 0, 8, min(spriteHeight, data->results[data->peakFrequencyIndex]), ILI9341_WHITE);
+    spr[sprSel].fillRect(301, 0, 8, min(spriteHeight, data->peakPeakValue), ILI9341_PINK);
 
     // Draw for peakFreaquencyIndex (white)
-    spr.fillRect(WIDTH_BAR * data->peakFrequencyIndex, 2, WIDTH_BAR, 4, ILI9341_WHITE);
-
-    // Draw for peakFreaquencyIndexFloat (orange)
-    spr.fillRect(WIDTH_BAR * data->peakFrequencyIndexFloat, 8, WIDTH_BAR, 4, ILI9341_ORANGE);
-
-    // Draw for peakFreaquencyIndexLazy (red)
-    spr.fillRect(WIDTH_BAR * data->peakFrequencyIndexLazy, 14, WIDTH_BAR, 4, ILI9341_RED);
-    Timing::stop(Timing::Id::DisplayDebugBars, 0);
-}
-
-
-void Display::Display::drawDebugLines(const AnalyzeData *data) {
-    Timing::start(Timing::Id::DisplayDebugLines, 0);
-    spr.drawLine(267, spriteHeight / 2, 270, spriteHeight / 2, TFT_GREEN);
-
-    const int off = max(0, min(spriteHeight, spriteHeight / 2 - Consts::RawMinOff));
-    spr.drawLine(270 - 10, off, 270 - 3, off, TFT_RED);
-#ifdef DoubleDebugLines
-    const int off2 = max(0, min(spriteHeight, spriteHeight / 2 + Consts::RawMinOff));
-    // spr.drawLine(270 - 10, off2, 270 - 3, off2, TFT_RED);
-#endif
-
-    const int maxV = max(0, min(spriteHeight, spriteHeight / 2 - data->rawDataMax));
-    spr.drawLine(270 - 10, maxV, 270 - 3, maxV, rgbTo565(14, 145, 243));
-#ifdef DoubleDebugLines
-    const int maxV2 = max(0, min(spriteHeight, spriteHeight / 2 + data->rawDataMax));
-    // spr.drawLine(270 - 10, maxV2, 270 - 3, maxV2, rgbTo565(14, 145, 243));
-#endif
-
-    const int inc = max(0, min(spriteHeight, spriteHeight / 2 - Consts::RawIncreaseDivider));
-    spr.drawLine(270 - 10, inc, 270 - 3, inc, TFT_MAGENTA);
-#ifdef DoubleDebugLines
-    const int inc2 = max(0, min(spriteHeight, spriteHeight / 2 + Consts::RawIncreaseDivider));
-    // spr.drawLine(270 - 10, inc2, 270 - 3, inc2, TFT_MAGENTA);
-#endif
-
-    const int div = max(0, min(spriteHeight, spriteHeight / 2 - Consts::RawDecreaseDivider));
-    spr.drawLine(270 - 10, div, 270 - 3, div, TFT_ORANGE);
-#ifdef DoubleDebugLines
-    const int div2 = max(0, min(spriteHeight, spriteHeight / 2 + Consts::RawDecreaseDivider));
-    // spr.drawLine(270 - 10, div2, 270 - 3, div2, TFT_ORANGE);
-#endif
-    Timing::stop(Timing::Id::DisplayDebugLines, 0);
+    spr[sprSel].fillRect(WIDTH_BAR * data->peakPeakFrequencyIndex, 2, WIDTH_BAR, 4, ILI9341_WHITE);
+    Timing::stop(Timing::Id::DisplayDebugBars);
 }

@@ -36,10 +36,10 @@ namespace Animations {
         uint8_t maxHWBrightness = 0;
 
         // change during animation
-        CircleAnimState circleAnimState;
-        CentreAnimState centreAnimState;
-        CentreAnimState normalAnimState;
-        OffAnimState offAnimState;
+        CircleAnimState circleAnimState{};
+        CentreAnimState centreAnimState{};
+        CentreAnimState normalAnimState{};
+        OffAnimState offAnimState{};
     };
 
 

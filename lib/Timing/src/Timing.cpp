@@ -19,7 +19,7 @@ namespace {
         "DrawLeds",
         "DrawLedsOff",
         "MicStep",
-        "MicDataCopy",
+        "FFT",
         // core 0
         "DisplayWait",
         "DisplayMain",

@@ -4,11 +4,11 @@
 
 namespace Analyze {
     // populate all data in AnalyzeData
-    void calculate(AnalyzeData *data, const float *magnitudes);
+    AnalyzedData calculate(AnalyzeDataDynamic *dynamic, const float *magnitudes);
 
     // Check if on/off or loudnessDivider need to change
-    void checkChanges(AnalyzeData *data);
+    void checkChanges(AnalyzeDataDynamic *data, float rawDataMax);
 
     /// Analyze the audio stream and fill the AnalyzeData structure
-    void analyzeFrequencies(AnalyzeData *data);
+    void analyzeFrequencies(AnalyzeDataDynamic *analyze, const AnalyzedData *data);
 } // namespace Analyze

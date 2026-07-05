@@ -8,8 +8,6 @@
 #include "Core.hpp"
 
 Animations::StripData *MultiplexedStrip::selectStrip(const uint8_t index) {
-    digitalWrite(selectA, index & 0x01);
-    digitalWrite(selectB, index >> 1 & 0x01);
     switch (index) {
         case 0:
             return &first;
@@ -24,12 +22,12 @@ Animations::StripData *MultiplexedStrip::selectStrip(const uint8_t index) {
     }
 }
 
-MultiplexedStrip::MultiplexedStrip(int16_t pin, uint16_t selectA, uint16_t selectB, uint16_t ledCount1,
-                                   uint16_t ledCount2, uint16_t ledCount3, uint16_t ledCount4)
+MultiplexedStrip::MultiplexedStrip(
+    const int16_t pin,
+    const uint16_t ledCount1, const uint16_t ledCount2, const uint16_t ledCount3, const uint16_t ledCount4
+)
     : pixels(max(ledCount1, max(ledCount2, max(ledCount3, ledCount4))), pin, NEO_RGB + NEO_KHZ800),
-      maxLength(max(ledCount1, max(ledCount2, max(ledCount3, ledCount4)))),
-      selectA(selectA),
-      selectB(selectB) {
+      maxLength(max(ledCount1, max(ledCount2, max(ledCount3, ledCount4)))) {
     first = {ledCount1, false, true, false, static_cast<uint16_t>(UINT16_MAX / ledCount1), 255};
     second = {ledCount2, false, true, false, static_cast<uint16_t>(UINT16_MAX / ledCount2), 255};
     third = {ledCount3, false, true, false, static_cast<uint16_t>(UINT16_MAX / ledCount3), 255};
@@ -41,7 +39,7 @@ void MultiplexedStrip::begin() {
     pixels.setBrightness(255);
 }
 
-void MultiplexedStrip::test(const uint8_t index) {
+void MultiplexedStrip::testShow(const uint8_t index) {
     const Animations::StripData *current = selectStrip(index);
     if (current == nullptr || current->ledCount == 0)
         return;
@@ -53,41 +51,31 @@ void MultiplexedStrip::test(const uint8_t index) {
         pixels.show();
         delay(1);
     }
-    pixels.show();
-    delay(100);
-
+    delay(10);
     for (int i = 0; i < current->ledCount; i++) {
         pixels.setPixelColor(i, Adafruit_NeoPixel::Color(255, 0, 0));
         pixels.show();
         delay(1);
     }
-    pixels.show();
-    delay(100);
-
+    delay(10);
     for (int i = 0; i < current->ledCount; i++) {
         pixels.setPixelColor(i, Adafruit_NeoPixel::Color(0, 255, 0));
         pixels.show();
         delay(1);
     }
-    pixels.show();
-    delay(100);
-
+    delay(10);
     for (int i = 0; i < current->ledCount; i++) {
         pixels.setPixelColor(i, Adafruit_NeoPixel::Color(0, 255, 255));
         pixels.show();
         delay(1);
     }
-    pixels.show();
-    delay(100);
-
+    delay(10);
     for (int i = 0; i < current->ledCount; i++) {
         pixels.setPixelColor(i, Adafruit_NeoPixel::Color(255, 255, 0));
         pixels.show();
         delay(1);
     }
-    pixels.show();
-    delay(100);
-
+    delay(10);
     const auto rand = random(0, 65535);
     const auto randColor = Adafruit_NeoPixel::ColorHSV(rand);
     for (int i = 0; i < current->ledCount; i++) {
@@ -95,57 +83,13 @@ void MultiplexedStrip::test(const uint8_t index) {
         pixels.show();
         delay(1);
     }
-    delay(100);
+    delay(300);
 
-    pixels.clear();
+    clear();
     pixels.show();
     delay(100);
 }
 
-void MultiplexedStrip::setMaxBrightness(const uint8_t index, const uint8_t brightness) {
-    Animations::StripData *current = selectStrip(index);
-    if (current == nullptr || current->ledCount == 0)
-        return;
-    current->maxBrightness = brightness;
-}
-
-void MultiplexedStrip::setMaxHWBrightness(const uint8_t index, const uint8_t brightness) {
-    Animations::StripData *current = selectStrip(index);
-    if (current == nullptr || current->ledCount == 0)
-        return;
-    current->maxHWBrightness = brightness;
-}
-
-void MultiplexedStrip::setRainbow(const uint8_t index, const bool rainbow) {
-    Animations::StripData *current = selectStrip(index);
-    if (current == nullptr || current->ledCount == 0)
-        return;
-    current->rainbow = rainbow;
-}
-
-void MultiplexedStrip::off(const uint8_t index) {
-    Animations::StripData *current = selectStrip(index);
-    if (current == nullptr || current->ledCount == 0)
-        return;
-
-    pixels.clear();
-    pixels.show();
-}
-
-void MultiplexedStrip::setReversed(const uint8_t index, const bool reverse) {
-    Animations::StripData *current = selectStrip(index);
-    if (current == nullptr || current->ledCount == 0)
-        return;
-
-    current->reversed = reverse;
-}
-
-void MultiplexedStrip::setPerLedColorChange(const uint8_t index, const uint16_t change) {
-    Animations::StripData *current = selectStrip(index);
-    if (current == nullptr || current->ledCount == 0)
-        return;
-    current->perLedColorChange = change;
-}
 
 void MultiplexedStrip::normal(const uint8_t index, const uint16_t lvl, const uint16_t colorOffset,
                               const float percentMaxChangeDivider) {
@@ -155,7 +99,6 @@ void MultiplexedStrip::normal(const uint8_t index, const uint16_t lvl, const uin
 
     Animations::renderNormal(reinterpret_cast<Animations::Rgb *>(pixels.getPixels()), current, lvl, colorOffset,
                              percentMaxChangeDivider);
-    pixels.show();
 }
 
 void MultiplexedStrip::centre(const uint8_t index, const uint16_t lvl, const uint16_t colorOffset,
@@ -165,8 +108,6 @@ void MultiplexedStrip::centre(const uint8_t index, const uint16_t lvl, const uin
         return;
     Animations::renderCentre(reinterpret_cast<Animations::Rgb *>(pixels.getPixels()), current, lvl, colorOffset,
                              percentMaxChangeDivider);
-
-    pixels.show();
 }
 
 void MultiplexedStrip::circle(const uint8_t index, const uint16_t lvl, const uint16_t colorOffset, const uint16_t width,
@@ -176,26 +117,14 @@ void MultiplexedStrip::circle(const uint8_t index, const uint16_t lvl, const uin
         return;
     Animations::renderCircle(reinterpret_cast<Animations::Rgb *>(pixels.getPixels()), current, lvl, colorOffset, width,
                              bars, moveSpeed, reverseOnPeak);
-    pixels.show();
 }
 
-void MultiplexedStrip::waitShow() {
-    // wait for write to complete
-    while (!pixels.canShow());
-
-}
-
-void MultiplexedStrip::resetOff(const uint8_t index) {
-    Animations::StripData *current = selectStrip(index);
-    if (current == nullptr || current->ledCount == 0)
-        return;
-    current->offAnimState.starting = 0;
-}
 
 void MultiplexedStrip::offAnimation(const uint8_t index) {
     Animations::StripData *current = selectStrip(index);
     if (current == nullptr || current->ledCount == 0)
         return;
+
     current->offAnimState.circle_position += static_cast<float>(current->ledCount) / 2000.0f;
     if (current->offAnimState.starting < 250) {
         current->offAnimState.starting++;
@@ -204,7 +133,7 @@ void MultiplexedStrip::offAnimation(const uint8_t index) {
     const uint8_t nonlinear_brightness = static_cast<uint16_t>(brightness_value) * brightness_value / 60;
 
     pixels.setBrightness(nonlinear_brightness);
-    pixels.clear();
+    clear();
     int32_t start = static_cast<int16_t>(current->offAnimState.circle_position) % current->ledCount;
     if (current->reversed) {
         start = current->ledCount - 1 - start;
@@ -220,7 +149,4 @@ void MultiplexedStrip::offAnimation(const uint8_t index) {
     pixels.setPixelColor((start + 3) % current->ledCount, Adafruit_NeoPixel::Color(60, 20, 255));
     pixels.setPixelColor((start + 4) % current->ledCount, Adafruit_NeoPixel::Color(80, 0, 255));
     pixels.setPixelColor((start + 5) % current->ledCount, Adafruit_NeoPixel::Color(100, 0, 255));
-    pixels.show();
-    // wait for write to complete
-    while (!pixels.canShow());
 }

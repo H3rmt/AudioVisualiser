@@ -19,10 +19,5 @@ monitor device="auto":
 monitor-pio:
     platformio device monitor -e wired -b 115200
 
-setup:
-    picotool partition create main.json ./tmp/pt.uf2
-    picotool load ./tmp/pt.uf2
-    picotool reboot -u
-
 test:
     pio test -e native -vv

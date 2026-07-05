@@ -252,7 +252,7 @@ void SettingsUI::SettingsUI::handleTouch(const int x, const int y, const int spr
 }
 
 void SettingsUI::SettingsUI::draw(TFT_eSprite &spr) {
-    Timing::start(Timing::Id::SettingsDraw, 0);
+    Timing::start(Timing::Id::SettingsDraw);
     const int h = spr.height();
     const int w = spr.width();
 
@@ -351,7 +351,7 @@ void SettingsUI::SettingsUI::draw(TFT_eSprite &spr) {
         default: drawPage9(spr, contentW, h);
             break;
     }
-    Timing::stop(Timing::Id::SettingsDraw, 0);
+    Timing::stop(Timing::Id::SettingsDraw);
 }
 
 void SettingsUI::SettingsUI::drawPage8(TFT_eSprite &spr, const int contentW, const int contentH) {

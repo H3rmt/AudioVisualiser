@@ -29,8 +29,8 @@ namespace Display {
     constexpr int spriteWidth = 320;
     constexpr int spriteHeight = 190;
 
-    // constexpr bool dma = true;
-    constexpr bool dma = false;
+    // constexpr bool dma = false;
+    constexpr bool dma = true;
 
     class Display {
     public:
@@ -47,36 +47,48 @@ namespace Display {
 
         /// draw data into sprite and write to display
         /// @param data analyzed data to draw
-        void drawMain(const AnalyzeData *data);
+        void drawMain(const AnalyzedData *data, const AnalyzeDataDynamic *dynamic);
 
         // TODO
-        void drawDebugBars(const AnalyzeData *data);
+        void drawDebugBars(const AnalyzedData *data, const AnalyzeDataDynamic *dynamic);
 
         // TODO
-        void drawDebugLines(const AnalyzeData *data);
+        void drawDebugLines(const AnalyzedData *data);
 
         // TODO
-        void drawRawAudio(const int16_t rawBuffer[Consts::Samples], bool off);
+        void drawRawAudio(const Frame &frame,
+                          const float loudnessDivider,
+                          const bool off);
 
         void drawSettings();
 
         /// update FPS counter in top bar
         /// @param loudnessDivider value of samples divider
         /// @param framesPerSecond calculated frames per second
-        /// @param ledsUpdatesPerSecond calculated leds updates per second
-        /// @param uptime_seconds uptime of the program in seconds
-        void updateFPS(uint16_t loudnessDivider, uint16_t framesPerSecond, uint16_t ledsUpdatesPerSecond, uint32_t uptime_seconds);
+        /// @param ledsPerSecond calculated leds updates per second
+        /// @param fftsPerSecond calculated ffts per second
+        /// @param micDataCount calculated mic datas per second
+        void updateFPS(
+            uint16_t loudnessDivider,
+            uint16_t framesPerSecond,
+            uint16_t ledsPerSecond,
+            uint16_t fftsPerSecond,
+            uint16_t micDataCount
+        );
 
         /// Adds info string to display
         /// @param infoString string to add
         /// @param replace replace last string
         void addInfoString(const char *infoString, bool replace = false);
 
+        // Is dma still busy
+        bool dmaBusy();
+
         /// wait for last DMA to finish
         void dmaWait();
 
         /// start DMA write
-        void dmaWrite();
+        void dmaWrite(bool flip);
 
         /// Poll touchscreen (no IRQ) and handle top-bar actions.
         void handleTouch();
@@ -88,8 +100,11 @@ namespace Display {
         SettingsUI::SettingsUI settingsUI;
 
         TFT_eSPI tft = TFT_eSPI();
-        TFT_eSprite spr = TFT_eSprite(&tft);
-        uint16_t *sptr = nullptr;
+
+        bool sprSel = false;
+        TFT_eSprite spr[2] = {TFT_eSprite(&tft), TFT_eSprite(&tft)};
+        uint16_t *sprPtr[2];
+
         uint16_t messageCount = 0;
 
         bool touchWasDown = false;

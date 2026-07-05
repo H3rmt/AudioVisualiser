@@ -11,7 +11,7 @@ namespace Timing {
         DrawLeds,
         DrawLedsOff,
         MicStep,
-        MicDataCopy,
+        FFT,
         // core 0
         DisplayWait,
         DisplayMain,
@@ -91,12 +91,14 @@ namespace Timing {
         return System::instance().nowMs();
     }
 
-    inline void start(const Id id, const uint8_t core = 0) {
-        System::instance().start(id, core);
+    inline void start(const Id id) {
+        return;
+        System::instance().start(id, rp2040.cpuid());
     }
 
-    inline void stop(const Id id, const uint8_t core = 0) {
-        System::instance().stop(id, core);
+    inline void stop(const Id id) {
+        return;
+        System::instance().stop(id, rp2040.cpuid());
     }
 
     inline uint64_t timeNs(const Id id, const uint8_t core = 0) {

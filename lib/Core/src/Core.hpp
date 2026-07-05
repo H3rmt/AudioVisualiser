@@ -24,75 +24,60 @@ namespace Console {
 
 namespace Consts {
     constexpr int32_t Samples = 512;
+
     // In theory yes
     // constexpr int32_t FrequenciesUsable = Samples / 2;
+    constexpr int32_t MaxFrequencyIndex = 90;
     constexpr int32_t FrequenciesUsable = 134;
     constexpr int32_t SamplingFrequency = 44100;
     constexpr int32_t BitsPerSample = 32;
 
-    constexpr uint32_t RawMinOff = 20;
-    constexpr uint32_t RawIncreaseDivider = 80;
-    constexpr uint32_t RawDecreaseDivider = 35;
+    // TODO 30 is lower than 90 which is the minimum
+    constexpr uint32_t RawMinOff = 30;
+    constexpr uint32_t RawIncreaseDivider = 140;
+    constexpr uint32_t RawDecreaseDivider = 95;
 }
 
 
 /// Data structure for analyzed audio data
-struct AnalyzeData {
-    /// Points to one of the two buffers with raw audio data
-    int16_t *rawDataPointer = nullptr;
-
+struct AnalyzedData {
     /// Approximate FFT buffer
-    uint16_t results[Consts::FrequenciesUsable]{};
+    float results[Consts::FrequenciesUsable]{};
 
-    /// Amplitude peak buffer
-    uint16_t peaks[Consts::FrequenciesUsable]{};
+    /// Value of the peak
+    float peakPeakValue = 0;
 
-    /// Maximum value inside the raw Buffer
-    int32_t rawDataMax = 0;
+    /// Index of the biggest peak
+    uint8_t peakPeakIndex = 0;
 
     /// Maximum value in the results array
-    uint16_t resultMax = 0;
+    float peakPeakFrequencyValue = 0;
+
+    /// Index of the biggest peak frequency
+    uint8_t peakPeakFrequencyIndex = 0;
+};
+
+
+struct AnalyzeDataDynamic {
+    /// Amplitude peak buffer
+    float peaks[Consts::FrequenciesUsable]{};
+
+    /// used for incoming sample values from the Microphone
+    uint8_t loudnessDivider = 40;
+
+    /// Value of the current floating average, calculated from floatingAverage and peakFrequency value
+    float floatingAverage = 0;
+
+    /// Minimum value of the floating average, calculated from peakFrequencyIndex and loudnessDivider
+    float floatingAverageMin = 0;
 
     /// No sound is detected over some time
     bool off = true;
-
-    /// Divider*10 used for incoming sample values from the Microphone
-    uint16_t loudnessDividerN = 8;
-
-    /// Index of the peak frequency Average that is adjusted to move towards the detected peak
-    uint8_t peakFrequencyIndexFloat = 0;
-
-    /// Index of the peak frequency Average (lazily adjusted)
-    uint8_t peakFrequencyIndexLazy = 0;
-
-    /// Index of the peak frequency Average
-    uint8_t peakFrequencyIndex = 0;
-
-    /// Value of the peak frequency
-    uint16_t peakFrequencyValue = 0;
-
-    /// Value of the current floating average, calculated from floatingAverage and peakFrequency value
-    uint16_t floatingAverage = 0;
-
-    /// Minimum value of the floating average, calculated from peakFrequencyIndex and loudnessDivider
-    uint16_t floatingAverageMin = 0;
 };
 
-/// Program-wide shared data structure
-struct Shared {
-    /// New Data has been analyzed and is ready for display
-    bool newDataForDisplay = false;
-
-    /// If Display has progressed the old data, this is set to true
-    bool allowNewDataForDisplay = true;
-
-    /// Number of Display refreshes (reset every second)
-    uint16_t DisplayRefreshCount = 0;
-
-    /// Number of FFTs (reset every second)
-    uint16_t FFTCount = 0;
+struct Frame {
+    float samples[Consts::Samples * 3]{};
 };
-
 
 enum class LEDMode {
     Normal,
