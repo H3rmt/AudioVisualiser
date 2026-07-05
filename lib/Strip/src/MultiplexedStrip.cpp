@@ -34,10 +34,14 @@ MultiplexedStrip::MultiplexedStrip(
     fourth = {ledCount4, false, true, false, static_cast<uint16_t>(UINT16_MAX / ledCount4), 255};
 }
 
-void MultiplexedStrip::begin() {
-    pixels.begin();
+bool MultiplexedStrip::begin() {
+    if (!pixels.begin()) {
+        return false;
+    }
     pixels.setBrightness(255);
+    return true;
 }
+
 
 void MultiplexedStrip::testShow(const uint8_t index) {
     const Animations::StripData *current = selectStrip(index);

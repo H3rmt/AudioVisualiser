@@ -13,7 +13,7 @@ public:
         uint16_t ledCount3, uint16_t ledCount4
     );
 
-    void begin();
+    bool begin();
 
     void testShow(uint8_t index);
 
@@ -35,11 +35,7 @@ public:
         return pixels.canShow();
     }
 
-    void startShow(const uint8_t index) {
-        const Animations::StripData *current = selectStrip(index);
-        if (current == nullptr || current->ledCount == 0)
-            return;
-
+    void startShow() {
         pixels.show();
     }
 

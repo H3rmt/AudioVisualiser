@@ -77,6 +77,50 @@ void Debug::testOnboardLeds() {
     delay(200);
 }
 
+void Debug::printPioUsage(const char *label) {
+    if (label != nullptr) {
+        Console::printf("PIO usage: %s\r\n", label);
+    } else {
+        Console::println("PIO usage:");
+    }
+
+    for (uint pioIndex = 0; pioIndex < NUM_PIOS; pioIndex++) {
+        const PIO pio = pio_get_instance(pioIndex);
+        Console::printf("  PIO%u SM claimed:", pioIndex);
+        for (uint sm = 0; sm < NUM_PIO_STATE_MACHINES; sm++) {
+            Console::printf(" %u=%c", sm, pio_sm_is_claimed(pio, sm) ? 'Y' : '-');
+        }
+        Console::println("");
+    }
+}
+
+uint32_t Debug::reserveFreePioStateMachines(const uint pioIndex) {
+    if (pioIndex >= NUM_PIOS) {
+        return 0;
+    }
+    PIO pio = pio_get_instance(pioIndex);
+    uint32_t claimedMask = 0;
+    for (uint sm = 0; sm < NUM_PIO_STATE_MACHINES; sm++) {
+        if (!pio_sm_is_claimed(pio, sm)) {
+            pio_sm_claim(pio, sm);
+            claimedMask |= 1u << sm;
+        }
+    }
+    return claimedMask;
+}
+
+void Debug::releasePioStateMachines(const uint pioIndex, const uint32_t mask) {
+    if (pioIndex >= NUM_PIOS) {
+        return;
+    }
+    PIO pio = pio_get_instance(pioIndex);
+    for (uint sm = 0; sm < NUM_PIO_STATE_MACHINES; sm++) {
+        if (mask & (1u << sm)) {
+            pio_sm_unclaim(pio, sm);
+        }
+    }
+}
+
 void Debug::loop() {
-    while (true) ;
+    while (true);
 }

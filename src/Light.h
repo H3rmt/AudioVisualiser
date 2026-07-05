@@ -21,6 +21,6 @@ void renderStrip(
 
 void updateBrightness();
 
-MultiplexedStrip *one();
+MultiplexedStrip &one();
 
-MultiplexedStrip *two();
+MultiplexedStrip &two();

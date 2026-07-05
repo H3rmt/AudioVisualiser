@@ -3,6 +3,8 @@
 
 #include "Light.h"
 
+#include "Debug.hpp"
+
 
 auto one_i = MultiplexedStrip(STRIP1OUT, 139, 0, 62, 61);
 auto two_i = MultiplexedStrip(STRIP2OUT, 72, 72, 72, 72);
@@ -15,8 +17,14 @@ void setupLeds() {
     pinMode(SELECT2, OUTPUT);
     digitalWrite(SELECT1, LOW);
     digitalWrite(SELECT2, LOW);
-    one_i.begin();
-    two_i.begin();
+    if (!one_i.begin()) {
+        Debug::errorExit(2);
+    }
+    Debug::printPioUsage("after strip 1 init");
+    if (!two_i.begin()) {
+        Debug::errorExit(3);
+    }
+    Debug::printPioUsage("after strip 2 init");
 }
 
 void selectOutput(const uint8_t index) {
@@ -62,10 +70,10 @@ void updateBrightness() {
     }
 }
 
-MultiplexedStrip *one() {
-    return &one_i;
+MultiplexedStrip &one() {
+    return one_i;
 }
 
-MultiplexedStrip *two() {
-    return &two_i;
+MultiplexedStrip &two() {
+    return two_i;
 }
