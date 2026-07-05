@@ -221,7 +221,16 @@ void Display::Display::drawRawAudio(
     const bool off
 ) {
     Timing::start(Timing::Id::DisplayRawAudio);
+
     int32_t startSample = 0;
+    float maxAbsValue = 0.0f;
+    // Find the index of the maximum absolute value in 1/4 of the frame
+    for (int32_t i = 0; i < Consts::SamplesCaptured / 4; i++) {
+        if (frame.samples[i] > maxAbsValue) {
+            maxAbsValue = frame.samples[i];
+            startSample = i;
+        }
+    }
     const uint32_t color = off ? ILI9341_RED : ILI9341_GREEN;
 
     const float mul = 131072.0f / static_cast<float>(loudnessDivider);
@@ -233,8 +242,8 @@ void Display::Display::drawRawAudio(
             max(0, min(spriteHeight, (spriteHeight / 2) - static_cast<int16_t>(frame.samples[startSample + 4] * mul))),
             color);
         startSample += 4;
-        if (startSample >= (Consts::Samples * 3) - 8)
-            break;
+        if (startSample >= (Consts::SamplesCaptured) - 8)
+            startSample = 0;
     }
     Timing::stop(Timing::Id::DisplayRawAudio);
 }

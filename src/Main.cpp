@@ -206,7 +206,7 @@ void loop() {
 
     Frame &frame = audio::audioFrames[frameIndex];
     // use middle of frame for fft
-    const auto samples = &frame.samples[Consts::Samples];
+    const auto samples = &frame.samples[Consts::SamplesCapturedOffset];
     memcpy(audio::vReal, samples, sizeof(audio::vReal));
     audio::fft();
     counter::incFFTCount();
@@ -307,7 +307,7 @@ void loop1() {
     Frame &frame = audio::audioFrames[frameIndex];
 
     Timing::start(Timing::Id::MicStep);
-    for (uint16_t i = 0; i < Consts::Samples * 3;) {
+    for (uint16_t i = 0; i < Consts::SamplesCaptured;) {
         if (float sample = 0; Mic::readSample(sample)) {
             frame.samples[i++] = sample;
         } else {

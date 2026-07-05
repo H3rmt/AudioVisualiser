@@ -23,11 +23,13 @@ namespace Console {
 }
 
 namespace Consts {
-    constexpr int32_t Samples = 512;
+    constexpr int32_t Samples = 1024;
+    constexpr int32_t SamplesCapturedOffset = 256;
+    constexpr int32_t SamplesCaptured = 1536;
 
-    // In theory yes
-    // constexpr int32_t FrequenciesUsable = Samples / 2;
     constexpr int32_t MaxFrequencyIndex = 90;
+    // In theory yes, but we dont have more space on display
+    // constexpr int32_t FrequenciesUsable = Samples / 2;
     constexpr int32_t FrequenciesUsable = 134;
     constexpr int32_t SamplingFrequency = 44100;
     constexpr int32_t BitsPerSample = 32;
@@ -76,7 +78,7 @@ struct AnalyzeDataDynamic {
 };
 
 struct Frame {
-    float samples[Consts::Samples * 3]{};
+    float samples[Consts::SamplesCaptured]{};
 };
 
 enum class LEDMode {

@@ -136,14 +136,14 @@ void Analyze::analyzeFrequencies(AnalyzeDataDynamic *analyze, const AnalyzedData
     analyze->floatingAverageMin = 90.0f;
 
     if (const auto pv = data->peakPeakValue * 1.3f; analyze->floatingAverage < pv) {
-        analyze->floatingAverage += max(1, (pv - analyze->floatingAverage) / 40);
+        analyze->floatingAverage += max(1, (pv - analyze->floatingAverage) / 30);
     } else if (analyze->floatingAverage > pv) {
-        analyze->floatingAverage -= 0.1f;
+        analyze->floatingAverage -= max(0.25f, (pv - analyze->floatingAverage) / 80);
     }
     if (const auto pfv = data->peakPeakFrequencyValue * 0.9f; analyze->floatingAverage < pfv) {
         analyze->floatingAverage += max(1, (pfv - analyze->floatingAverage) / 40);
     } else if (analyze->floatingAverage > pfv) {
-        analyze->floatingAverage -= 0.15f;
+        analyze->floatingAverage -= max(0.20f, (pfv - analyze->floatingAverage) / 100);
     }
     analyze->floatingAverage = max(analyze->floatingAverageMin, analyze->floatingAverage);
 
