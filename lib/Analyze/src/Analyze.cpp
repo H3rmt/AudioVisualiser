@@ -133,7 +133,7 @@ void Analyze::analyzeFrequencies(AnalyzeDataDynamic *analyze, const AnalyzedData
 
     // Update floating average to follow the peak value, with min clamp
     // analyze->floatingAverageMin = getAverageMinValue(analyze->peakFrequencyIndexLazy);
-    analyze->floatingAverageMin = 90.0f;
+    analyze->floatingAverageMin = 130.0f;
 
     if (const auto pv = data->peakPeakValue * 1.3f; analyze->floatingAverage < pv) {
         analyze->floatingAverage += max(1, (pv - analyze->floatingAverage) / 30);

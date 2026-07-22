@@ -37,7 +37,3 @@ and multiplexed NeoPixel LED strips.
 - `lib/`: Custom libraries for analysis, animations, display handling, and peripheral control.
 - `include/`: Global definitions and constants.
 - `other/recs/`: Sample audio recordings for testing/analysis.
-
-## License
-
-Check the repository for license information.

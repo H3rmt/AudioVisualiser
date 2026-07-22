@@ -34,10 +34,10 @@ namespace Consts {
     constexpr int32_t SamplingFrequency = 44100;
     constexpr int32_t BitsPerSample = 32;
 
-    // TODO 30 is lower than 90 which is the minimum
+    // TODO 30 is lower than 140 which is the minimum
     constexpr uint32_t RawMinOff = 30;
-    constexpr uint32_t RawIncreaseDivider = 140;
-    constexpr uint32_t RawDecreaseDivider = 95;
+    constexpr uint32_t RawIncreaseDivider = 190;
+    constexpr uint32_t RawDecreaseDivider = 145;
 }
 
 

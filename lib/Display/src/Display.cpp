@@ -16,8 +16,9 @@ void Display::Display::init(const bool startAnimation, Settings *settings) {
 
     Console::println("TFT init");
     tft.init();
-    if (dma)
+    if (dma) {
         tft.initDMA();
+    }
     Console::println("TFT init");
     tft.setRotation(3);
 
@@ -164,6 +165,7 @@ void Display::Display::updateFPS(
     const uint16_t fftsPerSecond,
     const uint16_t micDataCount
 ) {
+    tft.endWrite();
     tft.setTextColor(rgbTo565(14, 145, 243), rgbTo565(20, 20, 25));
     tft.setCursor(207, 5);
     const auto uptime_seconds = millis() / 1000;
@@ -198,6 +200,7 @@ void Display::Display::updateFPS(
     tft.print("/");
     tft.print(micDataCount);
     tft.print(" UPS ");
+    tft.startWrite();
 }
 
 void Display::Display::addInfoString(const char *infoString, const bool replace) {

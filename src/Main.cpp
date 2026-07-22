@@ -87,13 +87,12 @@ namespace audio {
 
 void drawDisplay(const AnalyzedData *data, const AnalyzeDataDynamic *dynamic, const uint8_t frameIndex) {
     if (display.isSettingsMode()) {
-        // display.dmaWait();
+        display.dmaWait();
         display.drawSettings();
         display.dmaWrite(true);
     } else {
-        // display.dmaWait();
+        display.dmaWait();
         display.drawMain(data, dynamic);
-
         display.drawRawAudio(audio::audioFrames[frameIndex], dynamic->loudnessDivider, dynamic->off);
         display.drawDebugBars(data, dynamic);
         display.dmaWrite(true);
@@ -139,7 +138,9 @@ void setup() {
     delay(200);
 
     const uint32_t pio2MicReserve = Debug::reserveFreePioStateMachines(2);
+    // const uint32_t pio1LedReserve = Debug::reserveFreePioStateMachines(1);
     Mic::setupMic();
+    // Debug::releasePioStateMachines(1, pio1LedReserve);
     Debug::releasePioStateMachines(2, pio2MicReserve);
     Debug::printPioUsage("after mic init");
     Debug::progress(4);
@@ -147,11 +148,9 @@ void setup() {
     display.addInfoString("mic setup complete");
     delay(500);
 
-    const uint32_t pio2LedReserve = Debug::reserveFreePioStateMachines(2);
-    const uint32_t pio1LedReserve = Debug::reserveFreePioStateMachines(1);
+    // const uint32_t pio2LedReserve = Debug::reserveFreePioStateMachines(2);
     setupLeds();
-    Debug::releasePioStateMachines(1, pio1LedReserve);
-    Debug::releasePioStateMachines(2, pio2LedReserve);
+    // Debug::releasePioStateMachines(2, pio2LedReserve);
     Debug::progress(5);
     Console::println("LEDs setup complete");
     display.addInfoString("LED setup complete");
@@ -202,7 +201,7 @@ void setup() {
 uint8_t frameIndex = 0;
 AnalyzeDataDynamic dynamic;
 
-void loop1() {
+void loop() {
     Frame &frame = audio::audioFrames[frameIndex];
 
     Timing::start(Timing::Id::MicStep);
@@ -225,49 +224,51 @@ void loop1() {
     Analyze::checkChanges(&dynamic, audio::data[frameIndex].peakPeakFrequencyValue);
     Analyze::analyzeFrequencies(&dynamic, &audio::data[frameIndex]);
 
+
     if (dynamic.off) {
         counter::incLEDUpdates();
         Timing::start(Timing::Id::DrawLedsOff);
-        one().offAnimation(0);
+        // one().offAnimation(0);
         two().offAnimation(0);
         selectOutput(0);
-        one().startShow();
+        // one().startShow();
         two().startShow();
         Timing::stop(Timing::Id::DrawLedsOff);
     } else {
         counter::incLEDUpdates();
-        const auto level = static_cast<uint16_t>(
-            audio::data[frameIndex].peakPeakValue * UINT16_MAX / dynamic.floatingAverage);
+        const auto level = static_cast<uint16_t>(audio::data[frameIndex].peakPeakValue * UINT16_MAX / dynamic.floatingAverage);
         const uint16_t offset = millis() * 12 % UINT16_MAX;
         Console::printf("leds: %f, %f\n\r", level, offset);
 
         Timing::start(Timing::Id::DrawLeds);
         // if (ledIndex == 0) {
-
         selectOutput(0);
         renderStrip(one(), 0, settings.frontCentre, level, offset, 20.0f, 15, 3, 1.3f, true);
-        renderStrip(two(), 0, settings.leftFrontBack, level, offset, 5.0f, 15, 2, 1.0f, true);
-        one().startShow();
+        // renderStrip(one(), 0, settings.frontCentre, level, offset, 5.0f, 15, 3, 1.3f, true);
+        renderStrip(two(), 0, settings.leftFrontBack, level, offset, 2.0f, 15, 2, 1.0f, true);
+        // one().startShow();
         two().startShow();
         sleep_us(100);
         // } else if (ledIndex == 1) {
         selectOutput(1);
-        renderStrip(two(), 1, settings.rightFrontBack, level, offset, 5.0f, 15, 2, 1.0f, true);
+        renderStrip(two(), 1, settings.rightFrontBack, level, offset, 2.0f, 15, 2, 1.0f, true);
         two().startShow();
         sleep_us(100);
 
         // } else if (ledIndex == 2) {
         selectOutput(2);
         renderStrip(one(), 2, settings.frontLeft, level, offset, 20.0f, 8, 3, 1.3f, true);
-        renderStrip(two(), 2, settings.rightMiddle, level, offset, 5.0f, 15, 2, 1.0f, true);
-        one().startShow();
+        // renderStrip(one(), 2, settings.frontLeft, level, offset, 5.0f, 8, 3, 1.3f, true);
+        renderStrip(two(), 2, settings.rightMiddle, level, offset, 1.0f, 15, 2, 1.0f, true);
+        // one().startShow();
         two().startShow();
         sleep_us(100);
         // } else {
         selectOutput(3);
         renderStrip(one(), 3, settings.frontRight, level, offset, 20.0f, 8, 3, 1.3f, true);
-        renderStrip(two(), 3, settings.leftMiddle, level, offset, 5.0f, 15, 2, 1.0f, true);
-        one().startShow();
+        // renderStrip(one(), 3, settings.frontRight, level, offset, 5.0f, 8, 3, 1.3f, true);
+        renderStrip(two(), 3, settings.leftMiddle, level, offset, 1.0f, 15, 2, 1.0f, true);
+        // one().startShow();
         two().startShow();
         sleep_us(100);
         // }
@@ -300,7 +301,7 @@ void setup1() {
 
 uint8_t displayIndex = 0;
 
-void loop() {
+void loop1() {
     while (readyFrameIndex == -1) {
     }
     __sync_synchronize();

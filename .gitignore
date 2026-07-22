@@ -3,7 +3,8 @@
 .vscode/c_cpp_properties.json
 .vscode/launch.json
 .vscode/ipch
+.cache
 
 .env
 
-tmp/
+compile_commands.json

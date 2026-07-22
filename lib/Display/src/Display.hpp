@@ -53,9 +53,6 @@ namespace Display {
         void drawDebugBars(const AnalyzedData *data, const AnalyzeDataDynamic *dynamic);
 
         // TODO
-        void drawDebugLines(const AnalyzedData *data);
-
-        // TODO
         void drawRawAudio(const Frame &frame,
                           const float loudnessDivider,
                           const bool off);

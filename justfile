@@ -20,4 +20,7 @@ monitor-pio:
     platformio device monitor -e wired -b 115200
 
 test:
-    pio test -e native -vv
+    platformio test -e native -vv
+
+compdb env="wired":
+    platformio run -t compiledb -e {{ env }}
